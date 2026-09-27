@@ -25,6 +25,16 @@ dotnet test tests/Swankers.League.Tests
 dotnet test tests/Swankers.Mcp.Tests
 ```
 
+## Run locally
+
+Each service has its own development port (set in `Properties/launchSettings.json`), so they can run side by side:
+
+| Service | Command | URL |
+|---|---|---|
+| MCP server | `dotnet run --project src/Swankers.Mcp` | `http://localhost:5210` |
+| Coach | `dotnet run --project src/Swankers.Coach` | `http://localhost:8088` (the local port Foundry hosted agents use) |
+| Web | `dotnet run --project src/Swankers.Web` | `http://localhost:5121` (`--launch-profile https` for `https://localhost:7149`) |
+
 ## Layout
 
 | Path | What it is |
