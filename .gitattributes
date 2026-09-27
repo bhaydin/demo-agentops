@@ -1,0 +1,5 @@
+# Normalize line endings in the repo; checkouts follow each machine's settings.
+* text=auto
+
+# Scripts run on Linux CI and containers.
+*.sh text eol=lf
