@@ -25,7 +25,7 @@ Gate: `dotnet build` and `dotnet test` pass locally and in CI. Summary lists eve
 
 ### Phase 0 record (verified 2026-09-27)
 
-**Gate status:** local build (Debug and Release, 0 warnings) and `dotnet test` (3/3) pass on SDK 10.0.401, including `dotnet restore --locked-mode`. CI runs on the first push to `origin/main`.
+**Gate status:** passed. Local build (Debug and Release, 0 warnings) and `dotnet test` (3/3) pass on SDK 10.0.401, including `dotnet restore --locked-mode`. CI green on the first push: [build run 36331443534](https://github.com/bhaydin/demo-agentops/actions/runs/36331443534).
 
 **Region:** North Central US. It supports Foundry hosted agents ([hosted agents: region availability](https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/hosted-agents)) and cloud AI red teaming, which is only in East US 2 and North Central US ([evaluation region support](https://learn.microsoft.com/en-us/azure/foundry/concepts/evaluation-regions-limits-virtual-network)). Sweden Central is ruled out for red teaming.
 
