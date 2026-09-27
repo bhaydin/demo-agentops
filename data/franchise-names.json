@@ -1,0 +1,4 @@
+{
+  "$comment": "Maintainer controlled. Maps MFL franchise IDs to the display names shown on stage. Never put real owner names here. Filled in before the Phase 1 snapshot capture; Phase 1 may refine this shape.",
+  "franchises": {}
+}
