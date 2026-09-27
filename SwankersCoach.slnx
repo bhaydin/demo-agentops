@@ -1,0 +1,31 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="AGENTS.md" />
+    <File Path="CLAUDE.md" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+    <File Path="nuget.config" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/docs/">
+    <File Path="docs/ARCHITECTURE.md" />
+    <File Path="docs/BUILD-PLAN.md" />
+  </Folder>
+  <Folder Name="/src/">
+    <File Path="src/Directory.Build.props" />
+    <Project Path="src/Swankers.Coach/Swankers.Coach.csproj" />
+    <Project Path="src/Swankers.League/Swankers.League.csproj" />
+    <Project Path="src/Swankers.Mcp/Swankers.Mcp.csproj" />
+    <Project Path="src/Swankers.Web/Swankers.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Swankers.Evals/Swankers.Evals.csproj" />
+    <Project Path="tests/Swankers.League.Tests/Swankers.League.Tests.csproj" />
+    <Project Path="tests/Swankers.Mcp.Tests/Swankers.Mcp.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/Swankers.SnapshotCapture/Swankers.SnapshotCapture.csproj" />
+  </Folder>
+</Solution>
