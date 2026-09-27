@@ -1,0 +1,45 @@
+<Project>
+
+  <!--
+    Central Package Management. Exact versions only; no floating or wildcard versions.
+    Versions verified 2026-09-27 against nuget.org and Microsoft Learn (see docs/BUILD-PLAN.md, Phase 0 record).
+    Frozen after Phase 4 unless the maintainer approves a bump.
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup Label="Microsoft Agent Framework">
+    <PackageVersion Include="Microsoft.Agents.AI" Version="1.22.0" />
+    <!-- Prerelease: contains FoundryEvals. Foundry.Hosting depends on this exact version. -->
+    <PackageVersion Include="Microsoft.Agents.AI.Foundry" Version="1.22.0-preview.260918.1" />
+    <!-- Prerelease: AddFoundryResponses / MapFoundryResponses. No stable release exists. -->
+    <PackageVersion Include="Microsoft.Agents.AI.Foundry.Hosting" Version="1.22.0-preview.260918.1" />
+  </ItemGroup>
+
+  <ItemGroup Label="Azure">
+    <!-- Prerelease: matches the version Microsoft.Agents.AI.Foundry 1.22.0-preview depends on. -->
+    <PackageVersion Include="Azure.AI.Projects" Version="3.0.0-beta.2" />
+    <PackageVersion Include="Azure.Identity" Version="1.21.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="MCP C# SDK">
+    <PackageVersion Include="ModelContextProtocol" Version="2.2.0" />
+    <PackageVersion Include="ModelContextProtocol.AspNetCore" Version="2.2.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="OpenTelemetry">
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.19.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.19.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.19.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.19.1" />
+  </ItemGroup>
+
+  <ItemGroup Label="Testing">
+    <!-- VSTest mode so `dotnet test tests/<project>` works as written in AGENTS.md. -->
+    <PackageVersion Include="xunit.v3.mtp-off" Version="4.0.1" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+  </ItemGroup>
+
+</Project>
