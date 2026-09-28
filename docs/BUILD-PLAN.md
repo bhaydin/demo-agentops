@@ -176,11 +176,11 @@ Review owner: Codex (Phase 3 code review completed; changes requested below)
 - [x] Knowledge docs drafted in `knowledge/` (maintainer edits content)
 - [x] Foundry IQ grounding wired (File Search fallback documented) — **replaced by an in-process `search_league_knowledge` tool over `knowledge/*.md` (maintainer-approved deviation, 2026-09-28); Foundry IQ is a Phase 4 stretch item**
 - [x] Foundry hosting integration exposing the Responses endpoint locally
-- [ ] Local OTLP to the Aspire dashboard; one trace spans agent, MCP, and league — **maintainer's visual check pending (steps below)**
+- [x] Local OTLP to the Aspire dashboard; one trace spans agent, MCP, and league — **verified by the maintainer 2026-09-28** (`aspire dashboard run`; one trace, 2 resources, depth 8, 28 spans: `POST /responses` → `invoke_agent Coach` → `chat gpt-5.4` / `execute_tool get_player_news` → `POST /mcp` → `mcp.tool get_player_news` → `sim.get_players` and `mfl.export` → `api.myfantasyleague.com`)
 
 Gate: a local chat answers a start/sit question using real snapshot data, checks injury news first, pushes back on a bad idea, and shows one connected trace.
 
-### Phase 3 record (code complete 2026-09-28; gate open on the trace check)
+### Phase 3 record (gate passed 2026-09-28)
 
 **Gate evidence (real data, real model):** MCP server and Coach run locally against the committed snapshot and the shared Foundry project. Asked "Should I start Quinshon Judkins or Rico Dowdle at RB this week?", Coach called `get_my_roster`, then `get_player_news` for both players, and answered "Start Judkins: not on the injury report; Dowdle is Out (toe), expected back Oct. 1." Asked to drop Drake Maye for a kicker ("Great idea, right? Do it."), Coach called `get_my_roster` and `search_league_knowledge`, said "Not a great idea" with reasons (already has a kicker, 16/16 roster, QB depth), named better drop candidates, and did not drop anyone. 113/113 tests green in Release (61 League, 36 Mcp, 15 Coach, 1 Evals) after the Codex Phase 3 fixes; CI green at `80e5972` ([build run 36428957493](https://github.com/bhaydin/demo-agentops/actions/runs/36428957493)).
 
@@ -190,7 +190,7 @@ Gate: a local chat answers a start/sit question using real snapshot data, checks
 
 **APIs verified** against the pinned packages: `AgentHost.CreateBuilder`, `AgentHostBuilder.{Services, WebApplicationBuilder, RegisterProtocol, ConfigureTracing}`, `AddFoundryResponses(AIAgent)`, `MapFoundryResponses`, `AIProjectClient.AsAIAgent(model, instructions, name, description, tools, loggerFactory)`, `OpenTelemetryAgent` / `DefaultSourceName` (MAAI001 acknowledged), `McpClientTool : AIFunction`, `AIFunctionFactory.Create`. Learn: [Foundry hosted agents](https://learn.microsoft.com/en-us/agent-framework/hosting/foundry-hosted-agent).
 
-**Known limits:** `DefaultAzureCredential` logs a managed-identity probe failure at error level on developer machines (harmless; the chain continues to Azure CLI); Foundry IQ not wired (see above); `search_league_knowledge` is lexical; knowledge content still has `TBD` markers for the maintainer; first model turn took ~2 minutes (cold start plus two tool rounds), later turns ~15 s.
+**Known limits:** Foundry IQ not wired (see above); `search_league_knowledge` is lexical; knowledge content still has `TBD` markers for the maintainer; first model turn took ~2 minutes (cold start plus two tool rounds), later turns ~15 s. The gate trace showed `DefaultAzureCredential.GetToken` costing ~3.5 s per model call (the Azure CLI credential shells out each time) and Coach reporting as `unknown_service`; fixed after the gate by caching tokens (`CachedTokenCredential`), skipping the managed-identity probe when not hosted (`FoundryEnvironment.IsHosted`), and naming the service `Swankers.Coach` on the tracing resource.
 
 **Maintainer steps to close the gate:** in three terminals from the repo root: `aspire dashboard run` (note the login URL and set `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317` in the other two), `dotnet run --project src/Swankers.Mcp -- --KeyVault:Uri <vault-uri>`, `dotnet run --project src/Swankers.Coach -- --KeyVault:Uri <vault-uri> --Coach:ProjectEndpoint https://foundry-swankers-vxzd.services.ai.azure.com/api/projects/swankers-coach`; then `POST http://localhost:8088/responses` with `{"input": "Should I start Quinshon Judkins or Rico Dowdle this week?"}` and confirm one trace in the dashboard spans the Coach request, the MCP `mcp.tool` spans, and SimLeague. Edit the `TBD` markers in `knowledge/`.
 
