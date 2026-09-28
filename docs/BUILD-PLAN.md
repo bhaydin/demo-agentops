@@ -60,7 +60,7 @@ Transitive prereleases pinned by the lock files: Azure.AI.AgentServer.Core 1.0.0
 **Codex review (2026-09-27, commit `1fd81f2`):** locked restore, Release build (0 warnings/errors), and all three scaffold tests independently passed. CI at that commit is also green ([run 36331497889](https://github.com/bhaydin/demo-agentops/actions/runs/36331497889)). One local-startup finding: Mcp and Coach both default to `http://localhost:5000`; running them together reproduces an address-in-use failure. Add distinct development launch profiles or document explicit ports before Phase 3 integration. This does not block Phase 1. Current tests prove runner discovery only; live Azure quota, agent/judge compatibility, and application behavior remain unverified at this scaffold gate.
 
 ## Phase 1: League gateway (Sun–Mon)
-Owner:
+Owner: Claude Code
 
 - [ ] Domain models (Franchise, Player, Roster, Lineup, Trade, Transaction, Matchup)
 - [ ] `ILeagueReader`, `ILeagueWriter`
@@ -162,3 +162,7 @@ Gate: two clean rehearsals in a row.
 | 2026-09-27 | xUnit v3 in VSTest mode (`xunit.v3.mtp-off`) | Keeps `dotnet test tests/<project>` working as documented; MTP mode needs `--project` |
 | 2026-09-27 | NuGet lock files, locked restore in CI | Freezes transitive prereleases (Azure.AI.AgentServer.*) as well as direct pins |
 | 2026-09-27 | Repo initialized in the existing OneDrive folder, remote `bhaydin/demo-agentops` | Watch for OneDrive sync conflicts in `.git` and `bin`/`obj`; move out of OneDrive if they appear |
+| 2026-09-27 | Secrets in a standalone Key Vault (`kv-swankers-vxzd`, RG `rg-swankers-shared`), not the azd environment | Survives `azd down`/`up` during rehearsals; agents reference secret names only. MFL secrets verified working |
+| 2026-09-27 | Snapshots store normalized, allow-listed domain data; raw MFL responses never written to disk or logged | MFL `league` export includes owner PII (name, email, phone, address) for every franchise |
+| 2026-09-27 | The Fleecers = franchise `0099`, roster drawn from free agents at capture time | Sim-only villain per AGENTS.md; ID cannot collide with the 12 real franchises (`0001`–`0012`) |
+| 2026-09-27 | Add `Azure.Extensions.AspNetCore.Configuration.Secrets` 1.5.2 | Apps load `Mfl:*` config from Key Vault via `--`→`:` name mapping; stable, verified on Learn |
