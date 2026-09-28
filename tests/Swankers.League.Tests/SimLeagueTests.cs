@@ -125,6 +125,20 @@ public sealed class SimLeagueTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Self_trade_is_rejected_and_rosters_are_unchanged()
+    {
+        // Codex Phase 1 review #5: accepting a self-trade duplicated roster slots.
+        var before = (await _sim.GetRosterAsync("0001", CT)).Slots.Count;
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _sim.ProposeTradeAsync("0001", "0001", ["1001"], ["1002"], "self", CT));
+
+        Assert.Contains("itself", ex.Message);
+        Assert.Equal(before, (await _sim.GetRosterAsync("0001", CT)).Slots.Count);
+        Assert.DoesNotContain(await _sim.GetPendingTradesAsync("0001", CT), t => t.FromFranchiseId == t.ToFranchiseId);
+    }
+
+    [Fact]
     public async Task Only_the_receiving_franchise_can_respond()
     {
         var trade = await _sim.ProposeTradeAsync("0099", "0001", ["1003"], ["1002"], "note", CT);

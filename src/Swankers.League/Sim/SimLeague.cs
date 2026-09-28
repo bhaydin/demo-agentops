@@ -91,6 +91,12 @@ public sealed partial class SimLeague(
         using var activity = StartWrite("sim.propose_trade", fromFranchiseId);
         return await MutateAsync(state =>
         {
+            if (fromFranchiseId == toFranchiseId)
+            {
+                // Accepting a self-trade would duplicate roster slots.
+                throw new InvalidOperationException("A franchise cannot trade with itself.");
+            }
+
             RequireOnRoster(state, fromFranchiseId, give, "give");
             RequireOnRoster(state, toFranchiseId, get, "get");
 
