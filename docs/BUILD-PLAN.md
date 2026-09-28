@@ -215,12 +215,21 @@ The Phase 3 gate should remain open. Real-model start/sit/pushback behavior and 
 ## Phase 4: Azure deploy (Tue)
 Owner: Claude Code
 
-- [ ] `infra/` Bicep + `azure.yaml` for azd: Foundry project, model, App Insights, Container Apps (Mcp, Web), ACR, Key Vault
-- [ ] Hosted agent deployment for Coach
-- [ ] Three hosted agent versions per ARCHITECTURE.md (v1 owner, v2 owner, v1 commissioner gate off)
-- [ ] Traces visible in Application Insights and Foundry for a deployed run
+- [x] `infra/` Bicep + `azure.yaml` for azd: Foundry project, model, App Insights, Container Apps (Mcp, Web), ACR, Key Vault
+- [x] Hosted agent deployment for Coach
+- [x] Three hosted agent versions per ARCHITECTURE.md (v1 owner, v2 owner, v1 commissioner gate off)
+- [x] Traces visible in Application Insights and Foundry for a deployed run
 
 Gate: `azd up` from a clean clone works. A deployed chat produces a connected trace. Package versions frozen from here on.
+
+### Phase 4 record (2026-09-28)
+
+- **Environment.** azd env `swankers-dev` → `rg-swankers-dev` (North Central US): `log-swankers-dev`, `appi-swankers-dev`, `crswankersdev…` (Basic ACR, remote builds), `cae-swankers-dev`, `ca-swankers-dev-mcp`, `ca-swankers-dev-web` (user-assigned identities, one replica each). The shared group only receives role assignments (Key Vault Secrets User for mcp, web, and the Coach agent identity; Foundry User for web) and the project's `AppInsights` connection. Vault, Foundry account, project, and the `gpt-5.4` deployment are referenced as `existing`. Pre-flight was `azd provision --preview` (what-if); `azd up` took 5m46s (provision 3m56s, remote builds and deploy 1m49s).
+- **Coach.** Hosted agent `Coach` in project `swankers-coach`, code bundle (`dotnet_10`, bundled publish output, Responses 2.0.0, 1 vCPU / 2 GiB) via `tools/Swankers.AgentDeploy`. Versions: **v4 = v1-owner (routed)**, v5 = v2-owner, v6 = v1-commissioner; v1–v3 were broken bundles and were deleted. The agent's own identity (principal `1e87167b-…`) holds Key Vault Secrets User via `COACH_AGENT_PRINCIPAL_ID`. "Gate off" is not a Coach version: it is the MCP container's `Mcp__CommissionerGateEnabled`, selected explicitly with `azd env set MCP_COMMISSIONER_GATE_ENABLED false` + `azd provision` (DEMO; the environment currently runs the hardened default).
+- **Gate evidence.** `POST {project}/agents/Coach/endpoint/protocols/openai/responses` returned 200 in 14 s (`completed`, 9 tool calls, roster + RB answer). Application Insights operation `2994054aa1a68a46ac41698e4e3291e2`: 25 spans across `Swankers.Coach`, `Swankers.Mcp`, and `agentsv2` (the hosted runtime): `POST /responses` → `invoke_agent` → `mcp.tool get_player_news` → `POST /mcp/` → `sim.get_players`, plus `mfl.export` → `GET /2026/export` for live injuries. The Foundry project's Tracing page reads the same resource. MCP and web answer on their FQDNs (`/healthz` 200; `/api` and `/mcp` 401 without credentials).
+- **Found by deploying, one commit each.** Ingress target port must not depend on whether an image is set, because `azd deploy` swaps only the image (`530ea93`). `dotnet publish -o` cannot take a path containing `,` (this checkout lives under "OneDrive - Concurrency, Inc"), so the bundle is published to the temp folder (`f546e2c`). The SDK's folder upload writes Windows separators into zip entry names, and its typed multipart path is internal in 3.0.0-beta.2, so the tool zips the bundle itself and uploads it with the documented REST call (`95470ae`).
+- **Verified against.** Learn: hosted agents concept (2026-09-14), deploy from source code (2026-09-21), hosted agent permissions reference (2026-09-23), azure.yaml schema (2026-08-26), Azure Monitor exporter README (1.9.0), ARM references for `Microsoft.App` and `accounts/projects/connections`; SDK signatures from the pinned `Azure.AI.Projects.Agents` 3.0.0-beta.2 XML docs plus reflection on the assembly (the XML lists protocol overloads that are not public).
+- **Open.** Foundry User was enough to create versions and patch routing (Project Manager not needed). The hosted runtime's Azure Monitor exporter is the transitive 1.7.0 (its default sampling was not checked; MCP samples at 100%). `Directory.Packages.props` is frozen from here.
 
 ## Phase 5: Evals and CI gate (Tue)
 Owner:
