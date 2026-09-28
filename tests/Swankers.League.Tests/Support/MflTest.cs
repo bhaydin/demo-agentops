@@ -24,9 +24,11 @@ internal static class MflTest
         Func<Uri, HttpResponseMessage>? responder = null,
         ISnapshotLeagueReader? fallback = null,
         MflOptions? options = null,
-        FranchiseNameMap? names = null)
+        FranchiseNameMap? names = null,
+        MflRateLimiter? rateLimiter = null,
+        RecordingHandler? handler = null)
     {
-        var handler = new RecordingHandler(responder);
+        handler ??= new RecordingHandler(responder);
         var http = new HttpClient(new ExportOnlyHandler { InnerHandler = handler });
         var logger = new CapturingLogger<MflExportClient>();
 
@@ -36,7 +38,7 @@ internal static class MflTest
             new MemoryCache(new MemoryCacheOptions()),
             names ?? FranchiseNameMap.Empty,
             logger,
-            time: null,
+            rateLimiter,
             snapshotFallback: fallback);
 
         return (client, handler, logger);

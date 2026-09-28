@@ -14,7 +14,8 @@ public static class MflServiceCollectionExtensions
     public static IHttpClientBuilder AddMflExportClient(this IServiceCollection services)
     {
         services.AddMemoryCache();
-        services.TryAddSingleton(TimeProvider.System);
+        // One limiter for the process: typed clients are created per resolution.
+        services.TryAddSingleton<MflRateLimiter>();
         services.TryAddSingleton(FranchiseNameMap.Empty);
         services.AddTransient<ExportOnlyHandler>();
 

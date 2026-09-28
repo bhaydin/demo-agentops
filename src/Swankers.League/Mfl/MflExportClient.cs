@@ -22,10 +22,8 @@ public sealed partial class MflExportClient : ILeagueReader
     private readonly FranchiseNameMap _names;
     private readonly ILogger<MflExportClient> _logger;
     private readonly ILeagueReader? _fallback;
-    private readonly TimeProvider _time;
+    private readonly MflRateLimiter _rateLimiter;
     private readonly MflRequestBuilder _requests;
-    private readonly SemaphoreSlim _throttle = new(1, 1);
-    private DateTimeOffset _nextRequestUtc = DateTimeOffset.MinValue;
 
     public MflExportClient(
         HttpClient http,
@@ -33,7 +31,7 @@ public sealed partial class MflExportClient : ILeagueReader
         IMemoryCache cache,
         FranchiseNameMap names,
         ILogger<MflExportClient> logger,
-        TimeProvider? time = null,
+        MflRateLimiter? rateLimiter = null,
         ISnapshotLeagueReader? snapshotFallback = null)
     {
         _http = http;
@@ -41,7 +39,7 @@ public sealed partial class MflExportClient : ILeagueReader
         _cache = cache;
         _names = names;
         _logger = logger;
-        _time = time ?? TimeProvider.System;
+        _rateLimiter = rateLimiter ?? new MflRateLimiter();
         _fallback = snapshotFallback;
         _requests = new MflRequestBuilder(_options);
 
@@ -179,35 +177,17 @@ public sealed partial class MflExportClient : ILeagueReader
         using var activity = LeagueDiagnostics.ActivitySource.StartActivity("mfl.export");
         activity?.SetTag("mfl.type", type);
 
-        await _throttle.WaitAsync(cancellationToken);
-        try
+        return await _rateLimiter.RunAsync(_options.MinRequestSpacing, async () =>
         {
-            var wait = _nextRequestUtc - _time.GetUtcNow();
-            if (wait > TimeSpan.Zero)
-            {
-                await Task.Delay(wait, cancellationToken);
-            }
+            using var response = await _http.GetAsync(
+                uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            activity?.SetTag("http.response.status_code", (int)response.StatusCode);
+            response.EnsureSuccessStatusCode();
 
-            try
-            {
-                using var response = await _http.GetAsync(
-                    uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-                activity?.SetTag("http.response.status_code", (int)response.StatusCode);
-                response.EnsureSuccessStatusCode();
-
-                await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-                var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-                _logger.LogDebug("MFL export {Type} succeeded.", type);
-                return document;
-            }
-            finally
-            {
-                _nextRequestUtc = _time.GetUtcNow() + _options.MinRequestSpacing;
-            }
-        }
-        finally
-        {
-            _throttle.Release();
-        }
+            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+            _logger.LogDebug("MFL export {Type} succeeded.", type);
+            return document;
+        }, cancellationToken);
     }
 }
