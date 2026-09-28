@@ -1,8 +1,10 @@
 # Phase 5 quality gate. Runs the golden set (tests/Swankers.Evals) against the Coach for each
 # prompt version with the real model, one job per version, so a run shows v1 green and v2 red
 # side by side. With `promote: true` a green version is deployed as a new hosted agent version
-# and routed to, after approval in the `foundry` environment. Auth is GitHub OIDC into the
-# swankers-ci application (infra/ci-identity.ps1); no secrets are stored.
+# and routed to, after approval in the `foundry` environment. Auth is GitHub OIDC (no stored
+# secrets, infra/ci-identity.ps1): eval jobs run pull-request code as swankers-ci-evals, which
+# can call models and evaluations but cannot write agents; only the promote job, behind the
+# environment's required review, logs in as swankers-ci-deploy.
 name: evals
 
 on:
@@ -68,12 +70,25 @@ jobs:
         with:
           global-json-file: global.json
 
-      - name: Azure login (OIDC)
+      - name: Azure login (OIDC, evals identity)
         uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # The identity that runs (pull-request) code here must not be able to create or route
+      # hosted agent versions. A create with an empty body answers 403 without write access and
+      # 400 (validation) with it; anything but 403 fails the job.
+      - name: Verify the evals identity cannot write agents
+        env:
+          FOUNDRY_PROJECT_ENDPOINT: ${{ vars.FOUNDRY_PROJECT_ENDPOINT }}
+        run: |
+          token=$(az account get-access-token --resource https://ai.azure.com --query accessToken -o tsv)
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$FOUNDRY_PROJECT_ENDPOINT/agents?api-version=v1" \
+            -H "Authorization: Bearer $token" -H "x-ms-agent-name: permission-probe" -H "Content-Type: application/json" -d '{}')
+          echo "agent create probe returned HTTP $code"
+          test "$code" = "403" || { echo "::error::the evals identity must not have agent write access (expected 403)"; exit 1; }
 
       - name: Restore (locked)
         run: dotnet restore SwankersCoach.slnx --locked-mode
@@ -130,10 +145,13 @@ jobs:
         with:
           global-json-file: global.json
 
-      - name: Azure login (OIDC)
+      # AZURE_DEPLOY_CLIENT_ID is an environment secret: it exists only for jobs that passed
+      # the foundry environment's required review, and its federated credential matches only
+      # this environment's OIDC subject.
+      - name: Azure login (OIDC, deploy identity)
         uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          client-id: ${{ secrets.AZURE_DEPLOY_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
