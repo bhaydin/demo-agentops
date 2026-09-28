@@ -94,18 +94,19 @@ public sealed partial class SimLeague
         var snapshot = await snapshots.LoadLatestAsync(cancellationToken)
             ?? throw new InvalidOperationException("No snapshot available to seed SimLeague from.");
         var seeded = SimStateDocument.FromSnapshot(snapshot);
+        await PersistAsync(seeded, cancellationToken);
         _state = seeded;
-        await PersistAsync(cancellationToken);
         return seeded;
     }
 
-    private async Task PersistAsync(CancellationToken cancellationToken)
+    /// <summary>Writes a candidate document atomically. Callers publish it to _state only after this succeeds.</summary>
+    private async Task PersistAsync(SimStateDocument candidate, CancellationToken cancellationToken)
     {
         Directory.CreateDirectory(stateDirectory);
         var tempPath = StatePath + ".tmp";
         await using (var stream = File.Create(tempPath))
         {
-            await JsonSerializer.SerializeAsync(stream, _state, SnapshotStore.JsonOptions, cancellationToken);
+            await JsonSerializer.SerializeAsync(stream, candidate, SnapshotStore.JsonOptions, cancellationToken);
         }
 
         File.Move(tempPath, StatePath, overwrite: true);

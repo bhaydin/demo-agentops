@@ -34,12 +34,13 @@ public sealed partial class SimLeague(
                 ? await snapshots.LoadLatestAsync(cancellationToken)
                 : await snapshots.LoadAsync(snapshotId, cancellationToken);
 
-            _state = SimStateDocument.FromSnapshot(
+            var seeded = SimStateDocument.FromSnapshot(
                 snapshot ?? throw new InvalidOperationException(
                     $"No snapshot {(snapshotId is null ? "available" : $"'{snapshotId}'")} to seed SimLeague from."));
-            await PersistAsync(cancellationToken);
+            await PersistAsync(seeded, cancellationToken);
+            _state = seeded;
             _logger.LogInformation(
-                "SimLeague reset from snapshot {SnapshotId}.", _state.SeededFromSnapshotId);
+                "SimLeague reset from snapshot {SnapshotId}.", seeded.SeededFromSnapshotId);
         }
         finally
         {
@@ -183,8 +184,9 @@ public sealed partial class SimLeague(
         try
         {
             var (next, result) = mutate(await RequireStateLockedAsync(cancellationToken));
+            // Persist first: a failed save must leave readers on the previous state.
+            await PersistAsync(next, cancellationToken);
             _state = next;
-            await PersistAsync(cancellationToken);
             return result;
         }
         finally

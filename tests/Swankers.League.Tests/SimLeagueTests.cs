@@ -60,6 +60,24 @@ public sealed class SimLeagueTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Failed_persistence_leaves_memory_and_disk_unchanged()
+    {
+        // Codex Phase 1 review #2. Block the temp file path so the save fails after the mutation
+        // is computed; the drop must throw and the player must still be on the roster everywhere.
+        var stateDir = Path.Combine(_root, "state");
+        await _sim.ResetAsync(null, CT);
+        var before = await File.ReadAllTextAsync(Path.Combine(stateDir, "state.json"), CT);
+        Directory.CreateDirectory(Path.Combine(stateDir, "state.json.tmp"));
+
+        await Assert.ThrowsAnyAsync<Exception>(() => _sim.DropPlayerAsync("0001", "1002", CT));
+        await Assert.ThrowsAnyAsync<Exception>(() => _sim.ResetAsync(null, CT));
+
+        Assert.Contains((await _sim.GetRosterAsync("0001", CT)).Slots, s => s.PlayerId == "1002");
+        Assert.Equal(before, await File.ReadAllTextAsync(Path.Combine(stateDir, "state.json"), CT));
+        Assert.DoesNotContain(await _sim.GetTransactionsAsync(50, CT), t => t.Type == TransactionType.Drop);
+    }
+
+    [Fact]
     public async Task Set_lineup_stores_starters_and_logs_a_transaction()
     {
         var lineup = await _sim.SetLineupAsync("0001", 4, ["1001", "1002"], CT);
