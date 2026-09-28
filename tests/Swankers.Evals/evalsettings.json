@@ -11,9 +11,8 @@
     "adversarial": 1.0
   },
   "foundry": {
-    "$comment": "tool_call_accuracy is run and reported but not gated: its judge penalizes the Coach's read-everything pattern (roster, matchup, rules, news per player), which v1 is required to do.",
+    "$comment": "tool_call_accuracy is run and reported but not gated: its judge penalizes the Coach's read-everything pattern (roster, matchup, rules, news per player), which v1 is required to do. Every gated evaluator must return results; a cloud outage fails the gate (the report still shows the local categories).",
     "enabled": true,
-    "required": false,
     "evaluators": [ "task_adherence", "intent_resolution", "tool_call_accuracy" ],
     "gated": [ "task_adherence", "intent_resolution" ],
     "minPassRate": 0.8

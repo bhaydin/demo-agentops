@@ -32,7 +32,13 @@ public sealed class EvalReport(string promptVersion, EvalSettings settings, IRea
             g => g.Key,
             g => (g.Count(r => r.Passed), g.Count(), g.Count() == 0 ? 0 : (double)g.Count(r => r.Passed) / g.Count()));
 
-    public IReadOnlyList<string> GateFailures { get; } = GateFailuresFor(settings, results, foundry);
+    /// <summary>Category thresholds only: what the deterministic and judge rules said, cloud or no cloud.</summary>
+    public IReadOnlyList<string> LocalGateFailures { get; } = LocalGateFailuresFor(settings, results);
+
+    /// <summary>Local failures plus the Foundry requirements; this is what promotion reads.</summary>
+    public IReadOnlyList<string> GateFailures { get; } = [.. LocalGateFailuresFor(settings, results), .. FoundryGateFailuresFor(settings, foundry)];
+
+    public bool LocalPassed => LocalGateFailures.Count == 0;
 
     public bool Passed => GateFailures.Count == 0;
 
@@ -41,7 +47,7 @@ public sealed class EvalReport(string promptVersion, EvalSettings settings, IRea
         var sb = new StringBuilder();
         sb.AppendLine($"# Coach {promptVersion} golden-set evals ({DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm} UTC)");
         sb.AppendLine();
-        sb.AppendLine($"**Gate: {(Passed ? "PASS" : "FAIL")}**");
+        sb.AppendLine($"**Gate: {(Passed ? "PASS" : "FAIL")}**{(Passed == LocalPassed ? "" : $" (local categories: {(LocalPassed ? "PASS" : "FAIL")})")}");
         foreach (var failure in GateFailures)
         {
             sb.AppendLine($"- {failure}");
@@ -104,6 +110,7 @@ public sealed class EvalReport(string promptVersion, EvalSettings settings, IRea
     {
         promptVersion,
         passed = Passed,
+        localPassed = LocalPassed,
         gateFailures = GateFailures,
         categories = Categories.ToDictionary(kv => kv.Key, kv => new { kv.Value.Passed, kv.Value.Total, kv.Value.Rate }),
         foundry = foundry is null ? null : new { foundry.Status, reportUrls = foundry.ReportUrls.Select(u => u.ToString()), foundry.Error, perEvaluator = foundry.PerEvaluator.ToDictionary(kv => kv.Key, kv => new { kv.Value.Passed, kv.Value.Failed }) },
@@ -122,7 +129,7 @@ public sealed class EvalReport(string promptVersion, EvalSettings settings, IRea
         return stem + ".md";
     }
 
-    private static IReadOnlyList<string> GateFailuresFor(EvalSettings settings, IReadOnlyList<CaseResult> results, FoundrySummary? foundry)
+    private static List<string> LocalGateFailuresFor(EvalSettings settings, IReadOnlyList<CaseResult> results)
     {
         var failures = new List<string>();
         foreach (var category in GoldenCase.Categories.All)
@@ -142,20 +149,35 @@ public sealed class EvalReport(string promptVersion, EvalSettings settings, IRea
             }
         }
 
-        if (foundry is not null)
+        return failures;
+    }
+
+    /// <summary>Every gated evaluator must have a nonempty result at or above the minimum; absence is a failure.</summary>
+    private static List<string> FoundryGateFailuresFor(EvalSettings settings, FoundrySummary? foundry)
+    {
+        var failures = new List<string>();
+        if (!settings.Foundry.Enabled)
         {
-            if (foundry.Error is not null && settings.Foundry.Required)
+            return failures;
+        }
+
+        foreach (var name in settings.Foundry.Gated)
+        {
+            var (passed, failed) = foundry?.PerEvaluator
+                .Where(kv => string.Equals(kv.Key, name, StringComparison.OrdinalIgnoreCase))
+                .Select(kv => kv.Value)
+                .FirstOrDefault() ?? (0, 0);
+            var total = passed + failed;
+            if (total == 0)
             {
-                failures.Add($"foundry: {foundry.Error}");
+                var why = foundry is null ? "no Foundry run" : $"status {foundry.Status ?? "unknown"}{(foundry.Error is null ? "" : $"; {foundry.Error}")}";
+                failures.Add($"foundry {name}: no result ({why})");
+                continue;
             }
 
-            foreach (var (name, (passed, failed)) in foundry.PerEvaluator.Where(kv => settings.Foundry.IsGated(kv.Key)))
+            if ((double)passed / total < settings.Foundry.MinPassRate)
             {
-                var total = passed + failed;
-                if (total > 0 && (double)passed / total < settings.Foundry.MinPassRate)
-                {
-                    failures.Add($"foundry {name}: {passed}/{total} passed, minimum {Percent(settings.Foundry.MinPassRate)}");
-                }
+                failures.Add($"foundry {name}: {passed}/{total} passed, minimum {Percent(settings.Foundry.MinPassRate)}");
             }
         }
 

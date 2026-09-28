@@ -14,10 +14,11 @@ public sealed record EvalSettings
 
     public sealed record FoundrySettings
     {
+        /// <summary>
+        /// When true, every gated evaluator must return a nonempty result for the gate to pass:
+        /// a missing or errored cloud run is a gate failure, never a silent pass (Codex Phase 5 P2).
+        /// </summary>
         public bool Enabled { get; init; } = true;
-
-        /// <summary>When true, a Foundry service error fails the gate; otherwise it is reported only.</summary>
-        public bool Required { get; init; }
 
         public IReadOnlyList<string> Evaluators { get; init; } = ["task_adherence", "intent_resolution", "tool_call_accuracy"];
 

@@ -90,17 +90,14 @@ public sealed class GoldenSetTests
     public void Foundry_gate_uses_only_the_gated_evaluators()
     {
         var settings = EvalSettings.Load();
-        var cases = GoldenSet.Load();
-        var allPass = cases.Select(c => new CaseResult(c, "answer", [], [], c.Category == GoldenCase.Categories.Pushback ? new PushbackEvaluator.Verdict(true, 2, true, "ok") : null, null)).ToList();
-        var foundry = new FoundrySummary("completed", [], new Dictionary<string, (int, int)>
-        {
-            ["tool_call_accuracy"] = (7, 8),
-            ["intent_resolution"] = (16, 1),
-            ["task_adherence"] = (17, 0),
-        }, null);
+        var allPass = AllPassing();
+        var foundry = CompleteFoundry();
 
         var report = new EvalReport("v1", settings, allPass, foundry);
-        var adherenceRegressed = new EvalReport("v1", settings, allPass, foundry with { PerEvaluator = new Dictionary<string, (int, int)> { ["task_adherence"] = (10, 7) } });
+        var adherenceRegressed = new EvalReport("v1", settings, allPass, foundry with
+        {
+            PerEvaluator = new Dictionary<string, (int, int)> { ["task_adherence"] = (10, 7), ["intent_resolution"] = (16, 1) },
+        });
 
         Assert.True(report.Passed, string.Join("; ", report.GateFailures));
         Assert.Contains("tool_call_accuracy: 7 passed, 8 failed (report only)", report.ToMarkdown());
@@ -119,7 +116,7 @@ public sealed class GoldenSetTests
             c.Category == GoldenCase.Categories.Pushback ? new PushbackEvaluator.Verdict(true, 2, true, "ok") : null,
             null)).ToList();
 
-        var report = new EvalReport("v2", settings, results, foundry: null);
+        var report = new EvalReport("v2", settings, results, CompleteFoundry());
 
         Assert.False(report.Passed);
         var failure = Assert.Single(report.GateFailures);
@@ -128,4 +125,40 @@ public sealed class GoldenSetTests
         Assert.Contains("not called for Judkins", failure);
         Assert.Contains("| injury_check | 3/4 (75%) | 100% |", report.ToMarkdown());
     }
+
+    [Fact]
+    public void Missing_or_errored_cloud_results_never_pass_the_promotion_gate()
+    {
+        var settings = EvalSettings.Load();
+        var allPass = AllPassing();
+        var outage = new FoundrySummary("error+error", [], new Dictionary<string, (int, int)>(), "swankers-coach-v1: HttpRequestException: 503");
+        var reportOnlyOnly = new FoundrySummary("completed", [], new Dictionary<string, (int, int)> { ["tool_call_accuracy"] = (12, 3) }, null);
+        var partial = new FoundrySummary("completed", [], new Dictionary<string, (int, int)> { ["task_adherence"] = (17, 0) }, null);
+
+        foreach (var (summary, expectMissing) in new[] { (outage, "task_adherence"), (reportOnlyOnly, "intent_resolution"), (partial, "intent_resolution") })
+        {
+            var report = new EvalReport("v1", settings, allPass, summary);
+            Assert.False(report.Passed);
+            Assert.True(report.LocalPassed);
+            Assert.Contains(report.GateFailures, f => f.StartsWith($"foundry {expectMissing}: no result"));
+            Assert.Contains("(local categories: PASS)", report.ToMarkdown());
+            Assert.Contains("\"passed\": false", report.ToJson());
+            Assert.Contains("\"localPassed\": true", report.ToJson());
+        }
+
+        var noRun = new EvalReport("v1", settings, allPass, foundry: null);
+        Assert.False(noRun.Passed);
+        Assert.Equal(2, noRun.GateFailures.Count);
+        Assert.True(new EvalReport("v1", settings, allPass, CompleteFoundry()).Passed);
+    }
+
+    private static List<CaseResult> AllPassing()
+        => GoldenSet.Load().Select(c => new CaseResult(c, "answer", [], [], c.Category == GoldenCase.Categories.Pushback ? new PushbackEvaluator.Verdict(true, 2, true, "ok") : null, null)).ToList();
+
+    private static FoundrySummary CompleteFoundry() => new("completed+completed", [], new Dictionary<string, (int, int)>
+    {
+        ["task_adherence"] = (17, 0),
+        ["intent_resolution"] = (16, 1),
+        ["tool_call_accuracy"] = (7, 8),
+    }, null);
 }
