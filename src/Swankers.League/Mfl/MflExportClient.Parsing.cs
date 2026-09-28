@@ -158,6 +158,47 @@ public sealed partial class MflExportClient
             ]
             : [];
 
+    /// <summary>
+    /// weeklyResults: franchises appear under matchup[].franchise[] (and top-level franchise[]
+    /// for teams outside a head-to-head pairing), each with a score and player[] rows
+    /// (id, score, status "starter"/"nonstarter"). Shape per the MFL docs; checked against
+    /// the maintainer's capture, which warns if a completed week parses to zero rows.
+    /// </summary>
+    private static IReadOnlyList<WeeklyResult> ParseWeeklyResults(JsonElement root, int week)
+    {
+        if (!root.TryGetProperty("weeklyResults", out var results))
+        {
+            return [];
+        }
+
+        var franchises = MflJson.Elements(results, "matchup")
+            .SelectMany(m => MflJson.Elements(m, "franchise"))
+            .Concat(MflJson.Elements(results, "franchise"));
+
+        return
+        [
+            .. franchises
+                .Select(f => new WeeklyResult(
+                    week,
+                    MflJson.GetString(f, "id"),
+                    MflJson.GetDecimal(f, "score") ?? 0m,
+                    [
+                        .. MflJson.Elements(f, "player").Select(p => new PlayerResult(
+                            MflJson.GetString(p, "id"),
+                            MflJson.GetDecimal(p, "score") ?? 0m,
+                            MflJson.GetString(p, "status").Equals("starter", StringComparison.OrdinalIgnoreCase)))
+                    ]))
+                .Where(r => r.FranchiseId.Length > 0)
+                .DistinctBy(r => r.FranchiseId)
+        ];
+    }
+
+    /// <summary>
+    /// transactions: add/drop entries encode players as "added,ids,|dropped,ids," (verified
+    /// against live data 2026-09-28). League-level system entries carry no franchise and are
+    /// skipped. MFL lists newest first; results are returned oldest first so sequence numbers
+    /// increase over time, matching SimLeague's append-only log.
+    /// </summary>
     private static IReadOnlyList<Transaction> ParseTransactions(JsonElement root)
     {
         if (!root.TryGetProperty("transactions", out var transactions))
@@ -165,29 +206,54 @@ public sealed partial class MflExportClient
             return [];
         }
 
+        var parsed = MflJson.Elements(transactions, "transaction")
+            .Select(e => (
+                Franchise: MflJson.GetString(e, "franchise"),
+                Type: MflJson.GetString(e, "type"),
+                Raw: MflJson.GetString(e, "transaction"),
+                Timestamp: DateTimeOffset.FromUnixTimeSeconds(MflJson.GetInt(e, "timestamp") ?? 0)))
+            .Where(t => t.Franchise.Length > 0)
+            .OrderBy(t => t.Timestamp)
+            .ToList();
+
         var sequence = 0L;
-        return
-        [
-            .. MflJson.Elements(transactions, "transaction").Select(e => new Transaction(
-                ++sequence,
-                DateTimeOffset.FromUnixTimeSeconds(MflJson.GetInt(e, "timestamp") ?? 0),
-                ParseTransactionType(MflJson.GetString(e, "type")),
-                MflJson.GetString(e, "franchise"),
-                MflJson.GetString(e, "transaction"),
-                []))
-        ];
+        return [.. parsed.Select(t => ToTransaction(++sequence, t.Franchise, t.Type, t.Raw, t.Timestamp))];
     }
 
-    private static TransactionType ParseTransactionType(string type)
+    private static Transaction ToTransaction(
+        long sequence, string franchise, string type, string raw, DateTimeOffset timestamp)
     {
-        var upper = type.ToUpperInvariant();
-        return upper switch
+        if (type.Contains("TRADE", StringComparison.OrdinalIgnoreCase))
         {
-            _ when upper.Contains("TRADE") => TransactionType.TradeAccepted,
-            _ when upper.Contains("DROP") => TransactionType.Drop,
-            _ when upper.Contains("WAIVER") || upper.Contains("FREE_AGENT") => TransactionType.Add,
-            _ => TransactionType.Unknown,
-        };
+            return new Transaction(sequence, timestamp, TransactionType.TradeAccepted, franchise, "Trade", []);
+        }
+
+        var halves = raw.Split('|');
+        var added = SplitAssets(halves[0]);
+        var dropped = halves.Length > 1 ? SplitAssets(halves[1]) : [];
+
+        var kind = added.Count > 0 ? TransactionType.Add
+            : dropped.Count > 0 ? TransactionType.Drop
+            : TransactionType.Unknown;
+
+        var parts = new List<string>();
+        if (added.Count > 0)
+        {
+            parts.Add($"Added {string.Join(", ", added)}");
+        }
+
+        if (dropped.Count > 0)
+        {
+            parts.Add($"Dropped {string.Join(", ", dropped)}");
+        }
+
+        return new Transaction(
+            sequence,
+            timestamp,
+            kind,
+            franchise,
+            parts.Count > 0 ? string.Join("; ", parts) : type,
+            [.. added, .. dropped]);
     }
 
     private static IReadOnlyList<Trade> ParsePendingTrades(JsonElement root)

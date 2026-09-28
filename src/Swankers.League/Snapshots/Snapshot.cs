@@ -26,10 +26,11 @@ public sealed record Snapshot(
     IReadOnlyList<Injury> Injuries,
     IReadOnlyList<Matchup> Matchups,
     IReadOnlyList<Projection> Projections,
+    IReadOnlyList<WeeklyResult> WeeklyResults,
     IReadOnlyList<Standing> Standings,
     IReadOnlyList<Transaction> Transactions,
     IReadOnlyList<Trade> PendingTrades)
 {
     public static Snapshot Empty(SnapshotManifest manifest)
-        => new(manifest, [], [], [], [], [], [], [], [], []);
+        => new(manifest, [], [], [], [], [], [], [], [], [], []);
 }

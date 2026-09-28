@@ -24,6 +24,9 @@ public interface ILeagueReader
 
     Task<IReadOnlyList<Projection>> GetProjectionsAsync(int week, CancellationToken cancellationToken);
 
+    /// <summary>Actual per-player results for a completed week.</summary>
+    Task<IReadOnlyList<WeeklyResult>> GetWeeklyResultsAsync(int week, CancellationToken cancellationToken);
+
     Task<IReadOnlyList<Standing>> GetStandingsAsync(CancellationToken cancellationToken);
 
     /// <param name="count">Maximum number of most-recent entries to return.</param>

@@ -36,6 +36,7 @@ public sealed class SnapshotStore(string rootDirectory)
         await WriteAsync(directory, "injuries.json", snapshot.Injuries, cancellationToken);
         await WriteAsync(directory, "matchups.json", snapshot.Matchups, cancellationToken);
         await WriteAsync(directory, "projections.json", snapshot.Projections, cancellationToken);
+        await WriteAsync(directory, "weekly-results.json", snapshot.WeeklyResults, cancellationToken);
         await WriteAsync(directory, "standings.json", snapshot.Standings, cancellationToken);
         await WriteAsync(directory, "transactions.json", snapshot.Transactions, cancellationToken);
         await WriteAsync(directory, "pending-trades.json", snapshot.PendingTrades, cancellationToken);
@@ -63,6 +64,7 @@ public sealed class SnapshotStore(string rootDirectory)
             await ReadListAsync<Injury>(directory, "injuries.json", cancellationToken),
             await ReadListAsync<Matchup>(directory, "matchups.json", cancellationToken),
             await ReadListAsync<Projection>(directory, "projections.json", cancellationToken),
+            await ReadListAsync<WeeklyResult>(directory, "weekly-results.json", cancellationToken),
             await ReadListAsync<Standing>(directory, "standings.json", cancellationToken),
             await ReadListAsync<Transaction>(directory, "transactions.json", cancellationToken),
             await ReadListAsync<Trade>(directory, "pending-trades.json", cancellationToken));

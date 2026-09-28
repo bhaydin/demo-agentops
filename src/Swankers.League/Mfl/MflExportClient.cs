@@ -101,6 +101,14 @@ public sealed partial class MflExportClient : ILeagueReader
             (reader, ct) => reader.GetProjectionsAsync(week, ct),
             cancellationToken);
 
+    public Task<IReadOnlyList<WeeklyResult>> GetWeeklyResultsAsync(int week, CancellationToken cancellationToken)
+        => GetAsync(
+            $"mfl:weeklyResults:{week}", _options.CacheDuration, "weeklyResults",
+            () => _requests.WeeklyResults(week),
+            root => ParseWeeklyResults(root, week),
+            (reader, ct) => reader.GetWeeklyResultsAsync(week, ct),
+            cancellationToken);
+
     public Task<IReadOnlyList<Standing>> GetStandingsAsync(CancellationToken cancellationToken)
         => GetAsync(
             "mfl:standings", _options.CacheDuration, "leagueStandings", _requests.LeagueStandings,

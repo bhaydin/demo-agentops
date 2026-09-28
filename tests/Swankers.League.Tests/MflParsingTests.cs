@@ -105,6 +105,56 @@ public class MflParsingTests
     }
 
     [Fact]
+    public async Task Transactions_split_added_and_dropped_and_skip_system_entries()
+    {
+        // Format verified against the live league: "added,ids,|dropped,ids,", newest first.
+        const string json = """
+            {
+              "transactions": { "transaction": [
+                { "type": "FREE_AGENT", "franchise": "0008", "transaction": "16432,|16597,", "timestamp": "1790510000" },
+                { "type": "LOCK_ALL_PLAYERS", "franchise": "", "transaction": "", "timestamp": "1790500000" },
+                { "type": "WAIVER", "franchise": "0009", "transaction": "17474,|", "timestamp": "1790400000" } ] }
+            }
+            """;
+        var (client, _, _) = MflTest.Create(responder: _ => RecordingHandler.Json(json));
+
+        var transactions = await client.GetTransactionsAsync(30, CT);
+
+        Assert.Equal(2, transactions.Count);                 // system entry skipped
+        Assert.Equal("0009", transactions[0].FranchiseId);   // oldest first
+        Assert.Equal([1L, 2L], transactions.Select(t => t.Sequence));
+        var addDrop = transactions[1];
+        Assert.Equal(TransactionType.Add, addDrop.Type);
+        Assert.Equal(["16432", "16597"], addDrop.PlayerIds);
+        Assert.Equal("Added 16432; Dropped 16597", addDrop.Description);
+    }
+
+    [Fact]
+    public async Task Weekly_results_parse_matchup_franchises_and_player_rows()
+    {
+        const string json = """
+            {
+              "weeklyResults": { "week": "2", "matchup": [
+                { "franchise": [
+                  { "id": "0001", "score": "84.3", "player": [
+                    { "id": "13589", "score": "23.8", "status": "starter" },
+                    { "id": "14000", "score": "11.0", "status": "nonstarter" } ] },
+                  { "id": "0004", "score": "123.0", "player": { "id": "15000", "score": "30.5", "status": "starter" } } ] } ] }
+            }
+            """;
+        var (client, _, _) = MflTest.Create(responder: _ => RecordingHandler.Json(json));
+
+        var results = await client.GetWeeklyResultsAsync(2, CT);
+
+        Assert.Equal(2, results.Count);
+        var first = results.Single(r => r.FranchiseId == "0001");
+        Assert.Equal(84.3m, first.Score);
+        Assert.Contains(first.Players, p => p is { PlayerId: "13589", Points: 23.8m, Started: true });
+        Assert.Contains(first.Players, p => p is { PlayerId: "14000", Started: false });
+        Assert.Single(results.Single(r => r.FranchiseId == "0004").Players); // single object, not array
+    }
+
+    [Fact]
     public async Task Unexpected_shapes_yield_empty_results_not_exceptions()
     {
         var (client, _, _) = MflTest.Create(
@@ -113,5 +163,6 @@ public class MflParsingTests
         Assert.Empty(await client.GetFranchisesAsync(CT));
         Assert.Empty(await client.GetStandingsAsync(CT));
         Assert.Empty(await client.GetTransactionsAsync(10, CT));
+        Assert.Empty(await client.GetWeeklyResultsAsync(1, CT));
     }
 }

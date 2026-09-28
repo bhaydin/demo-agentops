@@ -67,6 +67,8 @@ public sealed class SnapshotStoreTests : IDisposable
 
         Assert.Single(await reader.GetMatchupsAsync(4, CT));
         Assert.Empty(await reader.GetMatchupsAsync(5, CT));
+        Assert.Equal(2, (await reader.GetWeeklyResultsAsync(3, CT)).Count);
+        Assert.Empty(await reader.GetWeeklyResultsAsync(4, CT));
         Assert.Equal(2, (await reader.GetProjectionsAsync(4, CT)).Count);
         Assert.Single((await reader.GetRosterAsync("0099", CT)).Slots);
         Assert.Single(await reader.GetPendingTradesAsync("0099", CT));
@@ -87,6 +89,7 @@ public sealed class SnapshotStoreTests : IDisposable
             "details", "expectedReturn",                                      // injury
             "homeFranchiseId", "awayFranchiseId", "homeScore", "awayScore",   // matchup
             "points",                                                         // projection
+            "score", "players", "started",                                    // weekly result
             "wins", "losses", "ties", "pointsFor", "pointsAgainst",           // standing
             "sequence", "timestampUtc", "type", "description", "playerIds",   // transaction
             "fromFranchiseId", "toFranchiseId", "give", "get", "note", "offeredOn", // trade

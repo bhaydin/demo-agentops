@@ -24,6 +24,7 @@ public class NoImportGuardTests
         await client.GetInjuriesAsync(3, ct);
         await client.GetMatchupsAsync(3, ct);
         await client.GetProjectionsAsync(3, ct);
+        await client.GetWeeklyResultsAsync(2, ct);
         await client.GetStandingsAsync(ct);
         await client.GetTransactionsAsync(25, ct);
         await client.GetPendingTradesAsync("0001", ct);

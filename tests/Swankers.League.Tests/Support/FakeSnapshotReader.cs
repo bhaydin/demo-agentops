@@ -13,6 +13,7 @@ public sealed class FakeSnapshotReader : ISnapshotLeagueReader
     public List<Injury> Injuries { get; init; } = [];
     public List<Matchup> Matchups { get; init; } = [];
     public List<Projection> Projections { get; init; } = [];
+    public List<WeeklyResult> WeeklyResults { get; init; } = [];
     public List<Standing> Standings { get; init; } = [];
     public List<Transaction> Transactions { get; init; } = [];
     public List<Trade> PendingTrades { get; init; } = [];
@@ -32,10 +33,13 @@ public sealed class FakeSnapshotReader : ISnapshotLeagueReader
         => Result(Injuries);
 
     public Task<IReadOnlyList<Matchup>> GetMatchupsAsync(int week, CancellationToken ct)
-        => Result(Matchups);
+        => Result([.. Matchups.Where(m => m.Week == week)]);
 
     public Task<IReadOnlyList<Projection>> GetProjectionsAsync(int week, CancellationToken ct)
-        => Result(Projections);
+        => Result([.. Projections.Where(p => p.Week == week)]);
+
+    public Task<IReadOnlyList<WeeklyResult>> GetWeeklyResultsAsync(int week, CancellationToken ct)
+        => Result([.. WeeklyResults.Where(r => r.Week == week)]);
 
     public Task<IReadOnlyList<Standing>> GetStandingsAsync(CancellationToken ct)
         => Result(Standings);

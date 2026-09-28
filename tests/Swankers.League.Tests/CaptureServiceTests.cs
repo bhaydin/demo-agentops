@@ -22,9 +22,9 @@ public sealed class CaptureServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task Capture_adds_the_fleecers_and_omits_pending_trades()
+    public async Task Capture_adds_the_fleecers_omits_pending_trades_and_keeps_completed_weeks()
     {
-        var seed = SyntheticSnapshot.Build();
+        var seed = SyntheticSnapshot.Build(week: 4);
         var reader = new FakeSnapshotReader
         {
             Franchises = [.. seed.Franchises.Where(f => !f.IsSimOnly)],
@@ -33,6 +33,7 @@ public sealed class CaptureServiceTests : IDisposable
             Injuries = [.. seed.Injuries],
             Matchups = [.. seed.Matchups],
             Projections = [.. seed.Projections],
+            WeeklyResults = [.. seed.WeeklyResults, new WeeklyResult(4, "0001", 12m, [])], // week 4 is in progress
             Standings = [.. seed.Standings],
             Transactions = [.. seed.Transactions],
             PendingTrades = [.. seed.PendingTrades], // live offers exist but must not be captured
@@ -52,41 +53,44 @@ public sealed class CaptureServiceTests : IDisposable
         Assert.Equal("The Fleecers", fleecers.Name);
         Assert.NotEmpty(snapshot.Rosters.Single(r => r.FranchiseId == CaptureService.FleecersId).Slots);
         Assert.Empty(snapshot.PendingTrades);
+        Assert.Equal(2, snapshot.Matchups.Count);
+        Assert.All(snapshot.WeeklyResults, r => Assert.Equal(3, r.Week)); // only the completed week
         Assert.Equal("mfl", snapshot.Manifest.Source);
     }
 
     [Fact]
-    public void Fleecers_roster_uses_only_free_agents_deterministically()
+    public void Fleecers_roster_uses_only_free_agents_in_the_league_roster_shape()
     {
+        string[] positions = ["QB", "RB", "WR", "TE", "PK", "Def"];
         var players = new List<Player>();
         var projections = new List<Projection>();
-        for (var i = 0; i < 40; i++)
+        for (var i = 0; i < 60; i++)
         {
-            var position = new[] { "QB", "RB", "WR", "TE", "PK" }[i % 5];
-            players.Add(new Player($"9{i:000}", $"Synthetic, P{i}", position, "FA"));
-            projections.Add(new Projection($"9{i:000}", 4, 40 - i));
+            players.Add(new Player($"9{i:000}", $"Synthetic, P{i}", positions[i % positions.Length], "FA"));
+            projections.Add(new Projection($"9{i:000}", 4, 60 - i));
         }
 
-        // The five highest-projected players are already rostered elsewhere.
+        // The six highest-projected players are already rostered elsewhere.
         var rosters = new List<Roster>
         {
-            new("0001", [.. players.Take(5).Select(p => new RosterSlot(p.Id, RosterStatus.Roster))]),
+            new("0001", [.. players.Take(6).Select(p => new RosterSlot(p.Id, RosterStatus.Roster))]),
         };
 
         var first = CaptureService.BuildFleecersRoster(players, rosters, projections);
         var second = CaptureService.BuildFleecersRoster(players, rosters, projections);
 
-        Assert.Equal(15, first.Slots.Count);
         Assert.Equal(
             first.Slots.Select(s => s.PlayerId),
             second.Slots.Select(s => s.PlayerId)); // deterministic
         var taken = rosters[0].Slots.Select(s => s.PlayerId).ToHashSet();
         Assert.DoesNotContain(first.Slots, s => taken.Contains(s.PlayerId));
-        // Quotas are minimums; the final best-available picks may add more at any position.
+
         var byId = players.ToDictionary(p => p.Id);
-        Assert.True(first.Slots.Count(s => byId[s.PlayerId].Position == "QB") >= 2);
-        Assert.True(first.Slots.Count(s => byId[s.PlayerId].Position == "RB") >= 4);
-        Assert.True(first.Slots.Count(s => byId[s.PlayerId].Position == "WR") >= 4);
-        Assert.True(first.Slots.Count(s => byId[s.PlayerId].Position == "TE") >= 2);
+        foreach (var (position, count) in CaptureService.FleecersQuotas)
+        {
+            Assert.Equal(count, first.Slots.Count(s => byId[s.PlayerId].Position == position));
+        }
+
+        Assert.Equal(CaptureService.FleecersQuotas.Sum(q => q.Count), first.Slots.Count);
     }
 }

@@ -32,6 +32,9 @@ public sealed class SnapshotLeagueReader(SnapshotStore store) : ISnapshotLeagueR
     public async Task<IReadOnlyList<Projection>> GetProjectionsAsync(int week, CancellationToken ct)
         => [.. (await GetSnapshotAsync(ct)).Projections.Where(p => p.Week == week)];
 
+    public async Task<IReadOnlyList<WeeklyResult>> GetWeeklyResultsAsync(int week, CancellationToken ct)
+        => [.. (await GetSnapshotAsync(ct)).WeeklyResults.Where(r => r.Week == week)];
+
     public async Task<IReadOnlyList<Standing>> GetStandingsAsync(CancellationToken ct)
         => (await GetSnapshotAsync(ct)).Standings;
 

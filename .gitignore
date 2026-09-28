@@ -490,3 +490,6 @@ $RECYCLE.BIN/
 *.env
 # Claude Code per-user settings
 .claude/settings.local.json
+
+# SimLeague runtime state (seeded from data/snapshot; resettable)
+data/sim/

@@ -38,6 +38,34 @@ public sealed class CaptureService(
             matchups.AddRange(await mfl.GetMatchupsAsync(week, cancellationToken));
         }
 
+        // Only weeks whose every matchup has a final score count as completed.
+        var completedWeeks = matchups
+            .GroupBy(m => m.Week)
+            .Where(g => g.All(m => m.HomeScore is not null && m.AwayScore is not null))
+            .Select(g => g.Key)
+            .Order()
+            .ToList();
+
+        var weeklyResults = new List<WeeklyResult>();
+        foreach (var week in completedWeeks)
+        {
+            var results = await mfl.GetWeeklyResultsAsync(week, cancellationToken);
+            if (results.Count == 0 || results.All(r => r.Players.Count == 0))
+            {
+                logger.LogWarning(
+                    "weeklyResults for completed week {Week} parsed to no player rows; the response shape may differ from the parser.",
+                    week);
+            }
+
+            weeklyResults.AddRange(results);
+        }
+
+        WarnIfEmpty("players", players.Count);
+        WarnIfEmpty("rosters", rosters.Count);
+        WarnIfEmpty("projections", projections.Count);
+        WarnIfEmpty("standings", standings.Count);
+        WarnIfEmpty("matchups", matchups.Count);
+
         var fleecersRoster = BuildFleecersRoster(players, rosters, projections);
         var snapshot = new Snapshot(
             new SnapshotManifest(id, DateTimeOffset.UtcNow, options.Week, "mfl"),
@@ -47,6 +75,7 @@ public sealed class CaptureService(
             injuries,
             matchups,
             projections,
+            weeklyResults,
             standings,
             transactions,
             PendingTrades: []);
@@ -54,15 +83,34 @@ public sealed class CaptureService(
         await store.SaveAsync(snapshot, cancellationToken);
         logger.LogInformation(
             "Snapshot {SnapshotId}: {Franchises} franchises, {Players} players, {Rosters} rosters, "
-            + "{Matchups} matchups, {Fleecers} Fleecers players.",
-            id, snapshot.Franchises.Count, players.Count, snapshot.Rosters.Count,
-            matchups.Count, fleecersRoster.Slots.Count);
+            + "{Matchups} matchups, completed weeks [{Completed}], {Results} weekly results, "
+            + "{Transactions} transactions, {Fleecers} Fleecers players.",
+            id, snapshot.Franchises.Count, players.Count, snapshot.Rosters.Count, matchups.Count,
+            string.Join(",", completedWeeks), weeklyResults.Count, transactions.Count,
+            fleecersRoster.Slots.Count);
         return id;
     }
 
+    private void WarnIfEmpty(string what, int count)
+    {
+        if (count == 0)
+        {
+            logger.LogWarning("{What} parsed to zero rows; the response shape may differ from the parser.", what);
+        }
+    }
+
     /// <summary>
-    /// The Fleecers draft from free agents at capture time: best projected available, with a
-    /// position mix that yields a startable roster. Deterministic for a given capture.
+    /// Position mix of a typical Swankers roster (measured from the 2026-09-28 capture).
+    /// MFL position codes: PK = kicker, Def = team defense.
+    /// </summary>
+    internal static readonly IReadOnlyList<(string Position, int Count)> FleecersQuotas =
+    [
+        ("QB", 2), ("RB", 5), ("WR", 5), ("TE", 2), ("PK", 1), ("Def", 1),
+    ];
+
+    /// <summary>
+    /// The Fleecers draft from free agents at capture time: best projected available at each
+    /// position, in the league's typical roster shape. Deterministic for a given capture.
     /// </summary>
     internal static Roster BuildFleecersRoster(
         IReadOnlyList<Player> players,
@@ -78,14 +126,8 @@ public sealed class CaptureService(
             .ThenBy(p => p.Id, StringComparer.Ordinal)
             .ToList();
 
-        var quotas = new Dictionary<string, int> { ["QB"] = 2, ["RB"] = 4, ["WR"] = 4, ["TE"] = 2 };
-        var picked = new List<Player>();
-        foreach (var (position, quota) in quotas)
-        {
-            picked.AddRange(freeAgents.Where(p => p.Position == position).Take(quota));
-        }
-
-        picked.AddRange(freeAgents.Except(picked).Take(15 - picked.Count));
+        var picked = FleecersQuotas
+            .SelectMany(q => freeAgents.Where(p => p.Position == q.Position).Take(q.Count));
 
         return new Roster(FleecersId, [.. picked.Select(p => new RosterSlot(p.Id, RosterStatus.Roster))]);
     }

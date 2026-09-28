@@ -21,6 +21,8 @@ public sealed class MflRequestBuilder(MflOptions options)
 
     public Uri ProjectedScores(int week) => LeagueRequest("projectedScores", $"W={week}");
 
+    public Uri WeeklyResults(int week) => LeagueRequest("weeklyResults", $"W={week}");
+
     public Uri LeagueStandings() => LeagueRequest("leagueStandings");
 
     public Uri Transactions(int count) => LeagueRequest("transactions", $"COUNT={count}");
