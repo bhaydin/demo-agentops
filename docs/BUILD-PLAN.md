@@ -62,14 +62,36 @@ Transitive prereleases pinned by the lock files: Azure.AI.AgentServer.Core 1.0.0
 ## Phase 1: League gateway (Sun–Mon)
 Owner: Claude Code
 
-- [ ] Domain models (Franchise, Player, Roster, Lineup, Trade, Transaction, Matchup)
-- [ ] `ILeagueReader`, `ILeagueWriter`
-- [ ] `MflExportClient`: export-only, API-key auth, User-Agent, 1s spacing, response cache, snapshot fallback
-- [ ] `SimLeague`: seed from snapshot, apply writes, transaction log, `ResetAsync`
-- [ ] `Swankers.SnapshotCapture`: pulls exports into `data/snapshot/<date>/`, anonymizes owner names, applies `franchise-names.json`, adds The Fleecers as a sim-only franchise
-- [ ] Tests: no-import guard (no request URL may contain an import command), snapshot round-trip, SimLeague writes, reset restores exact state
+- [x] Domain models (Franchise, Player, Roster, Lineup, Trade, Transaction, Matchup)
+- [x] `ILeagueReader`, `ILeagueWriter`
+- [x] `MflExportClient`: export-only, API-key auth, User-Agent, 1s spacing, response cache, snapshot fallback
+- [x] `SimLeague`: seed from snapshot, apply writes, transaction log, `ResetAsync`
+- [x] `Swankers.SnapshotCapture`: pulls exports into `data/snapshot/<date>/`, anonymizes owner names, applies `franchise-names.json`, adds The Fleecers as a sim-only franchise
+- [x] Tests: no-import guard (no request URL may contain an import command), snapshot round-trip, SimLeague writes, reset restores exact state
 
 Gate: capture a real Swankers snapshot (maintainer runs it with the key), seed SimLeague, all tests green.
+
+### Phase 1 record (gate passed 2026-09-28)
+
+**Gate evidence:** the maintainer captured `data/snapshot/2026-09-28` (12 franchises + The Fleecers, 2,657 players, weeks 1–2 complete with per-player weekly results, week 3 in progress). `RealSnapshotTests` run against that committed snapshot: internal consistency, every name from `franchise-names.json`, no emails/phones/owner text in any file, SimLeague seeds from it and `ResetAsync` restores byte-identical state. 44/44 tests green locally (42 League incl. 4 real-snapshot, 1 Mcp, 1 Evals); CI green.
+
+**Verified against MFL (docs + live data):**
+
+- Export URL shape `https://{host}/{year}/export?TYPE=…&L=…&APIKEY=…&JSON=1`; import is `/import`, which `ExportOnlyHandler` refuses at send time and `MflRequestBuilder` cannot express. Source: [MFL API docs](https://api.myfantasyleague.com/2026/api_info) and [request types](https://api.myfantasyleague.com/2026/api_info?STATE=details).
+- `APIKEY` is owner-scoped and export-only; the registered User-Agent goes on every request; MFL asks for 1 s spacing, caching, and no retry (429 = throttled).
+- Type names used: `league` (franchise ids only), `players`, `rosters`, `injuries`, `schedule` (matchups incl. past scores), `projectedScores`, `weeklyResults`, `leagueStandings`, `transactions`, `pendingTrades`.
+- JSON quirks handled: every value is a string; empty collections are `{}`; single-item collections can be an object; transaction text is `added,ids,|dropped,ids,`.
+- **Privacy finding:** the `league` export returns owner name, email, phone, and address for every franchise. Snapshots therefore store only domain records (allow-list locked by test), `MflExportClient` never logs URLs or bodies, and franchise names resolve only through `FranchiseNameMap`.
+
+**Deviations from ARCHITECTURE.md (maintainer approved):**
+
+- Pending trades are **not** captured into snapshots: real notes could identify members. Live `GetPendingTradesAsync` still works; demo offers come from `data/demo` scenarios (Phase 2).
+- `WeeklyResult`/`PlayerResult` added to the domain and `GetWeeklyResultsAsync` to `ILeagueReader` (the architecture's reader list names weekly results; Phase 5 start/sit evals need actual per-player points).
+- MFL has no player-news export. `injuries` (status, details, expected return) is the only news-like source; Phase 2's `get_player_news` needs a decision on scope.
+
+**Known limits:** waiver-processing and IR transactions carry no player ids in MFL's text and surface as `Unknown` with the MFL label; The Fleecers' roster is redrafted from free agents on every capture; parsers for `schedule`, `leagueStandings`, `projectedScores`, and `weeklyResults` are validated against this league's real responses, not the full MFL schema.
+
+**Re-capture** after Monday Night Football (Tue) so week 3 is final for Thursday: `dotnet run --project tools/Swankers.SnapshotCapture -- --KeyVault:Uri <vault-uri> --Capture:Week 4` from the repo root.
 
 ## Phase 2: MCP server (Mon)
 Owner:
@@ -166,3 +188,7 @@ Gate: two clean rehearsals in a row.
 | 2026-09-27 | Snapshots store normalized, allow-listed domain data; raw MFL responses never written to disk or logged | MFL `league` export includes owner PII (name, email, phone, address) for every franchise |
 | 2026-09-27 | The Fleecers = franchise `0099`, roster drawn from free agents at capture time | Sim-only villain per AGENTS.md; ID cannot collide with the 12 real franchises (`0001`–`0012`) |
 | 2026-09-27 | Add `Azure.Extensions.AspNetCore.Configuration.Secrets` 1.5.2 | Apps load `Mfl:*` config from Key Vault via `--`→`:` name mapping; stable, verified on Learn |
+| 2026-09-28 | Pending trades never captured into snapshots | Real trade notes could identify league members; demo offers are seeded scenarios |
+| 2026-09-28 | Weekly per-player results added to the domain and snapshots | Phase 5 scores start/sit calls against completed weeks' actual points |
+| 2026-09-28 | The Fleecers draft 2 QB / 5 RB / 5 WR / 2 TE / 1 PK / 1 Def from free agents | Matches the measured Swankers roster shape; deterministic per capture |
+| 2026-09-28 | `Microsoft.Extensions.*` 10.0.12 pinned for class libraries | League and the capture tool need Http, Caching.Memory, Options, Logging.Abstractions, Hosting outside the ASP.NET shared framework |
