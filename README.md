@@ -63,6 +63,18 @@ pwsh tools/Swankers.AgentDeploy/deploy-coach.ps1           # Coach versions v1-o
 - Traces: `appi-swankers-dev` in Application Insights and the Foundry project's Tracing page (the project is connected to the same resource).
 - `azd down` removes only `rg-swankers-dev`; the vault, the Foundry account, and the model deployment stay.
 
+## Evals
+
+`tests/Swankers.Evals` holds the golden set (`golden/*.jsonl`, 17 cases: start/sit, injury check, pushback, adversarial) and the gate. The gate runs the Coach in-process, built exactly like the hosted version but with the MCP server hosted in the test on the repo's real snapshot, then scores each case with deterministic rules (`ToolSequenceEvaluator`: expected and forbidden tools, `get_player_news` before any start/sit call, lineup contents, own-franchise scope), an LLM judge for pushback, and Foundry's `task_adherence` / `intent_resolution` / `tool_call_accuracy` evaluators (report link in the output). Thresholds live in `evalsettings.json`.
+
+```
+azd env get-value FOUNDRY_PROJECT_ENDPOINT              # the gate skips itself when this is not set
+$env:FOUNDRY_PROJECT_ENDPOINT = "<endpoint>"; $env:COACH_PROMPT_VERSION = "v2"
+dotnet test tests/Swankers.Evals -c Release --logger "console;verbosity=normal"
+```
+
+Reports land in `artifacts/evals/` (ignored). In CI, `.github/workflows/evals.yml` runs one job per prompt version (v1 green, v2 red on the injury-check category) and, with `promote: true`, deploys and routes a green version as a new hosted agent version after approval in the `foundry` environment. `infra/ci-identity.ps1` sets up the OIDC identity it logs in with.
+
 ## Layout
 
 | Path | What it is |
