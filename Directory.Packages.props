@@ -21,8 +21,16 @@
     <!-- Prerelease: matches the version Microsoft.Agents.AI.Foundry 1.22.0-preview depends on. -->
     <PackageVersion Include="Azure.AI.Projects" Version="3.0.0-beta.2" />
     <PackageVersion Include="Azure.Identity" Version="1.21.0" />
-    <!-- Key Vault configuration provider: secret names map "--" to ":" config sections. -->
+    <!-- Key Vault configuration provider: a double dash in a secret name maps to a ":" config section. -->
     <PackageVersion Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.5.2" />
+  </ItemGroup>
+
+  <ItemGroup Label="Microsoft.Extensions (class libraries; apps get these from the shared framework)">
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.12" />
   </ItemGroup>
 
   <ItemGroup Label="MCP C# SDK">
