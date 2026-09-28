@@ -34,7 +34,8 @@ jobs:
       - name: Build
         run: dotnet build SwankersCoach.slnx --no-restore -c Release
 
-      # Swankers.Evals needs Foundry model access; it runs in evals.yml (Phase 5).
+      # Swankers.Evals' model-backed gate skips itself without FOUNDRY_PROJECT_ENDPOINT and
+      # runs in evals.yml; its evaluator and golden-set unit tests run here.
       - name: Test (League)
         run: dotnet test tests/Swankers.League.Tests --no-build -c Release
 
@@ -46,3 +47,6 @@ jobs:
 
       - name: Test (AgentDeploy)
         run: dotnet test tests/Swankers.AgentDeploy.Tests --no-build -c Release
+
+      - name: Test (Evals, model-free)
+        run: dotnet test tests/Swankers.Evals --no-build -c Release

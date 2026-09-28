@@ -1,0 +1,151 @@
+# Phase 5 quality gate. Runs the golden set (tests/Swankers.Evals) against the Coach for each
+# prompt version with the real model, one job per version, so a run shows v1 green and v2 red
+# side by side. With `promote: true` a green version is deployed as a new hosted agent version
+# and routed to, after approval in the `foundry` environment. Auth is GitHub OIDC into the
+# swankers-ci application (infra/ci-identity.ps1); no secrets are stored.
+name: evals
+
+on:
+  workflow_dispatch:
+    inputs:
+      versions:
+        description: "Prompt versions to evaluate, comma-separated"
+        default: "v1,v2"
+      promote:
+        description: "Deploy promote_version as a hosted agent version and route to it if its evals passed"
+        type: boolean
+        default: false
+      promote_version:
+        description: "Version to promote when promote is true"
+        default: "v1"
+  pull_request:
+    paths:
+      - "src/Swankers.Coach/prompts/**"
+      - "knowledge/**"
+      - "tests/Swankers.Evals/**"
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: evals
+  cancel-in-progress: false
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  versions:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+    steps:
+      - id: set
+        env:
+          RAW: ${{ github.event.inputs.versions || 'v1,v2' }}
+        run: echo "matrix=$(echo "$RAW" | jq -Rc 'split(",") | map(gsub("\\s"; "")) | map(select(length > 0))')" >> "$GITHUB_OUTPUT"
+
+  evals:
+    needs: versions
+    name: evals (${{ matrix.version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ${{ fromJSON(needs.versions.outputs.matrix) }}
+    steps:
+      # Actions are pinned to full commit SHAs; the tag is in the trailing comment.
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up .NET (SDK from global.json)
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - name: Azure login (OIDC)
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Restore (locked)
+        run: dotnet restore SwankersCoach.slnx --locked-mode
+
+      - name: Build
+        run: dotnet build SwankersCoach.slnx --no-restore -c Release
+
+      - name: Golden set (Coach ${{ matrix.version }})
+        env:
+          COACH_PROMPT_VERSION: ${{ matrix.version }}
+          FOUNDRY_PROJECT_ENDPOINT: ${{ vars.FOUNDRY_PROJECT_ENDPOINT }}
+          AZURE_AI_MODEL_DEPLOYMENT_NAME: ${{ vars.AZURE_AI_MODEL_DEPLOYMENT_NAME || 'gpt-5.4' }}
+        run: dotnet test tests/Swankers.Evals --no-build -c Release --logger "console;verbosity=normal"
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: evals-${{ matrix.version }}
+          path: artifacts/evals/
+          if-no-files-found: warn
+
+  promote:
+    needs: evals
+    if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.promote }}
+    name: promote (${{ inputs.promote_version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: foundry
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Download the version's report
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: evals-${{ inputs.promote_version }}
+          path: artifacts/evals/
+
+      - name: Gate on the report
+        env:
+          VERSION: ${{ inputs.promote_version }}
+        run: |
+          report="artifacts/evals/latest-$VERSION.json"
+          test -f "$report" || { echo "no report for $VERSION"; exit 1; }
+          jq -e '.passed == true' "$report" > /dev/null || { echo "evals for $VERSION did not pass:"; jq '.gateFailures' "$report"; exit 1; }
+          echo "evals for $VERSION passed"
+
+      - name: Set up .NET (SDK from global.json)
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - name: Azure login (OIDC)
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Restore (locked)
+        run: dotnet restore SwankersCoach.slnx --locked-mode
+
+      - name: Deploy and route the hosted agent version
+        env:
+          VERSION: ${{ inputs.promote_version }}
+          FOUNDRY_PROJECT_ENDPOINT: ${{ vars.FOUNDRY_PROJECT_ENDPOINT }}
+          MCP_ENDPOINT: ${{ vars.MCP_ENDPOINT }}
+          KEYVAULT_URI: ${{ vars.KEYVAULT_URI }}
+          AZURE_AI_MODEL_DEPLOYMENT_NAME: ${{ vars.AZURE_AI_MODEL_DEPLOYMENT_NAME || 'gpt-5.4' }}
+        run: >
+          dotnet run --project tools/Swankers.AgentDeploy -c Release --
+          create --label "$VERSION-owner" --prompt "$VERSION" --credential-key Mcp:OwnerCredential --route
