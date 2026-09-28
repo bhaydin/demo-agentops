@@ -208,6 +208,40 @@ public class McpServerTests
     }
 
     [Fact]
+    public async Task League_reads_join_the_tool_call_trace()
+    {
+        // Codex Phase 3 review #1: the league hop must be visible under the tool span.
+        using var spans = new SpanRecorder();
+        await using var host = await StartAsync();
+        var owner = await host.ConnectAsync(OwnerCredential, CT);
+
+        await CallAsync(owner, "get_my_roster", null, CT);
+
+        var tool = Assert.Single(spans.ToolCalls("get_my_roster"));
+        var leagueSpans = spans.Spans(Swankers.League.LeagueDiagnostics.ActivitySourceName)
+            .Where(a => a.TraceId == tool.TraceId)
+            .ToList();
+        Assert.NotEmpty(leagueSpans);
+        Assert.Contains(leagueSpans, a => a.OperationName == "sim.get_roster"
+            && SpanRecorder.Tag(a, "league.franchise_id") == "0001");
+        Assert.All(leagueSpans, a => Assert.Equal(tool.SpanId, FindAncestorUnder(a, tool.SpanId)));
+    }
+
+    /// <summary>Walks parents until it finds the given span id (or runs out).</summary>
+    private static System.Diagnostics.ActivitySpanId? FindAncestorUnder(System.Diagnostics.Activity activity, System.Diagnostics.ActivitySpanId target)
+    {
+        for (var current = activity.Parent; current is not null; current = current.Parent)
+        {
+            if (current.SpanId == target)
+            {
+                return current.SpanId;
+            }
+        }
+
+        return null;
+    }
+
+    [Fact]
     public async Task Commissioner_with_gate_off_executes_immediately()
     {
         // DEMO: intentionally vulnerable (Friday talk). Gate off must be selected explicitly.

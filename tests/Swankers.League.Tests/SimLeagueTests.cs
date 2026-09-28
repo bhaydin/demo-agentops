@@ -34,6 +34,30 @@ public sealed class SimLeagueTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Reads_emit_league_spans_with_franchise_and_snapshot_tags()
+    {
+        // Codex Phase 3 review #1: snapshot-backed reads must show up as the league hop.
+        var stopped = new List<System.Diagnostics.Activity>();
+        using var listener = new System.Diagnostics.ActivityListener
+        {
+            ShouldListenTo = s => s.Name == LeagueDiagnostics.ActivitySourceName,
+            Sample = (ref System.Diagnostics.ActivityCreationOptions<System.Diagnostics.ActivityContext> _) => System.Diagnostics.ActivitySamplingResult.AllDataAndRecorded,
+            ActivityStopped = stopped.Add,
+        };
+        System.Diagnostics.ActivitySource.AddActivityListener(listener);
+
+        await _sim.GetRosterAsync("0001", CT);
+        await _sim.GetInjuriesAsync(null, CT);
+        await _sim.GetProjectionsAsync(4, CT);
+
+        var roster = Assert.Single(stopped, a => a.OperationName == "sim.get_roster");
+        Assert.Equal("0001", roster.GetTagItem("league.franchise_id"));
+        Assert.Equal("2026-09-27", roster.GetTagItem("league.snapshot_id"));
+        Assert.Contains(stopped, a => a.OperationName == "sim.get_injuries");
+        Assert.Contains(stopped, a => a.OperationName == "sim.get_projections");
+    }
+
+    [Fact]
     public async Task Seeds_from_latest_snapshot_on_first_use()
     {
         var franchises = await _sim.GetFranchisesAsync(CT);

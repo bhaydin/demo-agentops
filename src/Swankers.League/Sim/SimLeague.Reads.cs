@@ -1,60 +1,85 @@
+using System.Diagnostics;
 using System.Text.Json;
 using Swankers.League.Models;
 using Swankers.League.Snapshots;
 
 namespace Swankers.League.Sim;
 
-/// <summary>ILeagueReader over the simulated state, plus state loading and persistence.</summary>
+/// <summary>
+/// ILeagueReader over the simulated state, plus state loading and persistence. Every read is
+/// a <c>sim.*</c> span under Swankers.League so a tool call's trace shows the league hop.
+/// </summary>
 public sealed partial class SimLeague
 {
-    public async Task<IReadOnlyList<Franchise>> GetFranchisesAsync(CancellationToken ct)
-        => (await RequireStateAsync(ct)).Franchises;
+    public Task<IReadOnlyList<Franchise>> GetFranchisesAsync(CancellationToken ct)
+        => ReadAsync("get_franchises", s => s.Franchises, ct);
 
-    public async Task<IReadOnlyList<Player>> GetPlayersAsync(CancellationToken ct)
-        => (await RequireStateAsync(ct)).Players;
+    public Task<IReadOnlyList<Player>> GetPlayersAsync(CancellationToken ct)
+        => ReadAsync("get_players", s => s.Players, ct);
 
-    public async Task<IReadOnlyList<Roster>> GetRostersAsync(CancellationToken ct)
-        => (await RequireStateAsync(ct)).Rosters;
+    public Task<IReadOnlyList<Roster>> GetRostersAsync(CancellationToken ct)
+        => ReadAsync("get_rosters", s => s.Rosters, ct);
 
-    public async Task<Roster> GetRosterAsync(string franchiseId, CancellationToken ct)
-        => (await RequireStateAsync(ct)).Rosters.FirstOrDefault(r => r.FranchiseId == franchiseId)
-            ?? new Roster(franchiseId, []);
+    public Task<Roster> GetRosterAsync(string franchiseId, CancellationToken ct)
+        => ReadAsync("get_roster",
+            s => s.Rosters.FirstOrDefault(r => r.FranchiseId == franchiseId) ?? new Roster(franchiseId, []),
+            ct, franchiseId);
 
-    public async Task<IReadOnlyList<Injury>> GetInjuriesAsync(int? week, CancellationToken ct)
-        => (await RequireStateAsync(ct)).Injuries;
+    public Task<IReadOnlyList<Injury>> GetInjuriesAsync(int? week, CancellationToken ct)
+        => ReadAsync("get_injuries", s => s.Injuries, ct);
 
-    public async Task<IReadOnlyList<Matchup>> GetMatchupsAsync(int week, CancellationToken ct)
-        => [.. (await RequireStateAsync(ct)).Matchups.Where(m => m.Week == week)];
+    public Task<IReadOnlyList<Matchup>> GetMatchupsAsync(int week, CancellationToken ct)
+        => ReadAsync<IReadOnlyList<Matchup>>("get_matchups", s => [.. s.Matchups.Where(m => m.Week == week)], ct);
 
-    public async Task<IReadOnlyList<Projection>> GetProjectionsAsync(int week, CancellationToken ct)
-        => [.. (await RequireStateAsync(ct)).Projections.Where(p => p.Week == week)];
+    public Task<IReadOnlyList<Projection>> GetProjectionsAsync(int week, CancellationToken ct)
+        => ReadAsync<IReadOnlyList<Projection>>("get_projections", s => [.. s.Projections.Where(p => p.Week == week)], ct);
 
-    public async Task<IReadOnlyList<WeeklyResult>> GetWeeklyResultsAsync(int week, CancellationToken ct)
-        => [.. (await RequireStateAsync(ct)).WeeklyResults.Where(r => r.Week == week)];
+    public Task<IReadOnlyList<WeeklyResult>> GetWeeklyResultsAsync(int week, CancellationToken ct)
+        => ReadAsync<IReadOnlyList<WeeklyResult>>("get_weekly_results", s => [.. s.WeeklyResults.Where(r => r.Week == week)], ct);
 
-    public async Task<IReadOnlyList<Standing>> GetStandingsAsync(CancellationToken ct)
-        => (await RequireStateAsync(ct)).Standings;
+    public Task<IReadOnlyList<Standing>> GetStandingsAsync(CancellationToken ct)
+        => ReadAsync("get_standings", s => s.Standings, ct);
 
-    public async Task<IReadOnlyList<Transaction>> GetTransactionsAsync(int count, CancellationToken ct)
-        => [.. (await RequireStateAsync(ct)).TransactionLog.TakeLast(count)];
+    public Task<IReadOnlyList<Transaction>> GetTransactionsAsync(int count, CancellationToken ct)
+        => ReadAsync<IReadOnlyList<Transaction>>("get_transactions", s => [.. s.TransactionLog.TakeLast(count)], ct);
 
-    public async Task<IReadOnlyList<Trade>> GetPendingTradesAsync(string franchiseId, CancellationToken ct)
-        => [.. (await RequireStateAsync(ct)).Trades.Where(t =>
-            t.Status == TradeStatus.Pending &&
-            (t.FromFranchiseId == franchiseId || t.ToFranchiseId == franchiseId))];
+    public Task<IReadOnlyList<Trade>> GetPendingTradesAsync(string franchiseId, CancellationToken ct)
+        => ReadAsync<IReadOnlyList<Trade>>("get_pending_trades",
+            s => [.. s.Trades.Where(t =>
+                t.Status == TradeStatus.Pending &&
+                (t.FromFranchiseId == franchiseId || t.ToFranchiseId == franchiseId))],
+            ct, franchiseId);
 
     /// <summary>A trade by id in any status, or null.</summary>
-    public async Task<Trade?> GetTradeAsync(string tradeId, CancellationToken ct)
-        => (await RequireStateAsync(ct)).Trades.FirstOrDefault(t => t.Id == tradeId);
+    public Task<Trade?> GetTradeAsync(string tradeId, CancellationToken ct)
+        => ReadAsync("get_trade", s => s.Trades.FirstOrDefault(t => t.Id == tradeId), ct);
 
     /// <summary>The league's current week, as seeded from the snapshot.</summary>
-    public async Task<int> GetCurrentWeekAsync(CancellationToken ct)
-        => (await RequireStateAsync(ct)).Week;
+    public Task<int> GetCurrentWeekAsync(CancellationToken ct)
+        => ReadAsync("get_current_week", s => s.Week, ct);
 
     /// <summary>The declared lineup, if any, for a franchise and week (used by the web ticker).</summary>
-    public async Task<Lineup?> GetLineupAsync(string franchiseId, int week, CancellationToken ct)
-        => (await RequireStateAsync(ct)).Lineups
-            .FirstOrDefault(l => l.FranchiseId == franchiseId && l.Week == week);
+    public Task<Lineup?> GetLineupAsync(string franchiseId, int week, CancellationToken ct)
+        => ReadAsync("get_lineup",
+            s => s.Lineups.FirstOrDefault(l => l.FranchiseId == franchiseId && l.Week == week),
+            ct, franchiseId);
+
+    private async Task<T> ReadAsync<T>(
+        string operation,
+        Func<SimStateDocument, T> project,
+        CancellationToken cancellationToken,
+        string? franchiseId = null)
+    {
+        using var activity = LeagueDiagnostics.ActivitySource.StartActivity($"sim.{operation}");
+        if (franchiseId is not null)
+        {
+            activity?.SetTag("league.franchise_id", franchiseId);
+        }
+
+        var state = await RequireStateAsync(cancellationToken);
+        activity?.SetTag("league.snapshot_id", state.SeededFromSnapshotId);
+        return project(state);
+    }
 
     /// <summary>
     /// Returns the current state, initializing under the write gate on first use so concurrent

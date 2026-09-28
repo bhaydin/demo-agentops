@@ -1,11 +1,13 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using Swankers.League;
 
 namespace Swankers.Mcp.Tests.Support;
 
 /// <summary>
-/// Captures Swankers.Mcp spans emitted by the in-process server (same process as the tests),
-/// so tests can assert the "intent vs action" attributes.
+/// Captures Swankers.Mcp and Swankers.League spans emitted by the in-process server (same
+/// process as the tests), so tests can assert the "intent vs action" attributes and that the
+/// league hop joins the tool call's trace.
 /// </summary>
 public sealed class SpanRecorder : IDisposable
 {
@@ -16,7 +18,7 @@ public sealed class SpanRecorder : IDisposable
     {
         _listener = new ActivityListener
         {
-            ShouldListenTo = source => source.Name == McpDiagnostics.ActivitySourceName,
+            ShouldListenTo = source => source.Name is McpDiagnostics.ActivitySourceName or LeagueDiagnostics.ActivitySourceName,
             Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
             ActivityStopped = activity => _activities.Enqueue(activity),
         };
@@ -25,6 +27,9 @@ public sealed class SpanRecorder : IDisposable
 
     public IReadOnlyList<Activity> ToolCalls(string tool)
         => [.. _activities.Where(a => Tag(a, McpDiagnostics.ToolNameTag) == tool)];
+
+    public IReadOnlyList<Activity> Spans(string sourceName)
+        => [.. _activities.Where(a => a.Source.Name == sourceName)];
 
     public static string? Tag(Activity activity, string key)
         => activity.GetTagItem(key)?.ToString();
