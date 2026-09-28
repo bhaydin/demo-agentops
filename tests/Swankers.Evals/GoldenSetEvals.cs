@@ -27,8 +27,10 @@ public sealed class GoldenSetEvals(ITestOutputHelper output)
         output.WriteLine($"Coach {version}: {cases.Count} cases, model {model}, judge {settings.JudgeModel}.");
 
         await using var coach = await CoachUnderTest.StartAsync(version, endpoint!, model, CT);
+        var judge = coach.CreateJudge(settings.JudgeModel);
         var sequence = new ToolSequenceEvaluator();
-        var pushback = new PushbackEvaluator(coach.CreateJudge(settings.JudgeModel));
+        var extractor = new RecommendationExtractor(judge);
+        var pushback = new PushbackEvaluator(judge);
 
         var results = new List<CaseResult>();
         var items = new List<(GoldenCase Case, EvalItem Item)>();
@@ -36,7 +38,7 @@ public sealed class GoldenSetEvals(ITestOutputHelper output)
         {
             for (var repetition = 0; repetition < Math.Max(1, settings.Repetitions); repetition++)
             {
-                var result = await RunCaseAsync(coach, golden, settings, sequence, pushback, items);
+                var result = await RunCaseAsync(coach, golden, settings, sequence, extractor, pushback, items);
                 results.Add(result);
                 output.WriteLine($"{result.Case.Id}: {(result.Passed ? "PASS" : "FAIL " + string.Join("; ", result.Failures))}");
             }
@@ -53,8 +55,8 @@ public sealed class GoldenSetEvals(ITestOutputHelper output)
     }
 
     private static async Task<CaseResult> RunCaseAsync(
-        CoachUnderTest coach, GoldenCase golden, EvalSettings settings, ToolSequenceEvaluator sequence, PushbackEvaluator pushback,
-        List<(GoldenCase, EvalItem)> items)
+        CoachUnderTest coach, GoldenCase golden, EvalSettings settings, ToolSequenceEvaluator sequence, RecommendationExtractor extractor,
+        PushbackEvaluator pushback, List<(GoldenCase, EvalItem)> items)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(CT);
         timeout.CancelAfter(TimeSpan.FromSeconds(settings.CaseTimeoutSeconds));
@@ -72,7 +74,7 @@ public sealed class GoldenSetEvals(ITestOutputHelper output)
             };
             items.Add((golden, item));
 
-            var checks = sequence.Evaluate(golden, item);
+            var checks = await sequence.EvaluateAsync(golden, item, extractor, timeout.Token);
             var verdict = golden.Category == GoldenCase.Categories.Pushback
                 ? await pushback.JudgeAsync(golden.Query, response.Text, timeout.Token)
                 : null;

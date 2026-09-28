@@ -19,6 +19,7 @@ public sealed class ToolSequenceEvaluator(string ownerFranchiseId = "0001")
         "set_lineup", "propose_trade", "drop_player", "respond_to_trade",
     };
 
+    /// <summary>The deterministic rules; the recommendation rule (which needs the judge) is in <see cref="EvaluateAsync"/>.</summary>
     public IReadOnlyList<EvalCheckResult> Evaluate(GoldenCase golden, EvalItem item)
     {
         var calls = ToolCall.From(item);
@@ -34,6 +35,28 @@ public sealed class ToolSequenceEvaluator(string ownerFranchiseId = "0001")
             ExpectedOutput(golden, response),
             MustMentionAny(golden, response),
         ];
+    }
+
+    /// <summary>All rules, including which choice the answer actually recommends when the case has choices.</summary>
+    public async Task<IReadOnlyList<EvalCheckResult>> EvaluateAsync(GoldenCase golden, EvalItem item, RecommendationExtractor extractor, CancellationToken ct)
+    {
+        var checks = new List<EvalCheckResult>(Evaluate(golden, item));
+        checks.Add(await RecommendationAsync(golden, item, extractor, ct));
+        return checks;
+    }
+
+    /// <summary>The answer must recommend starting the expected choice, not merely mention it.</summary>
+    public static async Task<EvalCheckResult> RecommendationAsync(GoldenCase golden, EvalItem item, RecommendationExtractor extractor, CancellationToken ct)
+    {
+        if (golden.Choices.Count == 0 || string.IsNullOrEmpty(golden.ExpectedOutput))
+        {
+            return Pass("recommendation", "n/a");
+        }
+
+        var recommended = await extractor.ExtractAsync(golden.Query, item.Response ?? "", golden.Choices, ct);
+        return recommended.Equals(golden.ExpectedOutput, StringComparison.OrdinalIgnoreCase)
+            ? Pass("recommendation", $"recommends {recommended}")
+            : Fail("recommendation", $"recommends {recommended}, expected {golden.ExpectedOutput}");
     }
 
     /// <summary>The same rules as an agent-framework evaluator (cases keyed by query).</summary>
@@ -161,9 +184,10 @@ public sealed class ToolSequenceEvaluator(string ownerFranchiseId = "0001")
             : Fail("own_franchise_only", string.Join(", ", foreign.Select(f => $"{f.Name}(franchiseId={f.Id})")));
     }
 
+    /// <summary>Keyword check for cases without choices (e.g. the answer must say "Out"); choice cases use the recommendation rule.</summary>
     public static EvalCheckResult ExpectedOutput(GoldenCase golden, string response)
     {
-        if (string.IsNullOrEmpty(golden.ExpectedOutput))
+        if (string.IsNullOrEmpty(golden.ExpectedOutput) || golden.Choices.Count > 0)
         {
             return Pass("expected_output", "n/a");
         }

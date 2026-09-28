@@ -67,6 +67,11 @@ public static class GoldenSet
             {
                 throw new InvalidDataException($"{c.Id}: injury_check cases need newsCheckFor.");
             }
+
+            if (c.Choices.Count > 0 && (c.Choices.Count < 2 || string.IsNullOrEmpty(c.ExpectedOutput) || !c.Choices.Contains(c.ExpectedOutput, StringComparer.OrdinalIgnoreCase)))
+            {
+                throw new InvalidDataException($"{c.Id}: choices need at least two entries and expectedOutput must be one of them.");
+            }
         }
     }
 }

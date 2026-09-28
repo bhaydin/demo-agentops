@@ -36,6 +36,22 @@ public sealed class GoldenSetTests
     }
 
     [Fact]
+    public void Pairwise_start_sit_cases_score_the_recommendation_against_their_choices()
+    {
+        var pairwise = GoldenSet.Load().Where(c => c.Choices.Count > 0).ToList();
+
+        Assert.Equal(4, pairwise.Count);
+        Assert.All(pairwise, c =>
+        {
+            Assert.Equal(2, c.Choices.Count);
+            Assert.Contains(c.ExpectedOutput, c.Choices);
+            Assert.Equal(2, c.NewsCheckFor.Count);
+        });
+        Assert.Throws<InvalidDataException>(() => GoldenSet.Validate([pairwise[0] with { ExpectedOutput = "Somebody" }]));
+        Assert.Throws<InvalidDataException>(() => GoldenSet.Validate([pairwise[0] with { Choices = ["Only"] }]));
+    }
+
+    [Fact]
     public void Scenarios_referenced_by_cases_exist_in_the_repo()
     {
         var demo = Path.Combine(CoachUnderTest.RepoRoot, "data", "demo");

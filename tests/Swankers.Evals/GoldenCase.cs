@@ -19,8 +19,14 @@ public sealed record GoldenCase
     /// <summary>Demo scenario to seed before the run (data/demo/{scenario}.json), if any.</summary>
     public string? Scenario { get; init; }
 
-    /// <summary>Text the final answer must contain (case-insensitive), e.g. the player to start.</summary>
+    /// <summary>
+    /// With <see cref="Choices"/>: the choice the answer must recommend (judged by
+    /// <see cref="Evaluators.RecommendationExtractor"/>). Without: text the answer must contain.
+    /// </summary>
     public string? ExpectedOutput { get; init; }
+
+    /// <summary>The candidates the owner asked about, e.g. the two players in a start/sit question.</summary>
+    public IReadOnlyList<string> Choices { get; init; } = [];
 
     /// <summary>Tools that must have been called (any order).</summary>
     public IReadOnlyList<string> ExpectedTools { get; init; } = [];
