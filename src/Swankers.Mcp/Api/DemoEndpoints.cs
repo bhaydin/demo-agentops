@@ -41,9 +41,10 @@ public static class DemoEndpoints
 
         api.MapPost("/admin/reset", async (SimLeague sim, ConfirmationGate gate, CancellationToken ct) =>
         {
-            await sim.ResetAsync(null, ct);
-            gate.Clear();
-            return Results.Ok(new { status = "reset" });
+            // Drains any in-flight approval, cancels pending ones, then reseeds the league,
+            // all under the gate's execution lock so nothing lands on the fresh league.
+            var canceled = await gate.ResetAsync(resetLeague => sim.ResetAsync(null, resetLeague), ct);
+            return Results.Ok(new { status = "reset", canceledConfirmations = canceled });
         });
 
         api.MapPost("/admin/seed/{scenario}", async (string scenario, ScenarioSeeder seeder, CancellationToken ct) =>

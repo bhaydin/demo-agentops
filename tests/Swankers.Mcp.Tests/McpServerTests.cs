@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Swankers.Mcp.Api;
 using Swankers.Mcp.Tests.Support;
 using static Swankers.Mcp.Tests.Support.McpTestHost;
 
@@ -183,6 +184,27 @@ public class McpServerTests
         var confirmations = await host.Http().GetFromJsonAsync<JsonElement>("/api/confirmations", CT);
         Assert.Empty(Prop(confirmations, "pending").EnumerateArray());
         Assert.Single(Prop(confirmations, "recent").EnumerateArray(), r => Prop(r, "status").GetString() == "failed");
+    }
+
+    [Fact]
+    public async Task Reset_cancels_pending_confirmations_so_they_cannot_run_afterwards()
+    {
+        // Codex Phase 2 review #2 (pending side; the in-flight side is a gate unit test).
+        await using var host = await StartAsync();
+        var owner = await host.ConnectAsync(OwnerCredential, CT);
+        var pending = await CallAsync(owner, "drop_player", new Dictionary<string, object?> { ["playerId"] = "1002" }, CT);
+        var id = Prop(pending, "confirmationId").GetString()!;
+
+        var reset = await host.Http().PostAsync("/api/admin/reset", null, CT);
+        var resetBody = JsonSerializer.Deserialize<JsonElement>(await reset.Content.ReadAsStringAsync(CT));
+        Assert.Equal(HttpStatusCode.OK, reset.StatusCode);
+        Assert.Equal(1, Prop(resetBody, "canceledConfirmations").GetInt32());
+
+        using var late = await host.Http().PostAsJsonAsync($"/api/confirmations/{id}", new ConfirmationDecision(true), CT);
+        Assert.Equal(HttpStatusCode.NotFound, late.StatusCode);
+        Assert.Contains("1002", PlayerIds(await CallAsync(owner, "get_my_roster", null, CT)));
+        var confirmations = await host.Http().GetFromJsonAsync<JsonElement>("/api/confirmations", CT);
+        Assert.Single(Prop(confirmations, "recent").EnumerateArray(), r => Prop(r, "status").GetString() == "canceled");
     }
 
     [Fact]

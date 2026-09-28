@@ -113,12 +113,34 @@ public sealed class ConfirmationGate(TimeProvider? time = null)
         }
     }
 
-    /// <summary>Drops every pending and recent confirmation (demo reset).</summary>
-    public void Clear()
+    /// <summary>
+    /// Demo reset. Waits for any in-flight approval to finish (the execution lock), cancels every
+    /// pending confirmation with a terminal record, clears history, and runs
+    /// <paramref name="resetLeague"/> while still holding the lock, so no approval can land on
+    /// the freshly reset league. Returns how many pending confirmations were canceled.
+    /// </summary>
+    public async Task<int> ResetAsync(Func<CancellationToken, Task> resetLeague, CancellationToken cancellationToken)
     {
-        _pending.Clear();
-        while (_recent.TryDequeue(out _))
+        await _execution.WaitAsync(cancellationToken);
+        try
         {
+            while (_recent.TryDequeue(out _))
+            {
+            }
+
+            var canceled = 0;
+            foreach (var entry in _pending.Values.OrderBy(e => e.Info.CreatedAtUtc).ToList())
+            {
+                Finish(entry, approved: false, "canceled", result: null, error: "Canceled by league reset.");
+                canceled++;
+            }
+
+            await resetLeague(cancellationToken);
+            return canceled;
+        }
+        finally
+        {
+            _execution.Release();
         }
     }
 

@@ -90,14 +90,49 @@ public class ConfirmationGateTests
     }
 
     [Fact]
-    public async Task Unknown_id_is_null_and_clear_empties_everything()
+    public async Task Unknown_id_is_null_and_reset_cancels_pending_work()
     {
         var gate = new ConfirmationGate();
         gate.Create("t", "s", "owner:0001", "0001", new Dictionary<string, object?>(), _ => Task.FromResult<object>(1));
+        var leagueResets = 0;
 
         Assert.Null(await gate.ResolveAsync("nope", approve: true, CT));
-        gate.Clear();
+        var canceled = await gate.ResetAsync(_ => { leagueResets++; return Task.CompletedTask; }, CT);
+
+        Assert.Equal(1, canceled);
+        Assert.Equal(1, leagueResets);
         Assert.Empty(gate.Pending);
-        Assert.Empty(gate.Recent);
+        Assert.Equal("canceled", Assert.Single(gate.Recent).Status);
+    }
+
+    [Fact]
+    public async Task Reset_waits_for_an_in_flight_approval_and_runs_the_league_reset_after_it()
+    {
+        // Codex Phase 2 review #2: reset must drain executing approvals, not race them.
+        var gate = new ConfirmationGate();
+        var order = new List<string>();
+        var started = new TaskCompletionSource();
+        var release = new TaskCompletionSource();
+        var pending = gate.Create("drop_player", "Drop X", "owner:0001", "0001", new Dictionary<string, object?>(),
+            async _ =>
+            {
+                started.SetResult();
+                await release.Task;
+                order.Add("executed");
+                return "dropped";
+            });
+
+        var approval = gate.ResolveAsync(pending.ConfirmationId, approve: true, CT);
+        await started.Task;
+        var reset = gate.ResetAsync(_ => { order.Add("reset"); return Task.CompletedTask; }, CT);
+
+        await Task.Delay(200, CT);
+        Assert.False(reset.IsCompleted, "reset completed while an approval was still executing");
+
+        release.SetResult();
+        Assert.Equal("executed", (await approval)!.Status);
+        Assert.Equal(0, await reset);
+        Assert.Equal(["executed", "reset"], order);
+        Assert.Null(await gate.ResolveAsync(pending.ConfirmationId, approve: true, CT));
     }
 }
