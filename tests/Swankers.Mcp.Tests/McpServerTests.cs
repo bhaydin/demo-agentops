@@ -137,6 +137,35 @@ public class McpServerTests
     }
 
     [Fact]
+    public async Task Spans_record_the_franchise_actually_read_or_acted_on()
+    {
+        // Codex Phase 2 review #5: effective franchise must match the action, not the caller.
+        using var spans = new SpanRecorder();
+        await using var host = await StartAsync();
+        var owner = await host.ConnectAsync(OwnerCredential, CT);
+        var commissioner = await host.ConnectAsync(CommissionerCredential, CT);
+
+        await CallAsync(owner, "get_roster", new Dictionary<string, object?> { ["franchiseId"] = "0002" }, CT);
+        var pending = await CallAsync(commissioner, "drop_player",
+            new Dictionary<string, object?> { ["playerId"] = "1003", ["franchiseId"] = "0000" }, CT);
+
+        var read = Assert.Single(spans.ToolCalls("get_roster"));
+        Assert.Equal("owner:0001", SpanRecorder.Tag(read, McpDiagnostics.CallerScopeTag));
+        Assert.Equal("0002", SpanRecorder.Tag(read, McpDiagnostics.RequestedFranchiseTag));
+        Assert.Equal("0002", SpanRecorder.Tag(read, McpDiagnostics.EffectiveFranchiseTag));
+
+        var drop = Assert.Single(spans.ToolCalls("drop_player"));
+        Assert.Equal("0000", SpanRecorder.Tag(drop, McpDiagnostics.RequestedFranchiseTag));
+        Assert.Equal("0099", SpanRecorder.Tag(drop, McpDiagnostics.EffectiveFranchiseTag)); // resolved target
+        Assert.Equal("pending", SpanRecorder.Tag(drop, McpDiagnostics.GateDecisionTag));
+
+        var confirmations = await host.Http().GetFromJsonAsync<JsonElement>("/api/confirmations", CT);
+        var queued = Prop(confirmations, "pending").EnumerateArray()
+            .Single(c => Prop(c, "id").GetString() == Prop(pending, "confirmationId").GetString());
+        Assert.Equal("0099", Prop(queued, "effectiveFranchiseId").GetString());
+    }
+
+    [Fact]
     public async Task Commissioner_with_gate_off_executes_immediately()
     {
         // DEMO: intentionally vulnerable (Friday talk). Gate off must be selected explicitly.

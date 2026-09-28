@@ -24,7 +24,9 @@ public sealed class ReadTools(ToolRunner runner, SimLeague sim, LeagueViews view
         CancellationToken cancellationToken)
         => runner.RunAsync("get_roster", ToolTier.Read, null, context =>
         {
+            // Cross-franchise read: the span records the franchise actually read.
             context.Activity?.SetTag(McpDiagnostics.RequestedFranchiseTag, franchiseId);
+            context.SetEffective(franchiseId);
             return views.RosterAsync(franchiseId, cancellationToken);
         }, cancellationToken);
 
