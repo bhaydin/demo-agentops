@@ -158,7 +158,7 @@ public sealed partial class MflExportClient : ILeagueReader
             return result;
         }
         catch (Exception ex) when (
-            ex is HttpRequestException or IOException ||
+            ex is HttpRequestException or IOException or MflResponseException ||
             (ex is TaskCanceledException && !cancellationToken.IsCancellationRequested))
         {
             if (_fallback is null)
@@ -186,6 +186,17 @@ public sealed partial class MflExportClient : ILeagueReader
 
             await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
             var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+
+            // MFL reports failures (bad key, unknown league, throttling) as HTTP 200 with
+            // {"error": ...}. That is a failed request, not an empty collection.
+            if (document.RootElement.ValueKind == JsonValueKind.Object &&
+                document.RootElement.TryGetProperty("error", out _))
+            {
+                document.Dispose();
+                activity?.SetTag("mfl.error_envelope", true);
+                throw new MflResponseException(type);
+            }
+
             _logger.LogDebug("MFL export {Type} succeeded.", type);
             return document;
         }, cancellationToken);

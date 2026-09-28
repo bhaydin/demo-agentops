@@ -60,10 +60,13 @@ public sealed class CaptureService(
             weeklyResults.AddRange(results);
         }
 
-        WarnIfEmpty("players", players.Count);
-        WarnIfEmpty("rosters", rosters.Count);
+        // Empty essentials mean an invalid upstream response, not an empty league. Fail rather
+        // than publish a snapshot containing nothing but The Fleecers.
+        RequireNonEmpty("franchises", franchises.Count);
+        RequireNonEmpty("players", players.Count);
+        RequireNonEmpty("rosters", rosters.Count);
+        RequireNonEmpty("standings", standings.Count);
         WarnIfEmpty("projections", projections.Count);
-        WarnIfEmpty("standings", standings.Count);
         WarnIfEmpty("matchups", matchups.Count);
 
         var fleecersRoster = BuildFleecersRoster(players, rosters, projections);
@@ -89,6 +92,15 @@ public sealed class CaptureService(
             string.Join(",", completedWeeks), weeklyResults.Count, transactions.Count,
             fleecersRoster.Slots.Count);
         return id;
+    }
+
+    private static void RequireNonEmpty(string what, int count)
+    {
+        if (count == 0)
+        {
+            throw new InvalidOperationException(
+                $"Capture aborted: {what} parsed to zero rows. MFL returned an error or an unexpected shape; nothing was saved.");
+        }
     }
 
     private void WarnIfEmpty(string what, int count)

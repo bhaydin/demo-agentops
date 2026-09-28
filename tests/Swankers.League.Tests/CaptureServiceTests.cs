@@ -59,6 +59,29 @@ public sealed class CaptureServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task Capture_fails_and_saves_nothing_when_essential_data_is_empty()
+    {
+        // Codex Phase 1 review #4: an error payload parsed as empty data must not become a snapshot.
+        var seed = SyntheticSnapshot.Build();
+        var reader = new FakeSnapshotReader
+        {
+            Franchises = [.. seed.Franchises.Where(f => !f.IsSimOnly)],
+            Players = [.. seed.Players],
+            Rosters = [], // e.g. rosters export answered with an error envelope
+            Standings = [.. seed.Standings],
+        };
+        var store = new SnapshotStore(_root);
+        var service = new CaptureService(
+            reader, store, new CaptureOptions { Week = 4, SnapshotId = "2026-09-28" },
+            NullLogger<CaptureService>.Instance);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => service.CaptureAsync(CT));
+
+        Assert.Contains("rosters", ex.Message);
+        Assert.Empty(store.ListIds());
+    }
+
+    [Fact]
     public void Fleecers_roster_uses_only_free_agents_in_the_league_roster_shape()
     {
         string[] positions = ["QB", "RB", "WR", "TE", "PK", "Def"];

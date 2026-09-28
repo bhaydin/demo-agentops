@@ -1,4 +1,5 @@
 using System.Net;
+using Swankers.League.Mfl;
 using Swankers.League.Models;
 using Swankers.League.Tests.Support;
 
@@ -60,6 +61,41 @@ public class MflExportClientTests
 
         Assert.Single(handler.Calls); // MFL guidance: a failed request is not retried.
         Assert.Equal("1234", Assert.Single(players).Id);
+    }
+
+    [Fact]
+    public async Task Error_envelope_with_http_200_is_a_failure_not_empty_data()
+    {
+        // Codex Phase 1 review #4: MFL signals bad key / unknown league as 200 + {"error": ...}.
+        var fallback = new FakeSnapshotReader
+        {
+            Standings = [new Standing("0001", 1, 0, 0, 100m, 90m)],
+        };
+        var (client, handler, _) = MflTest.Create(
+            responder: _ => RecordingHandler.Json("""{ "error": "Invalid API key" }"""),
+            fallback: fallback);
+        var ct = TestContext.Current.CancellationToken;
+
+        var first = await client.GetStandingsAsync(ct);
+        var second = await client.GetStandingsAsync(ct);
+
+        Assert.Single(first);                     // served from the snapshot fallback
+        Assert.Single(second);
+        Assert.Equal(2, handler.Calls.Count);     // the error was not cached as data
+    }
+
+    [Fact]
+    public async Task Error_envelope_without_fallback_throws_without_echoing_mfl_text()
+    {
+        var (client, _, logger) = MflTest.Create(
+            responder: _ => RecordingHandler.Json("""{ "error": "Invalid API key TEST-KEY-do-not-log" }"""));
+
+        var ex = await Assert.ThrowsAsync<MflResponseException>(
+            () => client.GetPlayersAsync(TestContext.Current.CancellationToken));
+
+        Assert.Equal("players", ex.RequestType);
+        Assert.DoesNotContain("Invalid API key", ex.Message);
+        Assert.All(logger.Entries, entry => Assert.DoesNotContain(MflTest.ApiKey, entry));
     }
 
     [Fact]
