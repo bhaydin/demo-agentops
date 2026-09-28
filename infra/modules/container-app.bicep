@@ -1,8 +1,9 @@
 // One Swankers service on Container Apps: a user-assigned identity (AcrPull here; Key Vault and
 // Foundry access are granted by the caller), external HTTPS ingress, and the image azd deploy
 // publishes. Until the first deploy the app runs a public placeholder image, so provisioning
-// never waits on an image that does not exist yet. One replica only: SimLeague state lives on
-// the container's disk.
+// never waits on an image that does not exist yet. Ingress always targets the service port:
+// azd deploy swaps only the image, so a port that depended on the image would strand the real
+// revision behind the placeholder. One replica only: SimLeague state lives on the container's disk.
 param name string
 param location string
 param tags object
@@ -61,7 +62,7 @@ resource app 'Microsoft.App/containerApps@2025-01-01' = {
     configuration: {
       ingress: {
         external: true
-        targetPort: hasImage ? targetPort : 80
+        targetPort: targetPort
         transport: 'auto'
         allowInsecure: false
       }
