@@ -21,7 +21,7 @@ public sealed partial class MflExportClient : ILeagueReader
     private readonly IMemoryCache _cache;
     private readonly FranchiseNameMap _names;
     private readonly ILogger<MflExportClient> _logger;
-    private readonly ILeagueReader? _fallback;
+    private readonly ISnapshotLeagueReader? _fallback;
     private readonly MflRateLimiter _rateLimiter;
     private readonly MflRequestBuilder _requests;
 
@@ -135,6 +135,15 @@ public sealed partial class MflExportClient : ILeagueReader
         return [.. trades.Where(t => t.FromFranchiseId == franchiseId || t.ToFranchiseId == franchiseId)];
     }
 
+    /// <summary>Injuries with their actual source (live, cache, or snapshot) so callers can label freshness.</summary>
+    public Task<Sourced<IReadOnlyList<Injury>>> GetInjuriesWithSourceAsync(int? week, CancellationToken cancellationToken)
+        => GetSourcedAsync(
+            $"mfl:injuries:{week?.ToString() ?? "current"}", _options.CacheDuration, "injuries",
+            () => _requests.Injuries(week),
+            ParseInjuries,
+            (reader, ct) => reader.GetInjuriesAsync(week, ct),
+            cancellationToken);
+
     private async Task<T> GetAsync<T>(
         string cacheKey,
         TimeSpan cacheDuration,
@@ -144,16 +153,27 @@ public sealed partial class MflExportClient : ILeagueReader
         Func<ILeagueReader, CancellationToken, Task<T>> fallback,
         CancellationToken cancellationToken)
         where T : class
+        => (await GetSourcedAsync(cacheKey, cacheDuration, type, requestUri, parse, fallback, cancellationToken)).Value;
+
+    private async Task<Sourced<T>> GetSourcedAsync<T>(
+        string cacheKey,
+        TimeSpan cacheDuration,
+        string type,
+        Func<Uri> requestUri,
+        Func<JsonElement, T> parse,
+        Func<ILeagueReader, CancellationToken, Task<T>> fallback,
+        CancellationToken cancellationToken)
+        where T : class
     {
-        if (_cache.TryGetValue(cacheKey, out T? cached) && cached is not null)
+        if (_cache.TryGetValue(cacheKey, out Sourced<T>? cached) && cached is not null)
         {
-            return cached;
+            return cached with { Source = DataSource.Cache };
         }
 
         try
         {
             using var document = await FetchAsync(type, requestUri(), cancellationToken);
-            var result = parse(document.RootElement);
+            var result = new Sourced<T>(parse(document.RootElement), DataSource.Live, DateTimeOffset.UtcNow);
             _cache.Set(cacheKey, result, cacheDuration);
             return result;
         }
@@ -166,9 +186,11 @@ public sealed partial class MflExportClient : ILeagueReader
                 throw;
             }
 
-            // Per MFL guidance a failed request is not retried; serve the latest snapshot.
+            // Per MFL guidance a failed request is not retried; serve the latest snapshot and say so.
             _logger.LogWarning(ex, "MFL export {Type} unavailable; serving snapshot fallback.", type);
-            return await fallback(_fallback, cancellationToken);
+            var value = await fallback(_fallback, cancellationToken);
+            var manifest = await _fallback.GetManifestAsync(cancellationToken);
+            return new Sourced<T>(value, DataSource.Snapshot, manifest?.CapturedAtUtc ?? DateTimeOffset.MinValue, manifest?.Id);
         }
     }
 

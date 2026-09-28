@@ -1,6 +1,8 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
@@ -33,7 +35,14 @@ public sealed class McpTestHost : IAsyncDisposable
     /// <summary>Where this host's SimLeague persists state.json (tests can block it to force save failures).</summary>
     public string StateDirectory => Path.Combine(_root, "sim");
 
-    public static async Task<McpTestHost> StartAsync(bool commissionerGateEnabled = true, bool ownerGateEnabled = true)
+    /// <param name="mflResponder">
+    /// When set, MFL is treated as configured and every MFL request is answered by this stub
+    /// (e.g. a 503 to exercise the snapshot fallback). Null leaves MFL unconfigured.
+    /// </param>
+    public static async Task<McpTestHost> StartAsync(
+        bool commissionerGateEnabled = true,
+        bool ownerGateEnabled = true,
+        Func<HttpResponseMessage>? mflResponder = null)
     {
         var root = Path.Combine(Path.GetTempPath(), "swankers-mcp-tests", Path.GetRandomFileName());
         var snapshotRoot = Path.Combine(root, "snapshot");
@@ -50,9 +59,26 @@ public sealed class McpTestHost : IAsyncDisposable
             b.UseSetting("Mcp:SnapshotRoot", snapshotRoot);
             b.UseSetting("Mcp:StateDirectory", Path.Combine(root, "sim"));
             b.UseSetting("Mcp:ScenarioRoot", Path.Combine(RepoRoot(), "data", "demo"));
+
+            if (mflResponder is not null)
+            {
+                b.UseSetting("Mfl:ApiKey", "test-key");
+                b.UseSetting("Mfl:LeagueId", "12345");
+                b.UseSetting("Mfl:Host", "www42.myfantasyleague.com");
+                b.UseSetting("Mfl:UserAgent", "SwankersTest/1.0");
+                b.ConfigureTestServices(services => services
+                    .AddHttpClient<Swankers.League.Mfl.MflExportClient>()
+                    .ConfigurePrimaryHttpMessageHandler(() => new StubHttpHandler(mflResponder)));
+            }
         });
 
         return new McpTestHost(root, factory);
+    }
+
+    private sealed class StubHttpHandler(Func<HttpResponseMessage> responder) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            => Task.FromResult(responder());
     }
 
     /// <summary>An MCP client authenticated with the given credential (null = no Authorization header).</summary>

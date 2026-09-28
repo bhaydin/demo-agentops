@@ -99,6 +99,34 @@ public class MflExportClientTests
     }
 
     [Fact]
+    public async Task Injuries_report_their_actual_source()
+    {
+        // Codex Phase 2 review #4: live, cache, and snapshot fallback must be distinguishable.
+        const string live = """{ "injuries": { "week": "4", "injury": [ { "id": "1", "status": "Out", "details": "Knee" } ] } }""";
+        var (client, _, _) = MflTest.Create(responder: _ => RecordingHandler.Json(live));
+        var ct = TestContext.Current.CancellationToken;
+
+        var first = await client.GetInjuriesWithSourceAsync(4, ct);
+        var second = await client.GetInjuriesWithSourceAsync(4, ct);
+
+        Assert.Equal(DataSource.Live, first.Source);
+        Assert.Equal(DataSource.Cache, second.Source);
+        Assert.Equal(first.AsOf, second.AsOf);
+
+        var manifest = new Snapshots.SnapshotManifest("2026-09-27", new DateTimeOffset(2026, 9, 27, 12, 0, 0, TimeSpan.Zero), 4, "synthetic");
+        var (offline, _, _) = MflTest.Create(
+            responder: _ => new HttpResponseMessage(HttpStatusCode.ServiceUnavailable),
+            fallback: new FakeSnapshotReader { Injuries = [new Injury("2", "IR", "Ankle", null)], Manifest = manifest });
+
+        var fallback = await offline.GetInjuriesWithSourceAsync(4, ct);
+
+        Assert.Equal(DataSource.Snapshot, fallback.Source);
+        Assert.Equal("2026-09-27", fallback.SnapshotId);
+        Assert.Equal(manifest.CapturedAtUtc, fallback.AsOf);
+        Assert.Equal("2", Assert.Single(fallback.Value).PlayerId);
+    }
+
+    [Fact]
     public async Task Failure_without_fallback_throws()
     {
         var (client, _, _) = MflTest.Create(

@@ -17,6 +17,9 @@ public sealed class FakeSnapshotReader : ISnapshotLeagueReader
     public List<Standing> Standings { get; init; } = [];
     public List<Transaction> Transactions { get; init; } = [];
     public List<Trade> PendingTrades { get; init; } = [];
+    public SnapshotManifest? Manifest { get; init; }
+
+    public Task<SnapshotManifest?> GetManifestAsync(CancellationToken ct) => Task.FromResult(Manifest);
 
     public Task<IReadOnlyList<Franchise>> GetFranchisesAsync(CancellationToken ct)
         => Result(Franchises);

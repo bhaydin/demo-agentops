@@ -50,13 +50,14 @@ public sealed class ReadTools(ToolRunner runner, SimLeague sim, LeagueViews view
                 throw new McpException($"No player matches '{player}'. Try the id or \"Last, First\".");
             }
 
-            var report = (await injuries.GetInjuriesAsync(cancellationToken))
+            var report = await injuries.GetInjuriesAsync(cancellationToken);
+            var byPlayer = report.Injuries
                 .GroupBy(i => i.PlayerId)
                 .ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
 
-            return new NewsResult(player, injuries.SourceName,
+            return new NewsResult(player, report.Source, report.AsOf,
             [
-                .. matches.Select(p => report.TryGetValue(p.Id, out var injury)
+                .. matches.Select(p => byPlayer.TryGetValue(p.Id, out var injury)
                     ? new PlayerNewsView(LeagueViews.View(players, p.Id),
                         new InjuryView(injury.Status, injury.Details, injury.ExpectedReturn),
                         $"On the injury report: {injury.Status}.")

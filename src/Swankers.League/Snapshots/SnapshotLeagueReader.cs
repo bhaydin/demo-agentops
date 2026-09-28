@@ -45,6 +45,9 @@ public sealed class SnapshotLeagueReader(SnapshotStore store) : ISnapshotLeagueR
         => [.. (await GetSnapshotAsync(ct)).PendingTrades
             .Where(t => t.FromFranchiseId == franchiseId || t.ToFranchiseId == franchiseId)];
 
+    public async Task<SnapshotManifest?> GetManifestAsync(CancellationToken ct)
+        => (await GetSnapshotAsync(ct)).Manifest is { Source: not "none" } manifest ? manifest : null;
+
     private async Task<Snapshot> GetSnapshotAsync(CancellationToken ct)
         => _snapshot ??= await store.LoadLatestAsync(ct)
             ?? Snapshot.Empty(new SnapshotManifest("empty", DateTimeOffset.MinValue, 0, "none"));

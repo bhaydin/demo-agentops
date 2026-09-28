@@ -12,7 +12,8 @@ public sealed record InjuryView(string Status, string Details, string? ExpectedR
 
 public sealed record PlayerNewsView(PlayerView Player, InjuryView? Injury, string Note);
 
-public sealed record NewsResult(string Query, string Source, IReadOnlyList<PlayerNewsView> Players);
+/// <summary><paramref name="Source"/> is mfl-live, mfl-cache, or "snapshot &lt;id&gt;"; <paramref name="AsOf"/> is when that data was fetched or captured.</summary>
+public sealed record NewsResult(string Query, string Source, DateTimeOffset? AsOf, IReadOnlyList<PlayerNewsView> Players);
 
 public sealed record ProjectedPlayerView(string Id, string Name, string Position, decimal ProjectedPoints);
 

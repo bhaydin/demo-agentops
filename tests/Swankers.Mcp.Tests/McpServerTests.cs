@@ -284,6 +284,22 @@ public class McpServerTests
 
         var entry = Assert.Single(Prop(news, "players").EnumerateArray());
         Assert.Equal("Questionable", Prop(Prop(entry, "injury"), "status").GetString());
-        Assert.Equal("snapshot", Prop(news, "source").GetString());
+        Assert.StartsWith("snapshot 2026-09-27", Prop(news, "source").GetString());
+        Assert.NotEqual(JsonValueKind.Null, Prop(news, "asOf").ValueKind);
+    }
+
+    [Fact]
+    public async Task Player_news_labels_snapshot_fallback_when_live_mfl_fails()
+    {
+        // Codex Phase 2 review #4: an upstream failure must not be labeled mfl-live.
+        await using var host = await StartAsync(mflResponder: () => new HttpResponseMessage(HttpStatusCode.ServiceUnavailable));
+        var owner = await host.ConnectAsync(OwnerCredential, CT);
+
+        var news = await CallAsync(owner, "get_player_news", new Dictionary<string, object?> { ["player"] = "1004" }, CT);
+
+        var source = Prop(news, "source").GetString()!;
+        Assert.StartsWith("snapshot 2026-09-27", source);
+        Assert.DoesNotContain("live", source);
+        Assert.Equal("Questionable", Prop(Prop(Assert.Single(Prop(news, "players").EnumerateArray()), "injury"), "status").GetString());
     }
 }
