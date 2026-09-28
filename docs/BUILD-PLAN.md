@@ -73,7 +73,7 @@ Gate: capture a real Swankers snapshot (maintainer runs it with the key), seed S
 
 ### Phase 1 record (gate passed 2026-09-28)
 
-**Gate evidence:** the maintainer captured `data/snapshot/2026-09-28` (12 franchises + The Fleecers, 2,657 players, weeks 1–2 complete with per-player weekly results, week 3 in progress). `RealSnapshotTests` run against that committed snapshot: internal consistency, every name from `franchise-names.json`, no emails/phones/owner text in any file, SimLeague seeds from it and `ResetAsync` restores byte-identical state. 44/44 tests green locally (42 League incl. 4 real-snapshot, 1 Mcp, 1 Evals); CI green.
+**Gate evidence:** the maintainer captured `data/snapshot/2026-09-28` (12 franchises + The Fleecers, 2,657 players, weeks 1–2 complete with per-player weekly results, week 3 in progress). `RealSnapshotTests` run against that committed snapshot: internal consistency, every name from `franchise-names.json`, no emails/phones/owner text in any file, SimLeague seeds from it and `ResetAsync` restores byte-identical state. 44/44 tests green locally (42 League incl. 4 real-snapshot, 1 Mcp, 1 Evals); CI green with the real-snapshot tests running: [build run 36365947293](https://github.com/bhaydin/demo-agentops/actions/runs/36365947293).
 
 **Verified against MFL (docs + live data):**
 
