@@ -102,6 +102,9 @@ public sealed class ToolRunner(
         CancellationToken cancellationToken)
         => RunAsync<object>(tool, ToolTier.Irreversible, requestedFranchiseId, async context =>
         {
+            // Snapshot the reset generation first: if the league is reset while we prepare,
+            // the gate refuses the confirmation instead of queuing a stale action.
+            var generation = gate.Generation;
             var action = await prepare(context);
             context.SetEffective(action.TargetFranchiseId);
 
@@ -109,7 +112,7 @@ public sealed class ToolRunner(
             {
                 context.Decision = "pending";
                 return gate.Create(
-                    tool, action.Summary, context.Scope.Label, action.TargetFranchiseId, arguments, action.Execute);
+                    tool, action.Summary, context.Scope.Label, action.TargetFranchiseId, arguments, action.Execute, generation);
             }
 
             // DEMO: intentionally vulnerable (Friday talk). See docs/ARCHITECTURE.md#security-demo.

@@ -34,17 +34,37 @@ public sealed record PendingConfirmationResult(string Status, string Confirmatio
 /// terminal record (executed, denied, failed, canceled); a failed action is not retried, the
 /// agent asks again and a new confirmation is created.
 /// </summary>
+/// <remarks>
+/// A league reset advances a generation. A tool call reads <see cref="Generation"/> before it
+/// prepares an action and passes it to <see cref="Create"/>; anything prepared against a league
+/// that has since been reset is rejected at creation, canceled when the reset finishes, or
+/// refused at approval, so no confirmation can act on a league it was not prepared against.
+/// </remarks>
 public sealed class ConfirmationGate(TimeProvider? time = null)
 {
     private const int RecentLimit = 20;
     private readonly TimeProvider _time = time ?? TimeProvider.System;
     private readonly ConcurrentDictionary<string, Entry> _pending = new(StringComparer.Ordinal);
     private readonly ConcurrentQueue<ResolvedConfirmation> _recent = new();
+    private readonly Lock _sync = new();
+    private long _generation;
 
     /// <summary>Serializes approvals (and reset) so an action can never run half-way through another.</summary>
     private readonly SemaphoreSlim _execution = new(1, 1);
 
-    private sealed record Entry(PendingConfirmation Info, Func<CancellationToken, Task<object>> Execute);
+    private sealed record Entry(PendingConfirmation Info, Func<CancellationToken, Task<object>> Execute, long Generation);
+
+    /// <summary>The current reset generation. Read it before preparing an action.</summary>
+    public long Generation
+    {
+        get
+        {
+            lock (_sync)
+            {
+                return _generation;
+            }
+        }
+    }
 
     public IReadOnlyList<PendingConfirmation> Pending
         => [.. _pending.Values.Select(e => e.Info).OrderBy(p => p.CreatedAtUtc)];
@@ -52,22 +72,33 @@ public sealed class ConfirmationGate(TimeProvider? time = null)
     public IReadOnlyList<ResolvedConfirmation> Recent
         => [.. _recent.OrderByDescending(r => r.ResolvedAtUtc)];
 
+    /// <param name="preparedInGeneration">The <see cref="Generation"/> observed before the action was prepared.</param>
     public PendingConfirmationResult Create(
         string tool,
         string summary,
         string callerScope,
         string effectiveFranchiseId,
         IReadOnlyDictionary<string, object?> arguments,
-        Func<CancellationToken, Task<object>> execute)
+        Func<CancellationToken, Task<object>> execute,
+        long preparedInGeneration)
     {
-        while (true)
+        lock (_sync)
         {
-            var id = RandomNumberGenerator.GetHexString(8, lowercase: true);
-            var info = new PendingConfirmation(
-                id, tool, summary, callerScope, effectiveFranchiseId, arguments, _time.GetUtcNow());
-            if (_pending.TryAdd(id, new Entry(info, execute)))
+            if (preparedInGeneration != _generation)
             {
-                return new PendingConfirmationResult("pending_confirmation", id, summary);
+                throw new McpException(
+                    "The league was reset while this action was being prepared; nothing was queued. Ask again if it still applies.");
+            }
+
+            while (true)
+            {
+                var id = RandomNumberGenerator.GetHexString(8, lowercase: true);
+                var info = new PendingConfirmation(
+                    id, tool, summary, callerScope, effectiveFranchiseId, arguments, _time.GetUtcNow());
+                if (_pending.TryAdd(id, new Entry(info, execute, _generation)))
+                {
+                    return new PendingConfirmationResult("pending_confirmation", id, summary);
+                }
             }
         }
     }
@@ -85,6 +116,11 @@ public sealed class ConfirmationGate(TimeProvider? time = null)
             if (!_pending.TryGetValue(id, out var entry))
             {
                 return null;
+            }
+
+            if (entry.Generation != Generation)
+            {
+                return Finish(entry, approved: false, "canceled", result: null, error: "Canceled: the league was reset after this action was queued.");
             }
 
             if (!approve)
@@ -114,29 +150,33 @@ public sealed class ConfirmationGate(TimeProvider? time = null)
     }
 
     /// <summary>
-    /// Demo reset. Waits for any in-flight approval to finish (the execution lock), cancels every
-    /// pending confirmation with a terminal record, clears history, and runs
-    /// <paramref name="resetLeague"/> while still holding the lock, so no approval can land on
-    /// the freshly reset league. Returns how many pending confirmations were canceled.
+    /// Demo reset. Waits for any in-flight approval (the execution lock), reseeds the league,
+    /// then advances the generation and cancels every pending confirmation, including ones
+    /// created while the reset was running. Returns how many were canceled.
     /// </summary>
     public async Task<int> ResetAsync(Func<CancellationToken, Task> resetLeague, CancellationToken cancellationToken)
     {
         await _execution.WaitAsync(cancellationToken);
         try
         {
-            while (_recent.TryDequeue(out _))
-            {
-            }
-
-            var canceled = 0;
-            foreach (var entry in _pending.Values.OrderBy(e => e.Info.CreatedAtUtc).ToList())
-            {
-                Finish(entry, approved: false, "canceled", result: null, error: "Canceled by league reset.");
-                canceled++;
-            }
-
             await resetLeague(cancellationToken);
-            return canceled;
+
+            lock (_sync)
+            {
+                _generation++;
+                while (_recent.TryDequeue(out _))
+                {
+                }
+
+                var canceled = 0;
+                foreach (var entry in _pending.Values.OrderBy(e => e.Info.CreatedAtUtc).ToList())
+                {
+                    Finish(entry, approved: false, "canceled", result: null, error: "Canceled by league reset.");
+                    canceled++;
+                }
+
+                return canceled;
+            }
         }
         finally
         {
