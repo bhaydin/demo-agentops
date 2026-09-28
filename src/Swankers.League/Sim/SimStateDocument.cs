@@ -3,6 +3,9 @@ using Swankers.League.Snapshots;
 
 namespace Swankers.League.Sim;
 
+/// <summary>Provenance of the simulated state: the seeding snapshot and its capture time.</summary>
+public sealed record SimSeed(string SnapshotId, DateTimeOffset? CapturedAtUtc);
+
 /// <summary>
 /// The whole simulated league as one immutable, JSON-persisted document. Every SimLeague
 /// write produces the next document, so reset can restore the exact seeded state.
@@ -22,7 +25,8 @@ public sealed record SimStateDocument(
     IReadOnlyList<Standing> Standings,
     IReadOnlyList<Lineup> Lineups,
     IReadOnlyList<Transaction> TransactionLog,
-    IReadOnlyList<Trade> Trades)
+    IReadOnlyList<Trade> Trades,
+    DateTimeOffset? SnapshotCapturedAtUtc = null)
 {
     public static SimStateDocument FromSnapshot(Snapshot snapshot) => new(
         snapshot.Manifest.Id,
@@ -39,5 +43,6 @@ public sealed record SimStateDocument(
         snapshot.Standings,
         Lineups: [],
         TransactionLog: snapshot.Transactions,
-        Trades: snapshot.PendingTrades);
+        Trades: snapshot.PendingTrades,
+        SnapshotCapturedAtUtc: snapshot.Manifest.CapturedAtUtc);
 }

@@ -58,6 +58,14 @@ public sealed partial class SimLeague
     public Task<int> GetCurrentWeekAsync(CancellationToken ct)
         => ReadAsync("get_current_week", s => s.Week, ct);
 
+    /// <summary>
+    /// Which snapshot this state was seeded from and when that snapshot was captured. This is
+    /// the provenance of everything SimLeague serves; it can lag the latest snapshot on disk
+    /// until the next reset.
+    /// </summary>
+    public Task<SimSeed> GetSeedAsync(CancellationToken ct)
+        => ReadAsync("get_seed", s => new SimSeed(s.SeededFromSnapshotId, s.SnapshotCapturedAtUtc), ct);
+
     /// <summary>The declared lineup, if any, for a franchise and week (used by the web ticker).</summary>
     public Task<Lineup?> GetLineupAsync(string franchiseId, int week, CancellationToken ct)
         => ReadAsync("get_lineup",

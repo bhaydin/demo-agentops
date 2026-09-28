@@ -58,6 +58,29 @@ public sealed class SimLeagueTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Seed_provenance_follows_the_seeding_snapshot_not_the_latest_on_disk()
+    {
+        // Codex Phase 3 review #3: after a re-capture, persisted state still comes from the old snapshot.
+        var seeded = await _sim.GetSeedAsync(CT);
+        Assert.Equal("2026-09-27", seeded.SnapshotId);
+        Assert.Equal(new DateTimeOffset(2026, 9, 27, 12, 0, 0, TimeSpan.Zero), seeded.CapturedAtUtc);
+
+        await _store.SaveAsync(SyntheticSnapshot.Build("2026-09-28", week: 4) with
+        {
+            Manifest = new SnapshotManifest("2026-09-28", new DateTimeOffset(2026, 9, 28, 12, 0, 0, TimeSpan.Zero), 4, "synthetic"),
+        }, CT);
+        var reloaded = new SimLeague(_store, Path.Combine(_root, "state")); // "restart" with persisted state
+
+        Assert.Equal("2026-09-27", (await reloaded.GetSeedAsync(CT)).SnapshotId);
+
+        await reloaded.ResetAsync(null, CT);
+
+        var reseeded = await reloaded.GetSeedAsync(CT);
+        Assert.Equal("2026-09-28", reseeded.SnapshotId);
+        Assert.Equal(new DateTimeOffset(2026, 9, 28, 12, 0, 0, TimeSpan.Zero), reseeded.CapturedAtUtc);
+    }
+
+    [Fact]
     public async Task Seeds_from_latest_snapshot_on_first_use()
     {
         var franchises = await _sim.GetFranchisesAsync(CT);

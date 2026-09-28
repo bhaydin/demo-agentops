@@ -323,6 +323,27 @@ public class McpServerTests
     }
 
     [Fact]
+    public async Task Player_news_provenance_is_the_seeding_snapshot_until_reset()
+    {
+        // Codex Phase 3 review #3: injuries and their label must come from the same snapshot.
+        await using var host = await StartAsync();
+        var owner = await host.ConnectAsync(OwnerCredential, CT);
+        await CallAsync(owner, "get_my_roster", null, CT); // seeds SimLeague from 2026-09-27
+
+        // A re-capture lands a newer snapshot; the persisted sim state is still the old one.
+        await new Swankers.League.Snapshots.SnapshotStore(host.SnapshotRoot).SaveAsync(
+            BuildSnapshot("2026-09-28", new DateTimeOffset(2026, 9, 28, 12, 0, 0, TimeSpan.Zero)), CT);
+
+        var stale = await CallAsync(owner, "get_player_news", new Dictionary<string, object?> { ["player"] = "1004" }, CT);
+        Assert.Equal("snapshot 2026-09-27", Prop(stale, "source").GetString());
+        Assert.Equal(new DateTimeOffset(2026, 9, 27, 12, 0, 0, TimeSpan.Zero), Prop(stale, "asOf").GetDateTimeOffset());
+
+        using var reset = await host.Http().PostAsync("/api/admin/reset", null, CT);
+        var fresh = await CallAsync(owner, "get_player_news", new Dictionary<string, object?> { ["player"] = "1004" }, CT);
+        Assert.Equal("snapshot 2026-09-28", Prop(fresh, "source").GetString());
+    }
+
+    [Fact]
     public async Task Player_news_labels_snapshot_fallback_when_live_mfl_fails()
     {
         // Codex Phase 2 review #4: an upstream failure must not be labeled mfl-live.

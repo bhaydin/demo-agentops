@@ -35,6 +35,9 @@ public sealed class McpTestHost : IAsyncDisposable
     /// <summary>Where this host's SimLeague persists state.json (tests can block it to force save failures).</summary>
     public string StateDirectory => Path.Combine(_root, "sim");
 
+    /// <summary>This host's snapshot store (tests can add a newer snapshot to simulate a re-capture).</summary>
+    public string SnapshotRoot => Path.Combine(_root, "snapshot");
+
     /// <param name="mflResponder">
     /// When set, MFL is treated as configured and every MFL request is answered by this stub
     /// (e.g. a 503 to exercise the snapshot fallback). Null leaves MFL unconfigured.
@@ -183,8 +186,8 @@ public sealed class McpTestHost : IAsyncDisposable
     }
 
     /// <summary>Synthetic league: 0001 (owner), 0002, and The Fleecers (0099). Week 4 is current.</summary>
-    private static Snapshot BuildSnapshot() => new(
-        new SnapshotManifest("2026-09-27", new DateTimeOffset(2026, 9, 27, 12, 0, 0, TimeSpan.Zero), 4, "synthetic"),
+    public static Snapshot BuildSnapshot(string id = "2026-09-27", DateTimeOffset? capturedAt = null) => new(
+        new SnapshotManifest(id, capturedAt ?? new DateTimeOffset(2026, 9, 27, 12, 0, 0, TimeSpan.Zero), 4, "synthetic"),
         [new Franchise("0001", "The Swank"), new Franchise("0002", "Mock Dynasty"), new Franchise("0099", "The Fleecers", IsSimOnly: true)],
         [
             new Player("1001", "Synthetic, Quin", "QB", "GBP"),
