@@ -11,7 +11,8 @@
 //   list
 //   identity                                                    agent identity principal id
 //
-// Common options (or the azd environment variables in brackets):
+// Common options, or the settings in brackets from the process environment or the selected
+// azd environment (read with `azd env get-values`, so a fresh shell works after azd up):
 //   --name Coach  --project-endpoint [FOUNDRY_PROJECT_ENDPOINT]  --vault-uri [KEYVAULT_URI]
 //   --mcp-endpoint [MCP_ENDPOINT]  --model [AZURE_AI_MODEL_DEPLOYMENT_NAME]
 using Swankers.AgentDeploy;
@@ -22,9 +23,9 @@ var ct = cancellation.Token;
 
 try
 {
-    var line = CommandLine.Parse(args);
-    var agentName = line.Optional("name") ?? "Coach";
     var repoRoot = CoachPublisher.FindRepoRoot();
+    var line = CommandLine.Parse(args, AzdEnvironment.Load(repoRoot));
+    var agentName = line.Optional("name") ?? "Coach";
     var defaultPublishDir = CoachPublisher.DefaultOutputDirectory;
 
     switch (line.Command)

@@ -93,7 +93,9 @@ try {
 
     Write-Host "`nCoach versions: " -NoNewline
     Write-Host (($versions.GetEnumerator() | Sort-Object Value | ForEach-Object { "$($_.Key)=v$($_.Value)" }) -join ', ')
-    Write-Host "Routed: v$($versions['v1-owner']) (v1-owner). Rollback/switch: dotnet run --project $tool -- route --version <n>"
+    Write-Host "Routed: v$($versions['v1-owner']) (v1-owner)."
+    Write-Host "Rollback/switch (from the repo root; the tool reads the azd environment, or pass the endpoint):"
+    Write-Host "  dotnet run --project tools/Swankers.AgentDeploy -- route --version <n> --project-endpoint $env:FOUNDRY_PROJECT_ENDPOINT"
 }
 finally {
     Pop-Location
