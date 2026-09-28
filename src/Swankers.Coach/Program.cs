@@ -49,7 +49,13 @@ var startupLogger = startupLogging.CreateLogger("Swankers.Coach.Startup");
 var contentRoot = builder.WebApplicationBuilder.Environment.ContentRootPath;
 
 var instructions = new PromptLibrary(PromptLibrary.DefaultDirectory).Load(options.PromptVersion);
-var knowledge = KnowledgeSearch.Load(RepoPaths.Resolve(options.KnowledgeRoot, contentRoot));
+var knowledgeRoot = RepoPaths.Resolve(options.KnowledgeRoot, contentRoot);
+var knowledge = KnowledgeSearch.Load(knowledgeRoot);
+if (knowledge.SectionCount == 0)
+{
+    throw new InvalidOperationException(
+        $"No knowledge documents found under '{knowledgeRoot}' (content root '{contentRoot}', working directory '{Environment.CurrentDirectory}'). Set Coach:KnowledgeRoot.");
+}
 
 // Connect to the league MCP server up front: a Coach with no tools is not worth starting.
 var mcpTools = new McpToolSource(options, mcpCredential, startupLogging);
@@ -57,8 +63,9 @@ var leagueTools = await mcpTools.ConnectAsync(CancellationToken.None);
 var tools = new List<AITool>(leagueTools) { knowledge.AsTool() };
 
 startupLogger.LogInformation(
-    "Coach {PromptVersion}: model {Model}, {McpTools} MCP tools from {McpEndpoint} (credential key {CredentialKey}), {Sections} knowledge sections.",
-    options.PromptVersion, options.ModelDeployment, leagueTools.Count, options.McpEndpoint, options.McpCredentialKey, knowledge.SectionCount);
+    "Coach {PromptVersion}: model {Model} at {ProjectEndpoint}, {McpTools} MCP tools from {McpEndpoint} (credential key {CredentialKey}), {Sections} knowledge sections from {KnowledgeRoot}.",
+    options.PromptVersion, options.ModelDeployment, options.ProjectEndpoint, leagueTools.Count, options.McpEndpoint,
+    options.McpCredentialKey, knowledge.SectionCount, knowledgeRoot);
 
 var agent = CoachAgentFactory.Create(options, instructions, tools, startupLogging);
 
