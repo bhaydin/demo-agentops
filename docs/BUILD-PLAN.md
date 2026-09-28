@@ -168,16 +168,30 @@ Changes requested before closing Phase 2. The maintainer's Inspector and vulnera
 - #5 `ToolContext.SetEffective` updates the span tag and confirmation metadata for cross-franchise reads and resolved `0000` targets (regression via an ActivityListener on the in-process server).
 
 ## Phase 3: Coach agent, local (Mon)
-Owner:
+Owner: Claude Code
 
-- [ ] MAF agent with MCP client tools and Foundry model
-- [ ] `prompts/coach-v1.md` and `prompts/coach-v2.md`
-- [ ] Knowledge docs drafted in `knowledge/` (maintainer edits content)
-- [ ] Foundry IQ grounding wired (File Search fallback documented)
-- [ ] Foundry hosting integration exposing the Responses endpoint locally
-- [ ] Local OTLP to the Aspire dashboard; one trace spans agent, MCP, and league
+- [x] MAF agent with MCP client tools and Foundry model
+- [x] `prompts/coach-v1.md` and `prompts/coach-v2.md`
+- [x] Knowledge docs drafted in `knowledge/` (maintainer edits content)
+- [x] Foundry IQ grounding wired (File Search fallback documented) — **replaced by an in-process `search_league_knowledge` tool over `knowledge/*.md` (maintainer-approved deviation, 2026-09-28); Foundry IQ is a Phase 4 stretch item**
+- [x] Foundry hosting integration exposing the Responses endpoint locally
+- [ ] Local OTLP to the Aspire dashboard; one trace spans agent, MCP, and league — **maintainer's visual check pending (steps below)**
 
 Gate: a local chat answers a start/sit question using real snapshot data, checks injury news first, pushes back on a bad idea, and shows one connected trace.
+
+### Phase 3 record (code complete 2026-09-28; gate open on the trace check)
+
+**Gate evidence (real data, real model):** MCP server and Coach run locally against the committed snapshot and the shared Foundry project. Asked "Should I start Quinshon Judkins or Rico Dowdle at RB this week?", Coach called `get_my_roster`, then `get_player_news` for both players, and answered "Start Judkins: not on the injury report; Dowdle is Out (toe), expected back Oct. 1." Asked to drop Drake Maye for a kicker ("Great idea, right? Do it."), Coach called `get_my_roster` and `search_league_knowledge`, said "Not a great idea" with reasons (already has a kicker, 16/16 roster, QB depth), named better drop candidates, and did not drop anyone. 106/106 tests green in Release (59 League, 33 Mcp, 14 Coach); CI green.
+
+**Azure (shared, in `rg-swankers-shared`, provisioned by `infra/modules/foundry.bicep`):** Foundry account `foundry-swankers-vxzd` (AIServices, local auth disabled, system identity), project `swankers-coach` (endpoint `https://foundry-swankers-vxzd.services.ai.azure.com/api/projects/swankers-coach`), deployment `gpt-5.4` (2026-03-05, GlobalStandard, 50K TPM). The maintainer holds **Foundry User** on the account (subscription Owner alone gets 403 from the data plane). Phase 4 references these as existing.
+
+**How Coach works:** `AgentHost.CreateBuilder` → `AddFoundryResponses(agent)` → `MapFoundryResponses` on `http://localhost:8088/responses`. The agent is `AIProjectClient.AsAIAgent(gpt-5.4, instructions, tools)` wrapped in `OpenTelemetryAgent` (source `Swankers.Coach`), with the ten `Swankers.Mcp` tools discovered over MCP (bearer credential read from the configuration key in `Coach:McpCredentialKey`, default `Mcp:OwnerCredential`) plus `search_league_knowledge`. Prompt version from `Coach:PromptVersion` (`v1` | `v2`). The agent host owns the OpenTelemetry pipeline (OTLP via `OTEL_EXPORTER_OTLP_ENDPOINT`, Application Insights via `APPLICATIONINSIGHTS_CONNECTION_STRING`); Coach adds the `Swankers.Coach`, MAF, and `Swankers.League` sources.
+
+**APIs verified** against the pinned packages: `AgentHost.CreateBuilder`, `AgentHostBuilder.{Services, WebApplicationBuilder, RegisterProtocol, ConfigureTracing}`, `AddFoundryResponses(AIAgent)`, `MapFoundryResponses`, `AIProjectClient.AsAIAgent(model, instructions, name, description, tools, loggerFactory)`, `OpenTelemetryAgent` / `DefaultSourceName` (MAAI001 acknowledged), `McpClientTool : AIFunction`, `AIFunctionFactory.Create`. Learn: [Foundry hosted agents](https://learn.microsoft.com/en-us/agent-framework/hosting/foundry-hosted-agent).
+
+**Known limits:** `DefaultAzureCredential` logs a managed-identity probe failure at error level on developer machines (harmless; the chain continues to Azure CLI); Foundry IQ not wired (see above); `search_league_knowledge` is lexical; knowledge content still has `TBD` markers for the maintainer; first model turn took ~2 minutes (cold start plus two tool rounds), later turns ~15 s.
+
+**Maintainer steps to close the gate:** in three terminals from the repo root: `aspire dashboard run` (note the login URL and set `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317` in the other two), `dotnet run --project src/Swankers.Mcp -- --KeyVault:Uri <vault-uri>`, `dotnet run --project src/Swankers.Coach -- --KeyVault:Uri <vault-uri> --Coach:ProjectEndpoint https://foundry-swankers-vxzd.services.ai.azure.com/api/projects/swankers-coach`; then `POST http://localhost:8088/responses` with `{"input": "Should I start Quinshon Judkins or Rico Dowdle this week?"}` and confirm one trace in the dashboard spans the Coach request, the MCP `mcp.tool` spans, and SimLeague. Edit the `TBD` markers in `knowledge/`.
 
 ## Phase 4: Azure deploy (Tue)
 Owner:
@@ -258,4 +272,9 @@ Gate: two clean rehearsals in a row.
 | 2026-09-28 | Tool reads come from SimLeague state (seeded from the real snapshot); only `get_player_news` reads MFL live | Sim writes must be visible in roster reads; injuries stay current |
 | 2026-09-28 | `get_player_news` is injury-only | MFL exposes no player-news export; the injury check is the eval that matters |
 | 2026-09-28 | Add `Microsoft.AspNetCore.Mvc.Testing` 10.0.12 | Real MCP client against the in-process server proves scope, gate, and "approval is not a tool" |
-| 2026-09-28 | Relative data paths resolve from the repo root (`DataPaths`) | `dotnet run --project` runs from the project folder and ignores launch-profile `workingDirectory` |
+| 2026-09-28 | Relative data paths resolve from the repo root (`RepoPaths`, repo root preferred over the working directory) | `dotnet run --project` runs from the project folder; on a case-insensitive file system a source folder (`Knowledge/`) shadowed `knowledge/` |
+| 2026-09-28 | Shared Foundry account/project/`gpt-5.4` in `rg-swankers-shared` via `infra/modules/foundry.bicep` | Needed by Phase 3 locally and Phase 5 evals; keeps quota-bearing deployments out of the disposable azd environment |
+| 2026-09-28 | Grounding via in-process `search_league_knowledge` over `knowledge/*.md`; Foundry IQ deferred to a Phase 4 stretch | Foundry IQ's hosted-agent path is Toolboxes (out of scope) and needs Azure AI Search plus preview APIs; not worth a day of schedule risk before Thursday |
+| 2026-09-28 | Coach reads its MCP credential by configuration key (`Coach:McpCredentialKey`) | No agent version carries a secret value; the Friday "before" flips one non-secret setting to `Mcp:CommissionerCredential` |
+| 2026-09-28 | `tests/Swankers.Coach.Tests` added to the layout | Coach's prompt, knowledge, and tool-discovery wiring is tested without a model |
+| 2026-09-28 | Aspire CLI (`dotnet tool install -g Aspire.Cli`, `aspire dashboard run`) for local traces | No Docker on the maintainer's ARM64 machine |
