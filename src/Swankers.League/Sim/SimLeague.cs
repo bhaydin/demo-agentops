@@ -19,7 +19,7 @@ public sealed partial class SimLeague(
     private readonly TimeProvider _time = time ?? TimeProvider.System;
     private readonly ILogger<SimLeague> _logger = logger ?? NullLogger<SimLeague>.Instance;
     private readonly SemaphoreSlim _gate = new(1, 1);
-    private SimStateDocument? _state;
+    private volatile SimStateDocument? _state;
 
     private string StatePath => Path.Combine(stateDirectory, "state.json");
 
@@ -182,7 +182,7 @@ public sealed partial class SimLeague(
         await _gate.WaitAsync(cancellationToken);
         try
         {
-            var (next, result) = mutate(await RequireStateAsync(cancellationToken));
+            var (next, result) = mutate(await RequireStateLockedAsync(cancellationToken));
             _state = next;
             await PersistAsync(cancellationToken);
             return result;

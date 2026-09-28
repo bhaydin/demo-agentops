@@ -49,33 +49,54 @@ public sealed partial class SimLeague
             .FirstOrDefault(l => l.FranchiseId == franchiseId && l.Week == week);
 
     /// <summary>
-    /// Loads persisted state, or seeds from the latest snapshot. Never takes the write gate:
-    /// MutateAsync calls this while already holding it. Assigning the immutable document is
-    /// atomic, so lock-free reads at worst see the previous state.
+    /// Returns the current state, initializing under the write gate on first use so concurrent
+    /// cold reads cannot race each other (or a write) to create state.json. Once loaded, reads
+    /// are lock-free: the document is immutable and the field assignment is atomic.
     /// </summary>
     private async Task<SimStateDocument> RequireStateAsync(CancellationToken cancellationToken)
     {
-        if (_state is not null)
+        if (_state is { } loaded)
         {
-            return _state;
+            return loaded;
+        }
+
+        await _gate.WaitAsync(cancellationToken);
+        try
+        {
+            return await RequireStateLockedAsync(cancellationToken);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    /// <summary>Loads persisted state or seeds from the latest snapshot. The caller holds the gate.</summary>
+    private async Task<SimStateDocument> RequireStateLockedAsync(CancellationToken cancellationToken)
+    {
+        if (_state is { } loaded)
+        {
+            return loaded;
         }
 
         if (File.Exists(StatePath))
         {
             await using var stream = File.OpenRead(StatePath);
-            _state = await JsonSerializer.DeserializeAsync<SimStateDocument>(
+            var persisted = await JsonSerializer.DeserializeAsync<SimStateDocument>(
                 stream, SnapshotStore.JsonOptions, cancellationToken);
-            if (_state is not null)
+            if (persisted is not null)
             {
-                return _state;
+                _state = persisted;
+                return persisted;
             }
         }
 
         var snapshot = await snapshots.LoadLatestAsync(cancellationToken)
             ?? throw new InvalidOperationException("No snapshot available to seed SimLeague from.");
-        _state = SimStateDocument.FromSnapshot(snapshot);
+        var seeded = SimStateDocument.FromSnapshot(snapshot);
+        _state = seeded;
         await PersistAsync(cancellationToken);
-        return _state;
+        return seeded;
     }
 
     private async Task PersistAsync(CancellationToken cancellationToken)

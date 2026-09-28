@@ -43,6 +43,23 @@ public sealed class SimLeagueTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Concurrent_cold_reads_and_a_write_initialize_once_without_errors()
+    {
+        // Codex Phase 1 review #1: 32 simultaneous first reads (plus a write) on a cold instance.
+        var reads = Enumerable.Range(0, 32).Select(_ => _sim.GetFranchisesAsync(CT)).ToList();
+        var write = _sim.DropPlayerAsync("0001", "1002", CT);
+
+        var results = await Task.WhenAll(reads);
+        await write;
+
+        Assert.All(results, r => Assert.Equal(3, r.Count));
+        var stateDir = Path.Combine(_root, "state");
+        Assert.True(File.Exists(Path.Combine(stateDir, "state.json")));
+        Assert.Empty(Directory.EnumerateFiles(stateDir, "*.tmp"));
+        Assert.DoesNotContain((await _sim.GetRosterAsync("0001", CT)).Slots, s => s.PlayerId == "1002");
+    }
+
+    [Fact]
     public async Task Set_lineup_stores_starters_and_logs_a_transaction()
     {
         var lineup = await _sim.SetLineupAsync("0001", 4, ["1001", "1002"], CT);
