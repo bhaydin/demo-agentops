@@ -147,6 +147,8 @@ public sealed partial class SimLeague(
                 RequireOnRoster(state, trade.ToFranchiseId, trade.Get, "get");
                 next = MovePlayers(next, trade.FromFranchiseId, trade.ToFranchiseId, trade.Give);
                 next = MovePlayers(next, trade.ToFranchiseId, trade.FromFranchiseId, trade.Get);
+                next = RemoveFromLineups(next, trade.FromFranchiseId, trade.Give);
+                next = RemoveFromLineups(next, trade.ToFranchiseId, trade.Get);
             }
 
             next = next with
@@ -177,6 +179,7 @@ public sealed partial class SimLeague(
 
             var next = ReplaceRoster(state, franchiseId,
                 [.. roster.Slots.Where(s => s.PlayerId != playerId)]);
+            next = RemoveFromLineups(next, franchiseId, [playerId]);
             next = Log(next, TransactionType.Drop, franchiseId, $"Dropped player {playerId}", [playerId]);
             return (next, playerId);
         }, cancellationToken);
@@ -227,6 +230,22 @@ public sealed partial class SimLeague(
         state = ReplaceRoster(state, fromId, [.. from.Slots.Where(s => !playerIds.Contains(s.PlayerId))]);
         return ReplaceRoster(state, toId, [.. to.Slots, .. moving]);
     }
+
+    /// <summary>
+    /// Removes players from the franchise's declared lineups for the current week onward.
+    /// Past weeks stay as the historical record (Phase 5 scores against them).
+    /// </summary>
+    private static SimStateDocument RemoveFromLineups(
+        SimStateDocument state, string franchiseId, IReadOnlyList<string> playerIds)
+        => state with
+        {
+            Lineups =
+            [
+                .. state.Lineups.Select(l => l.FranchiseId == franchiseId && l.Week >= state.Week
+                    ? l with { StarterPlayerIds = [.. l.StarterPlayerIds.Where(id => !playerIds.Contains(id))] }
+                    : l),
+            ],
+        };
 
     private static SimStateDocument ReplaceRoster(
         SimStateDocument state, string franchiseId, IReadOnlyList<RosterSlot> slots)

@@ -148,6 +148,32 @@ public sealed class SimLeagueTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Dropping_a_starter_removes_them_from_current_and_future_lineups_only()
+    {
+        // Codex Phase 1 review #6. Snapshot week is 4: week 1 is history, weeks 4 and 5 are live.
+        await _sim.SetLineupAsync("0001", 1, ["1001", "1002"], CT);
+        await _sim.SetLineupAsync("0001", 4, ["1001", "1002"], CT);
+        await _sim.SetLineupAsync("0001", 5, ["1002"], CT);
+
+        await _sim.DropPlayerAsync("0001", "1002", CT);
+
+        Assert.Equal(["1001", "1002"], (await _sim.GetLineupAsync("0001", 1, CT))!.StarterPlayerIds);
+        Assert.Equal(["1001"], (await _sim.GetLineupAsync("0001", 4, CT))!.StarterPlayerIds);
+        Assert.Empty((await _sim.GetLineupAsync("0001", 5, CT))!.StarterPlayerIds);
+    }
+
+    [Fact]
+    public async Task Trading_away_a_starter_removes_them_from_the_live_lineup()
+    {
+        await _sim.SetLineupAsync("0001", 4, ["1001", "1002"], CT);
+        var trade = await _sim.ProposeTradeAsync("0099", "0001", ["1003"], ["1002"], "note", CT);
+
+        await _sim.RespondToTradeAsync(trade.Id, accept: true, "0001", CT);
+
+        Assert.Equal(["1001"], (await _sim.GetLineupAsync("0001", 4, CT))!.StarterPlayerIds);
+    }
+
+    [Fact]
     public async Task Drop_removes_the_player_and_logs()
     {
         await _sim.DropPlayerAsync("0001", "1002", CT);
