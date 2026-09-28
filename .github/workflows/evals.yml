@@ -99,7 +99,8 @@ jobs:
   promote:
     needs: evals
     if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.promote }}
-    name: promote (${{ inputs.promote_version }})
+    # `inputs` is not available when rendering job names, so the version is logged in the steps.
+    name: promote
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: foundry
