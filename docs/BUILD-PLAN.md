@@ -169,6 +169,7 @@ Changes requested before closing Phase 2. The maintainer's Inspector and vulnera
 
 ## Phase 3: Coach agent, local (Mon)
 Owner: Claude Code
+Review owner: Codex (Phase 3 code review completed; changes requested below)
 
 - [x] MAF agent with MCP client tools and Foundry model
 - [x] `prompts/coach-v1.md` and `prompts/coach-v2.md`
@@ -181,7 +182,7 @@ Gate: a local chat answers a start/sit question using real snapshot data, checks
 
 ### Phase 3 record (code complete 2026-09-28; gate open on the trace check)
 
-**Gate evidence (real data, real model):** MCP server and Coach run locally against the committed snapshot and the shared Foundry project. Asked "Should I start Quinshon Judkins or Rico Dowdle at RB this week?", Coach called `get_my_roster`, then `get_player_news` for both players, and answered "Start Judkins: not on the injury report; Dowdle is Out (toe), expected back Oct. 1." Asked to drop Drake Maye for a kicker ("Great idea, right? Do it."), Coach called `get_my_roster` and `search_league_knowledge`, said "Not a great idea" with reasons (already has a kicker, 16/16 roster, QB depth), named better drop candidates, and did not drop anyone. 107/107 tests green in Release (59 League, 33 Mcp, 14 Coach, 1 Evals); CI green at `960954b` ([build run 36375263332](https://github.com/bhaydin/demo-agentops/actions/runs/36375263332)).
+**Gate evidence (real data, real model):** MCP server and Coach run locally against the committed snapshot and the shared Foundry project. Asked "Should I start Quinshon Judkins or Rico Dowdle at RB this week?", Coach called `get_my_roster`, then `get_player_news` for both players, and answered "Start Judkins: not on the injury report; Dowdle is Out (toe), expected back Oct. 1." Asked to drop Drake Maye for a kicker ("Great idea, right? Do it."), Coach called `get_my_roster` and `search_league_knowledge`, said "Not a great idea" with reasons (already has a kicker, 16/16 roster, QB depth), named better drop candidates, and did not drop anyone. 113/113 tests green in Release (61 League, 36 Mcp, 15 Coach, 1 Evals) after the Codex Phase 3 fixes; CI green at `80e5972` ([build run 36428957493](https://github.com/bhaydin/demo-agentops/actions/runs/36428957493)).
 
 **Azure (shared, in `rg-swankers-shared`, provisioned by `infra/modules/foundry.bicep`):** Foundry account `foundry-swankers-vxzd` (AIServices, local auth disabled, system identity), project `swankers-coach` (endpoint `https://foundry-swankers-vxzd.services.ai.azure.com/api/projects/swankers-coach`), deployment `gpt-5.4` (2026-03-05, GlobalStandard, 50K TPM). The maintainer holds **Foundry User** on the account (subscription Owner alone gets 403 from the data plane). Phase 4 references these as existing.
 
@@ -192,6 +193,24 @@ Gate: a local chat answers a start/sit question using real snapshot data, checks
 **Known limits:** `DefaultAzureCredential` logs a managed-identity probe failure at error level on developer machines (harmless; the chain continues to Azure CLI); Foundry IQ not wired (see above); `search_league_knowledge` is lexical; knowledge content still has `TBD` markers for the maintainer; first model turn took ~2 minutes (cold start plus two tool rounds), later turns ~15 s.
 
 **Maintainer steps to close the gate:** in three terminals from the repo root: `aspire dashboard run` (note the login URL and set `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317` in the other two), `dotnet run --project src/Swankers.Mcp -- --KeyVault:Uri <vault-uri>`, `dotnet run --project src/Swankers.Coach -- --KeyVault:Uri <vault-uri> --Coach:ProjectEndpoint https://foundry-swankers-vxzd.services.ai.azure.com/api/projects/swankers-coach`; then `POST http://localhost:8088/responses` with `{"input": "Should I start Quinshon Judkins or Rico Dowdle this week?"}` and confirm one trace in the dashboard spans the Coach request, the MCP `mcp.tool` spans, and SimLeague. Edit the `TBD` markers in `knowledge/`.
+
+**Codex review (2026-09-28, commit `e6f6382`):** locked restore, Release build (0 warnings/errors), and all 107 tests independently pass (59 League, 33 Mcp, 14 Coach, 1 Evals scaffold); CI at this commit is green ([run 36375337209](https://github.com/bhaydin/demo-agentops/actions/runs/36375337209)). The Phase 2 regression tests pass, and the approved local-knowledge deviation is accepted as scope. A model-free runtime probe using the pinned Foundry Responses host, a scripted chat client, production `McpToolSource`, and a real HTTP connection to an isolated MCP instance completed a roster call and returned HTTP 200; Coach and outbound MCP HTTP spans shared a trace ID. No live Foundry inference, MFL calls, or real credentials were used in this review.
+
+Changes requested before closing the trace gate / proceeding to deployment:
+
+- P2: `SimLeague.Reads.cs` emits no league activities. An active `Swankers.League` listener captured zero spans for roster, injury, and projection reads, while reset emitted a span. The snapshot-backed start/sit path cannot show the promised league hop; instrument the read operations and assert parent/trace continuity through MCP, then perform the Aspire visual check.
+- P2: `ConfirmationGate.ResetAsync` serializes approvals but not preparation/creation. While the league reset was blocked on its write lock, the real `drop_player` tool created a confirmation from the old state. Reset returned with one pending confirmation and canceled count zero; approving it dropped the player from the freshly reset league. Coordinate preparation/creation with reset, or reject work from an earlier reset generation; add this interleaving to the regression tests.
+- P2: offline `InjurySource` combines injuries from persisted SimLeague state with the manifest from `SnapshotLeagueReader`, which independently loads the latest snapshot. After seeding A, saving newer B, and restarting the reader/sim, the tool returned A's injury labeled with B's id and capture time. Derive the data and provenance from the same snapshot, including across reset/recapture.
+- P2 (deployment packaging): `Swankers.Coach.csproj` publishes prompts but not the required `knowledge/*.md`. Publishing into a standalone directory and starting with otherwise sufficient placeholder settings fails before MCP connection with `DirectoryNotFoundException: Knowledge folder not found`. Include the knowledge documents in the published/container artifact and smoke-test from outside the checkout.
+
+The Phase 3 gate should remain open. Real-model start/sit/pushback behavior and the Aspire dashboard were not independently rerun; the 14 Coach tests cover prompt text, lexical retrieval, and MCP discovery, not full model behavior. Reproduction harness and logs are under ignored `artifacts/phase3-review/`. Implementation files were not changed by this review.
+
+**Resolution (Claude Code, 2026-09-28):** all four fixed, one commit per finding, each with a regression test (tests 107 → 113, all green in Release):
+
+- #1 every `SimLeague` read is now a `sim.<operation>` span under `Swankers.League` with `league.franchise_id` and `league.snapshot_id`; an end-to-end test asserts `sim.get_roster` is a descendant of the `mcp.tool` span in the same trace (`91a8b85`).
+- #2 the gate has a reset generation: the tool snapshots it before preparing, `Create` refuses a stale one, `ResetAsync` reseeds and then advances the generation and cancels everything still pending (including entries created mid-reset), and `ResolveAsync` refuses older generations; gate tests cover prepared-before-reset and queued-during-reset (`561f587`).
+- #3 `SimStateDocument` records the seeding snapshot's capture time, `SimLeague.GetSeedAsync` exposes it, and `InjurySource` labels snapshot injuries with that seed; tests cover a newer snapshot on disk across a "restart" and after reset (`68cbfb2`).
+- #4 `knowledge/*.md` ships next to the Coach binaries (README excluded); startup prefers the repo folder from a checkout and falls back to the shipped copy, logging what it loaded before connecting to MCP. Verified by publishing to a scratch folder and running the executable from outside the checkout: prompt and 23 knowledge sections loaded, then the expected failure at an unreachable MCP endpoint (`80e5972`).
 
 ## Phase 4: Azure deploy (Tue)
 Owner:
