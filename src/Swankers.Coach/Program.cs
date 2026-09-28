@@ -1,7 +1,82 @@
-// Phase 3: Microsoft Agent Framework agent exposed through the Foundry Responses protocol,
-// with Swankers.Mcp as its MCP tool source.
-var builder = WebApplication.CreateBuilder(args);
+// Swankers.Coach: Microsoft Agent Framework agent hosted through the Foundry Responses
+// protocol (AgentHost + AddFoundryResponses/MapFoundryResponses). Tools come from Swankers.Mcp
+// over MCP with the configured credential, plus local league-knowledge search. The stage
+// configurations differ only in Coach:PromptVersion and Coach:McpCredentialKey.
+using Azure.AI.AgentServer.Core;
+using Azure.Identity;
+using Microsoft.Agents.AI;
+using Microsoft.Agents.AI.Foundry.Hosting;
+using Microsoft.Extensions.AI;
+using OpenTelemetry.Trace;
+using Swankers.Coach;
+using Swankers.Coach.Knowledge;
+using Swankers.Coach.Mcp;
+using Swankers.Coach.Prompts;
+using Swankers.League;
+
+var builder = AgentHost.CreateBuilder(args);
+var configuration = builder.WebApplicationBuilder.Configuration;
+
+// Secrets (Mcp--OwnerCredential, Mcp--CommissionerCredential) come from Key Vault when KeyVault:Uri is set.
+var vaultUri = configuration["KeyVault:Uri"];
+if (!string.IsNullOrWhiteSpace(vaultUri))
+{
+    configuration.AddAzureKeyVault(new Uri(vaultUri), new DefaultAzureCredential());
+}
+
+var options = configuration.GetSection(CoachOptions.SectionName).Get<CoachOptions>() ?? new CoachOptions();
+
+// The Foundry hosted runtime injects these two; local runs set Coach:* instead.
+options.ProjectEndpoint = FirstNonEmpty(options.ProjectEndpoint, configuration["FOUNDRY_PROJECT_ENDPOINT"]);
+options.ModelDeployment = FirstNonEmpty(configuration["AZURE_AI_MODEL_DEPLOYMENT_NAME"], options.ModelDeployment);
+if (string.IsNullOrWhiteSpace(options.ProjectEndpoint))
+{
+    throw new InvalidOperationException("Coach:ProjectEndpoint (or FOUNDRY_PROJECT_ENDPOINT) is required.");
+}
+
+// The MCP credential is looked up by configuration key, so no version carries a secret value:
+// Mcp:OwnerCredential (default, hardened) or Mcp:CommissionerCredential (Friday "before").
+var mcpCredential = configuration[options.McpCredentialKey];
+if (string.IsNullOrWhiteSpace(mcpCredential))
+{
+    throw new InvalidOperationException(
+        $"No MCP credential at configuration key '{options.McpCredentialKey}' " +
+        "(Key Vault secrets Mcp--OwnerCredential / Mcp--CommissionerCredential).");
+}
+
+using var startupLogging = LoggerFactory.Create(logging => logging.AddConsole());
+var startupLogger = startupLogging.CreateLogger("Swankers.Coach.Startup");
+var contentRoot = builder.WebApplicationBuilder.Environment.ContentRootPath;
+
+var instructions = new PromptLibrary(PromptLibrary.DefaultDirectory).Load(options.PromptVersion);
+var knowledge = KnowledgeSearch.Load(RepoPaths.Resolve(options.KnowledgeRoot, contentRoot));
+
+// Connect to the league MCP server up front: a Coach with no tools is not worth starting.
+var mcpTools = new McpToolSource(options, mcpCredential, startupLogging);
+var leagueTools = await mcpTools.ConnectAsync(CancellationToken.None);
+var tools = new List<AITool>(leagueTools) { knowledge.AsTool() };
+
+startupLogger.LogInformation(
+    "Coach {PromptVersion}: model {Model}, {McpTools} MCP tools from {McpEndpoint} (credential key {CredentialKey}), {Sections} knowledge sections.",
+    options.PromptVersion, options.ModelDeployment, leagueTools.Count, options.McpEndpoint, options.McpCredentialKey, knowledge.SectionCount);
+
+var agent = CoachAgentFactory.Create(options, instructions, tools, startupLogging);
+
+builder.Services.AddSingleton(options);
+builder.Services.AddSingleton(mcpTools); // keeps the MCP session alive for the host's lifetime
+builder.Services.AddSingleton(knowledge);
+builder.Services.AddFoundryResponses(agent);
+builder.RegisterProtocol("responses", endpoints => endpoints.MapFoundryResponses());
+
+// The agent host owns the OpenTelemetry pipeline (OTLP / Application Insights from environment);
+// we add our sources so agent, tool, and league spans join the same trace as the MCP server.
+builder.ConfigureTracing(tracing => tracing
+    .AddSource(CoachDiagnostics.ActivitySourceName)
+    .AddSource(OpenTelemetryAgent.DefaultSourceName)
+    .AddSource(LeagueDiagnostics.ActivitySourceName));
 
 var app = builder.Build();
-
 app.Run();
+
+static string FirstNonEmpty(string? first, string? second)
+    => !string.IsNullOrWhiteSpace(first) ? first : second ?? "";
