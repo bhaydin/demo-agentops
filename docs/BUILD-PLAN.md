@@ -61,6 +61,7 @@ Transitive prereleases pinned by the lock files: Azure.AI.AgentServer.Core 1.0.0
 
 ## Phase 1: League gateway (Sun–Mon)
 Owner: Claude Code
+Review owner: Codex (Phase 1 code review completed; changes requested below)
 
 - [x] Domain models (Franchise, Player, Roster, Lineup, Trade, Transaction, Matchup)
 - [x] `ILeagueReader`, `ILeagueWriter`
@@ -92,6 +93,28 @@ Gate: capture a real Swankers snapshot (maintainer runs it with the key), seed S
 **Known limits:** waiver-processing and IR transactions carry no player ids in MFL's text and surface as `Unknown` with the MFL label; The Fleecers' roster is redrafted from free agents on every capture; parsers for `schedule`, `leagueStandings`, `projectedScores`, and `weeklyResults` are validated against this league's real responses, not the full MFL schema.
 
 **Re-capture** after Monday Night Football (Tue) so week 3 is final for Thursday: `dotnet run --project tools/Swankers.SnapshotCapture -- --KeyVault:Uri <vault-uri> --Capture:Week 4` from the repo root.
+
+**Codex review (commit `b173381`):** locked restore, Release build (0 warnings/errors), and all 44 tests independently pass; CI at this commit is green. The Phase 0 port collision is fixed. Changes requested before building Phase 2 on the gateway, based on an isolated synthetic-data harness (no live MFL exports or credentials used):
+
+- P1: concurrent first reads initialize/persist SimLeague without the write gate; 27 of 32 reads failed with `IOException`.
+- P1: SimLeague publishes `_state` before persistence succeeds; a failed drop removed the player in memory while the persisted state still retained the player.
+- P2: SnapshotStore publishes the manifest before the collections and treats missing files as empty; an interrupted save became the latest snapshot with zero franchises/players.
+- P2: capture only warns about missing essential data; a synthetic HTTP 200 error payload was cached as empty data, bypassed fallback, and produced a successful snapshot containing only The Fleecers.
+- P2: a self-trade is accepted and duplicates roster slots (2 players became 4 slots); reject identical source/target franchises.
+- P2: dropping/trading away a starter leaves that player in the declared lineup; keep affected active/future lineups consistent with roster changes.
+- P2: rate limiting is per MflExportClient instance, but DI creates transient clients; two factory-created clients sent requests 2.3 ms apart with a configured 1 s gap.
+
+Add targeted regressions for these cases. Implementation files were not changed by this review.
+
+**Resolution (Claude Code, 2026-09-28):** all seven fixed, one commit per finding, each with a regression test (League tests 44 → 57, all green in Release):
+
+- #1 first use initializes under the write gate; loaded reads stay lock-free on the volatile immutable document.
+- #2 `PersistAsync` takes the candidate document; `_state` is published only after the save succeeds (writes and reset).
+- #3 `SnapshotStore` writes to `<id>.tmp` with the manifest last and publishes by directory rename; discovery and load accept only complete directories; same-id recapture retires the old snapshot whole.
+- #4 MFL's HTTP 200 `{"error": …}` envelope raises `MflResponseException` (never cached, message carries no MFL text) and takes the snapshot fallback; `CaptureAsync` aborts before saving if franchises, players, rosters, or standings are empty.
+- #5 self-trades are rejected at proposal.
+- #6 drops and accepted trades remove moved players from the franchise's lineups for the current week onward; past weeks are preserved.
+- #7 request spacing lives in a singleton `MflRateLimiter` shared by every DI-created client; the regression resolves two clients from the real registration.
 
 ## Phase 2: MCP server (Mon)
 Owner:
