@@ -1,0 +1,67 @@
+[
+  {
+    "id": "0001",
+    "name": "Anchorage Falling",
+    "isSimOnly": false
+  },
+  {
+    "id": "0002",
+    "name": "Indiana Joneses",
+    "isSimOnly": false
+  },
+  {
+    "id": "0003",
+    "name": "Toledo Intimidators",
+    "isSimOnly": false
+  },
+  {
+    "id": "0004",
+    "name": "Gary Characters",
+    "isSimOnly": false
+  },
+  {
+    "id": "0005",
+    "name": "Everglades City",
+    "isSimOnly": false
+  },
+  {
+    "id": "0006",
+    "name": "Texas Tornadoes",
+    "isSimOnly": false
+  },
+  {
+    "id": "0007",
+    "name": "Delk Runners",
+    "isSimOnly": false
+  },
+  {
+    "id": "0008",
+    "name": "Iron City Beers",
+    "isSimOnly": false
+  },
+  {
+    "id": "0009",
+    "name": "Reno Football Club",
+    "isSimOnly": false
+  },
+  {
+    "id": "0010",
+    "name": "Jackson Mississippis",
+    "isSimOnly": false
+  },
+  {
+    "id": "0011",
+    "name": "Gang Evergreen",
+    "isSimOnly": false
+  },
+  {
+    "id": "0012",
+    "name": "Florida Men",
+    "isSimOnly": false
+  },
+  {
+    "id": "0099",
+    "name": "The Fleecers",
+    "isSimOnly": true
+  }
+]

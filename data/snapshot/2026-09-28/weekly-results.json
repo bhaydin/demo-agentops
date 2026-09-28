@@ -1,0 +1,2090 @@
+[
+  {
+    "week": 1,
+    "franchiseId": "0004",
+    "score": 123,
+    "players": [
+      {
+        "playerId": "17032",
+        "points": 25.00,
+        "started": true
+      },
+      {
+        "playerId": "15708",
+        "points": 21.80,
+        "started": true
+      },
+      {
+        "playerId": "17472",
+        "points": 12.00,
+        "started": true
+      },
+      {
+        "playerId": "14836",
+        "points": 27.20,
+        "started": true
+      },
+      {
+        "playerId": "16185",
+        "points": 25.20,
+        "started": true
+      },
+      {
+        "playerId": "17102",
+        "points": 8.80,
+        "started": true
+      },
+      {
+        "playerId": "16414",
+        "points": 2.00,
+        "started": true
+      },
+      {
+        "playerId": "0514",
+        "points": 1.00,
+        "started": true
+      },
+      {
+        "playerId": "15742",
+        "points": 7.80,
+        "started": false
+      },
+      {
+        "playerId": "16188",
+        "points": 2.70,
+        "started": false
+      },
+      {
+        "playerId": "14127",
+        "points": 11.20,
+        "started": false
+      },
+      {
+        "playerId": "15261",
+        "points": 22.20,
+        "started": false
+      },
+      {
+        "playerId": "14056",
+        "points": -0.50,
+        "started": false
+      },
+      {
+        "playerId": "16628",
+        "points": 0,
+        "started": false
+      },
+      {
+        "playerId": "16178",
+        "points": 0.90,
+        "started": false
+      },
+      {
+        "playerId": "17107",
+        "points": 0.00,
+        "started": false
+      }
+    ]
+  },
+  {
+    "week": 1,
+    "franchiseId": "0001",
+    "score": 84.3,
+    "players": [
+      {
+        "playerId": "16580",
+        "points": 8.60,
+        "started": true
+      },
+      {
+        "playerId": "17051",
+        "points": 6.00,
+        "started": true
+      },
+      {
+        "playerId": "14071",
+        "points": 27.40,
+        "started": true
+      },
+      {
+        "playerId": "17070",
+        "points": 7.00,
+        "started": true
+      },
+      {
+        "playerId": "15281",
+        "points": 2.20,
+        "started": true
+      },
+      {
+        "playerId": "15889",
+        "points": 2.60,
+        "started": true
+      },
+      {
+        "playerId": "13719",
+        "points": 10.50,
+        "started": true
+      },
+      {
+        "playerId": "0510",
+        "points": 20.00,
+        "started": true
+      },
+      {
+        "playerId": "16641",
+        "points": 0,
+        "started": false
+      },
+      {
+        "playerId": "14102",
+        "points": 6.00,
+        "started": false
+      },
+      {
+        "playerId": "16618",
+        "points": 5.50,
+        "started": false
+      },
+      {
+        "playerId": "14823",
+        "points": 3.10,
+        "started": false
+      },
+      {
+        "playerId": "15255",
+        "points": 2.30,
+        "started": false
+      },
+      {
+        "playerId": "15779",
+        "points": 0.00,
+        "started": false
+      },
+      {
+        "playerId": "17482",
+        "points": 4.10,
+        "started": false
+      },
+      {
+        "playerId": "16596",
+        "points": 4.00,
+        "started": false
+      }
+    ]
+  },
+  {
+    "week": 1,
+    "franchiseId": "0005",
+    "score": 97.5,
+    "players": [
+      {
+        "playerId": "16581",
+        "points": 16.50,
+        "started": true
+      },
+      {
+        "playerId": "16162",
+        "points": 34.10,
+        "started": true
+      },
+      {
+        "playerId": "15290",
+        "points": 17.70,
+        "started": true
+      },
+      {
+        "playerId": "14835",
+        "points": 7.40,
+        "started": true
+      },
+      {
+        "playerId": "16627",
+        "points": 16.70,
+        "started": true
+      },
+      {
+        "playerId": "17103",
+        "points": 3.10,
+        "started": true
+      },
+      {
+        "playerId": "15979",
+        "points": 2.00,
+        "started": true
+      },
+      {
+        "playerId": "0508",
+        "points": 0.00,
+        "started": true
+      },
+      {
+        "playerId": "15789",
+        "points": 32.70,
+        "started": false
+      },
+      {
+        "playerId": "14800",
+        "points": 3.60,
+        "started": false
+      },
+      {
+        "playerId": "16582",
+        "points": 4.50,
+        "started": false
+      },
+      {
+        "playerId": "16213",
+        "points": 18.50,
+        "started": false
+      },
+      {
+        "playerId": "0532",
+        "points": -4.00,
+        "started": false
+      },
+      {
+        "playerId": "15721",
+        "points": 3.70,
+        "started": false
+      },
+      {
+        "playerId": "16080",
+        "points": 0.90,
+        "started": false
+      },
+      {
+        "playerId": "13772",
+        "points": 5.50,
+        "started": false
+      }
+    ]
+  },
+  {
+    "week": 1,
+    "franchiseId": "0002",
+    "score": 87.7,
+    "players": [
+      {
+        "playerId": "14777",
+        "points": 12.40,
+        "started": true
+      },
+      {
+        "playerId": "13604",
+        "points": 8.50,
+        "started": true
+      },
+      {
+        "playerId": "16181",
+        "points": 16.30,
+        "started": true
+      },
+      {
+        "playerId": "16190",
+        "points": 26.50,
+        "started": true
+      },
+      {
+        "playerId": "15282",
+        "points": 6.80,
+        "started": true
+      },
+      {
+        "playerId": "13299",
+        "points": 2.20,
+        "started": true
+      },
+      {
+        "playerId": "16681",
+        "points": 7.00,
+        "started": true
+      },
+      {
+        "playerId": "0524",
+        "points": 8.00,
+        "started": true
+      },
+      {
+        "playerId": "17497",
+        "points": 5.80,
+        "started": false
+      },
+      {
+        "playerId": "16604",
+        "points": 3.70,
+        "started": false
+      },
+      {
+        "playerId": "14842",
+        "points": 7.30,
+        "started": false
+      },
+      {
+        "playerId": "16186",
+        "points": 0.00,
+        "started": false
+      },
+      {
+        "playerId": "17256",
+        "points": 12.10,
+        "started": false
+      },
+      {
+        "playerId": "15712",
+        "points": 8.00,
+        "started": false
+      },
+      {
+        "playerId": "14861",
+        "points": 12.90,
+        "started": false
+      },
+      {
+        "playerId": "14059",
+        "points": 7.90,
+        "started": false
+      }
+    ]
+  },
+  {
+    "week": 1,
+    "franchiseId": "0006",
+    "score": 103.7,
+    "players": [
+      {
+        "playerId": "14783",
+        "points": 23.30,
+        "started": true
+      },
+      {
+        "playerId": "16161",
+        "points": 27.30,
+        "started": true
+      },
+      {
+        "playerId": "15256",
+        "points": 21.70,
+        "started": true
+      },
+      {
+        "playerId": "14109",
+        "points": 2.40,
+        "started": true
+      },
+      {
+        "playerId": "15756",
+        "points": 6.50,
+        "started": true
+      },
+      {
+        "playerId": "16222",
+        "points": 8.00,
+        "started": true
+      },
+      {
+        "playerId": "17222",
+        "points": 12.50,
+        "started": true
+      },
+      {
+        "playerId": "0528",
+        "points": 2.00,
+        "started": true
+      },
+      {
+        "playerId": "14073",
+        "points": 0,
+        "started": false
+      },
+      {
+        "playerId": "13116",
+        "points": 20.40,
+        "started": false
+      },
+      {
+        "playerId": "15799",
+        "points": 1.60,
+        "started": false
+      },
+      {
+        "playerId": "17501",
+        "points": 5.80,
+        "started": false
+      },
+      {
+        "playerId": "17499",
+        "points": 1.00,
+        "started": false
+      },
+      {
+        "playerId": "16809",
+        "points": 32.80,
+        "started": false
+      },
+      {
+        "playerId": "16164",
+        "points": 0.30,
+        "started": false
+      },
+      {
+        "playerId": "13164",
+        "points": 4.50,
+        "started": false
+      }
+    ]
+  },
+  {
+    "week": 1,
+    "franchiseId": "0003",
+    "score": 105.3,
+    "players": [
+      {
+        "playerId": "14779",
+        "points": 11.80,
+        "started": true
+      },
+      {
+        "playerId": "14802",
+        "points": 23.60,
+        "started": true
+      },
+      {
+        "playerId": "15710",
+        "points": 14.00,
+        "started": true
+      },
+      {
+        "playerId": "11675",
+        "points": 4.10,
+        "started": true
+      },
+      {
+        "playerId": "15751",
+        "points": 4.50,
+        "started": true
+      },
+      {
+        "playerId": "15798",
+        "points": 23.80,
+        "started": true
+      },
+      {
+        "playerId": "12860",
+        "points": 8.50,
+        "started": true
+      },
+      {
+        "playerId": "0513",
+        "points": 15.00,
+        "started": true
+      },
+      {
+        "playerId": "17045",
+        "points": 14.10,
+        "started": false
+      },
+      {
+        "playerId": "13163",
+        "points": 6.30,
+        "started": false
+      },
+      {
+        "playerId": "16184",
+        "points": 3.50,
+        "started": false
+      },
+      {
+        "playerId": "15972",
+        "points": 11.90,
+        "started": false
+      },
+      {
+        "playerId": "16174",
+        "points": 2.30,
+        "started": false
+      },
+      {
+        "playerId": "16165",
+        "points": 3.40,
+        "started": false
+      },
+      {
+        "playerId": "15694",
+        "points": 15.20,
+        "started": false
+      },
+      {
+        "playerId": "16193",
+        "points": 2.60,
+        "started": false
+      }
+    ]
+  },
+  {
+    "week": 1,
+    "franchiseId": "0007",
+    "score": 137.6,
+    "players": [
+      {
+        "playerId": "12611",
+        "points": 15.00,
+        "started": true
+      },
+      {
+        "playerId": "14797",
+        "points": 34.90,
+        "started": true
+      },
+      {
+        "playerId": "15711",
+        "points": 35.60,
+        "started": true
+      },
+      {
+        "playerId": "17081",
+        "points": 8.80,
+        "started": true
+      },
+      {
+        "playerId": "15287",
+        "points": 23.70,
+        "started": true
+      },
+      {
+        "playerId": "11244",
+        "points": 8.60,
+        "started": true
+      },
+      {
+        "playerId": "16680",
+        "points": 10.00,
+        "started": true
+      },
+      {
+        "playerId": "0518",
+        "points": 1.00,
+        "started": true
+      },
+      {
+        "playerId": "13589",
+        "points": 33.40,
+        "started": false
+      },
+      {
+        "playerId": "17052",
+        "points": 9.30,
+        "started": false
+      },
+      {
+        "playerId": "16614",
+        "points": 3.80,
+        "started": false
+      },
+      {
+        "playerId": "14085",
+        "points": 3.90,
+        "started": false
+      },
+      {
+        "playerId": "17066",
+        "points": 22.40,
+        "started": false
+      },
+      {
+        "playerId": "17514",
+        "points": 0.00,
+        "started": false
+      },
+      {
+        "playerId": "16195",
+        "points": 14.30,
+        "started": false
+      },
+      {
+        "playerId": "16269",
+        "points": 9.30,
+        "started": false
+      }
+    ]
+  },
+  {
+    "week": 1,
+    "franchiseId": "0010",
+    "score": 89.6,
+    "players": [
+      {
+        "playerId": "12620",
+        "points": 13.20,
+        "started": true
+      },
+      {
+        "playerId": "17044",
+        "points": 8.30,
+        "started": true
+      },
+      {
+        "playerId": "17473",
+        "points": 6.80,
+        "started": true
+      },
+      {
+        "playerId": "14832",
+        "points": 12.90,
+        "started": true
+      },
+      {
+        "playerId": "15753",
+        "points": 10.90,
+        "started": true
+      },
+      {
+        "playerId": "15794",
+        "points": 20.00,
+        "started": true
+      },
+      {
+        "playerId": "17668",
+        "points": 11.50,
+        "started": true
+      },
+      {
+        "playerId": "0531",
+        "points": 6.00,
+        "started": true
+      },
+      {
+        "playerId": "11671",
+        "points": 13.90,
+        "started": false
+      },
+      {
+        "playerId": "16187",
+        "points": 4.70,
+        "started": false
+      },
+      {
+        "playerId": "17068",
+        "points": 6.10,
+        "started": false
+      },
+      {
+        "playerId": "13671",
+        "points": 6.90,
+        "started": false
+      },
+      {
+        "playerId": "17053",
+        "points": 4.50,
+        "started": false
+      },
+      {
+        "playerId": "17039",
+        "points": 23.40,
+        "started": false
+      },
+      {
+        "playerId": "16287",
+        "points": 3.70,
+        "started": false
+      },
+      {
+        "playerId": "17498",
+        "points": 0,
+        "started": false
+      }
+    ]
+  },
+  {
+    "week": 1,
+    "franchiseId": "0008",
+    "score": 87.1,
+    "players": [
+      {
+        "playerId": "13590",
+        "points": 10.20,
+        "started": true
+      },
+      {
+        "playerId": "15253",
+        "points": 11.30,
+        "started": true
+      },
+      {
+        "playerId": "17042",
+        "points": 32.70,
+        "started": true
+      },
+      {
+        "playerId": "17071",
+        "points": 8.00,
+        "started": true
+      },
+      {
+        "playerId": "16211",
+        "points": 9.90,
+        "started": true
+      },
+      {
+        "playerId": "15329",
+        "points": 0.00,
+        "started": true
+      },
+      {
+        "playerId": "12437",
+        "points": 7.00,
+        "started": true
+      },
+      {
+        "playerId": "0504",
+        "points": 8.00,
+        "started": true
+      },
+      {
+        "playerId": "13635",
+        "points": 18.50,
+        "started": false
+      },
+      {
+        "playerId": "16206",
+        "points": 8.10,
+        "started": false
+      },
+      {
+        "playerId": "15698",
+        "points": 19.70,
+        "started": false
+      },
+      {
+        "playerId": "12186",
+        "points": 13.50,
+        "started": false
+      },
+      {
+        "playerId": "16597",
+        "points": 6.70,
+        "started": false
+      },
+      {
+        "playerId": "14136",
+        "points": 15.00,
+        "started": false
+      },
+      {
+        "playerId": "14138",
+        "points": 11.60,
+        "started": false
+      },
+      {
+        "playerId": "14095",
+        "points": 0,
+        "started": false
+      }
+    ]
+  },
+  {
+    "week": 1,
+    "franchiseId": "0011",
+    "score": 119.1,
+    "players": [
+      {
+        "playerId": "16579",
+        "points": 35.40,
+        "started": true
+      },
+      {
+        "playerId": "13130",
+        "points": 11.30,
+        "started": true
+      },
+      {
+        "playerId": "15259",
+        "points": 12.00,
+        "started": true
+      },
+      {
+        "playerId": "15762",
+        "points": 4.30,
+        "started": true
+      },
+      {
+        "playerId": "16194",
+        "points": 8.90,
+        "started": true
+      },
+      {
+        "playerId": "13674",
+        "points": 21.70,
+        "started": true
+      },
+      {
+        "playerId": "14717",
+        "points": 10.50,
+        "started": true
+      },
+      {
+        "playerId": "0515",
+        "points": 15.00,
+        "started": true
+      },
+      {
+        "playerId": "16192",
+        "points": 16.80,
+        "started": false
+      },
+      {
+        "playerId": "13630",
+        "points": 2.10,
+        "started": false
+      },
+      {
+        "playerId": "9431",
+        "points": 3.00,
+        "started": false
+      },
+      {
+        "playerId": "13319",
+        "points": 10.00,
+        "started": false
+      },
+      {
+        "playerId": "16684",
+        "points": 4.80,
+        "started": false
+      },
+      {
+        "playerId": "17105",
+        "points": 4.80,
+        "started": false
+      },
+      {
+        "playerId": "14833",
+        "points": 3.60,
+        "started": false
+      },
+      {
+        "playerId": "7836",
+        "points": 11.00,
+        "started": false
+      }
+    ]
+  },
+  {
+    "week": 1,
+    "franchiseId": "0009",
+    "score": 120.7,
+    "players": [
+      {
+        "playerId": "15237",
+        "points": 24.40,
+        "started": true
+      },
+      {
+        "playerId": "16167",
+        "points": 8.60,
+        "started": true
+      },
+      {
+        "playerId": "12626",
+        "points": 37.80,
+        "started": true
+      },
+      {
+        "playerId": "15754",
+        "points": 26.20,
+        "started": true
+      },
+      {
+        "playerId": "15284",
+        "points": 0.70,
+        "started": true
+      },
+      {
+        "playerId": "17104",
+        "points": 0.00,
+        "started": true
+      },
+      {
+        "playerId": "11936",
+        "points": 8.00,
+        "started": true
+      },
+      {
+        "playerId": "0509",
+        "points": 15.00,
+        "started": true
+      },
+      {
+        "playerId": "15768",
+        "points": 8.10,
+        "started": false
+      },
+      {
+        "playerId": "16593",
+        "points": 5.40,
+        "started": false
+      },
+      {
+        "playerId": "17075",
+        "points": 12.50,
+        "started": false
+      },
+      {
+        "playerId": "15757",
+        "points": 6.30,
+        "started": false
+      },
+      {
+        "playerId": "14782",
+        "points": 16.90,
+        "started": false
+      },
+      {
+        "playerId": "12676",
+        "points": 4.10,
+        "started": false
+      },
+      {
+        "playerId": "17477",
+        "points": 0.00,
+        "started": false
+      },
+      {
+        "playerId": "16212",
+        "points": 6.20,
+        "started": false
+      }
+    ]
+  },
+  {
+    "week": 1,
+    "franchiseId": "0012",
+    "score": 77.3,
+    "players": [
+      {
+        "playerId": "13593",
+        "points": 22.80,
+        "started": true
+      },
+      {
+        "playerId": "15715",
+        "points": 8.40,
+        "started": true
+      },
+      {
+        "playerId": "16598",
+        "points": 16.80,
+        "started": true
+      },
+      {
+        "playerId": "14104",
+        "points": 4.10,
+        "started": true
+      },
+      {
+        "playerId": "16615",
+        "points": 9.90,
+        "started": true
+      },
+      {
+        "playerId": "16214",
+        "points": 7.30,
+        "started": true
+      },
+      {
+        "playerId": "16846",
+        "points": 7.00,
+        "started": true
+      },
+      {
+        "playerId": "0511",
+        "points": 1.00,
+        "started": true
+      },
+      {
+        "playerId": "16616",
+        "points": 6.20,
+        "started": false
+      },
+      {
+        "playerId": "17043",
+        "points": 0,
+        "started": false
+      },
+      {
+        "playerId": "16620",
+        "points": 3.30,
+        "started": false
+      },
+      {
+        "playerId": "15761",
+        "points": 7.00,
+        "started": false
+      },
+      {
+        "playerId": "14860",
+        "points": 0.00,
+        "started": false
+      },
+      {
+        "playerId": "16603",
+        "points": 0.30,
+        "started": false
+      },
+      {
+        "playerId": "16169",
+        "points": 0,
+        "started": false
+      },
+      {
+        "playerId": "16150",
+        "points": 14.60,
+        "started": false
+      }
+    ]
+  },
+  {
+    "week": 2,
+    "franchiseId": "0001",
+    "score": 69.5,
+    "players": [
+      {
+        "playerId": "16580",
+        "points": 6.60,
+        "started": true
+      },
+      {
+        "playerId": "14071",
+        "points": 3.40,
+        "started": true
+      },
+      {
+        "playerId": "15281",
+        "points": 23.00,
+        "started": true
+      },
+      {
+        "playerId": "15779",
+        "points": 11.10,
+        "started": true
+      },
+      {
+        "playerId": "14102",
+        "points": 4.70,
+        "started": true
+      },
+      {
+        "playerId": "17543",
+        "points": 2.70,
+        "started": true
+      },
+      {
+        "playerId": "13719",
+        "points": 5.00,
+        "started": true
+      },
+      {
+        "playerId": "0510",
+        "points": 13.00,
+        "started": true
+      },
+      {
+        "playerId": "16641",
+        "points": 0,
+        "started": false
+      },
+      {
+        "playerId": "17051",
+        "points": 7.30,
+        "started": false
+      },
+      {
+        "playerId": "17070",
+        "points": 4.70,
+        "started": false
+      },
+      {
+        "playerId": "16618",
+        "points": 5.50,
+        "started": false
+      },
+      {
+        "playerId": "14823",
+        "points": 5.40,
+        "started": false
+      },
+      {
+        "playerId": "17482",
+        "points": 0.70,
+        "started": false
+      },
+      {
+        "playerId": "16596",
+        "points": 8.00,
+        "started": false
+      },
+      {
+        "playerId": "17485",
+        "points": 2.50,
+        "started": false
+      }
+    ]
+  },
+  {
+    "week": 2,
+    "franchiseId": "0007",
+    "score": 148.4,
+    "players": [
+      {
+        "playerId": "13589",
+        "points": 39.10,
+        "started": true
+      },
+      {
+        "playerId": "14797",
+        "points": 10.40,
+        "started": true
+      },
+      {
+        "playerId": "15711",
+        "points": 23.80,
+        "started": true
+      },
+      {
+        "playerId": "17081",
+        "points": 8.80,
+        "started": true
+      },
+      {
+        "playerId": "15287",
+        "points": 33.70,
+        "started": true
+      },
+      {
+        "playerId": "11244",
+        "points": 20.60,
+        "started": true
+      },
+      {
+        "playerId": "16680",
+        "points": 7.00,
+        "started": true
+      },
+      {
+        "playerId": "0518",
+        "points": 5.00,
+        "started": true
+      },
+      {
+        "playerId": "17052",
+        "points": 13.20,
+        "started": false
+      },
+      {
+        "playerId": "16614",
+        "points": 0.00,
+        "started": false
+      },
+      {
+        "playerId": "14085",
+        "points": 7.00,
+        "started": false
+      },
+      {
+        "playerId": "17066",
+        "points": 6.80,
+        "started": false
+      },
+      {
+        "playerId": "12611",
+        "points": 27.60,
+        "started": false
+      },
+      {
+        "playerId": "16195",
+        "points": 9.90,
+        "started": false
+      },
+      {
+        "playerId": "16269",
+        "points": 2.70,
+        "started": false
+      },
+      {
+        "playerId": "17599",
+        "points": 2.90,
+        "started": false
+      }
+    ]
+  },
+  {
+    "week": 2,
+    "franchiseId": "0010",
+    "score": 124.9,
+    "players": [
+      {
+        "playerId": "12620",
+        "points": 27.90,
+        "started": true
+      },
+      {
+        "playerId": "17044",
+        "points": 16.50,
+        "started": true
+      },
+      {
+        "playerId": "11671",
+        "points": 6.90,
+        "started": true
+      },
+      {
+        "playerId": "14832",
+        "points": 34.30,
+        "started": true
+      },
+      {
+        "playerId": "15753",
+        "points": 14.20,
+        "started": true
+      },
+      {
+        "playerId": "15794",
+        "points": 14.10,
+        "started": true
+      },
+      {
+        "playerId": "17668",
+        "points": 8.00,
+        "started": true
+      },
+      {
+        "playerId": "0531",
+        "points": 3.00,
+        "started": true
+      },
+      {
+        "playerId": "17473",
+        "points": 4.50,
+        "started": false
+      },
+      {
+        "playerId": "16187",
+        "points": 10.70,
+        "started": false
+      },
+      {
+        "playerId": "17068",
+        "points": 0,
+        "started": false
+      },
+      {
+        "playerId": "13671",
+        "points": 7.90,
+        "started": false
+      },
+      {
+        "playerId": "17053",
+        "points": 6.00,
+        "started": false
+      },
+      {
+        "playerId": "17039",
+        "points": 20.70,
+        "started": false
+      },
+      {
+        "playerId": "16287",
+        "points": 23.40,
+        "started": false
+      },
+      {
+        "playerId": "16788",
+        "points": 8.90,
+        "started": false
+      }
+    ]
+  },
+  {
+    "week": 2,
+    "franchiseId": "0004",
+    "score": 103.6,
+    "players": [
+      {
+        "playerId": "17032",
+        "points": 0.60,
+        "started": true
+      },
+      {
+        "playerId": "15708",
+        "points": 11.70,
+        "started": true
+      },
+      {
+        "playerId": "15261",
+        "points": 13.40,
+        "started": true
+      },
+      {
+        "playerId": "14836",
+        "points": 7.00,
+        "started": true
+      },
+      {
+        "playerId": "16185",
+        "points": 41.00,
+        "started": true
+      },
+      {
+        "playerId": "17102",
+        "points": 11.40,
+        "started": true
+      },
+      {
+        "playerId": "16414",
+        "points": 14.50,
+        "started": true
+      },
+      {
+        "playerId": "0514",
+        "points": 4.00,
+        "started": true
+      },
+      {
+        "playerId": "17472",
+        "points": 6.00,
+        "started": false
+      },
+      {
+        "playerId": "15742",
+        "points": 8.70,
+        "started": false
+      },
+      {
+        "playerId": "16188",
+        "points": 1.90,
+        "started": false
+      },
+      {
+        "playerId": "14127",
+        "points": 3.30,
+        "started": false
+      },
+      {
+        "playerId": "14056",
+        "points": 0,
+        "started": false
+      },
+      {
+        "playerId": "16628",
+        "points": 0.00,
+        "started": false
+      },
+      {
+        "playerId": "16178",
+        "points": 4.40,
+        "started": false
+      },
+      {
+        "playerId": "17500",
+        "points": 18.00,
+        "started": false
+      }
+    ]
+  },
+  {
+    "week": 2,
+    "franchiseId": "0011",
+    "score": 76.2,
+    "players": [
+      {
+        "playerId": "16579",
+        "points": 6.80,
+        "started": true
+      },
+      {
+        "playerId": "13130",
+        "points": 20.60,
+        "started": true
+      },
+      {
+        "playerId": "15259",
+        "points": 3.10,
+        "started": true
+      },
+      {
+        "playerId": "15762",
+        "points": 7.00,
+        "started": true
+      },
+      {
+        "playerId": "16194",
+        "points": 10.30,
+        "started": true
+      },
+      {
+        "playerId": "13674",
+        "points": 0.90,
+        "started": true
+      },
+      {
+        "playerId": "14717",
+        "points": 14.50,
+        "started": true
+      },
+      {
+        "playerId": "0515",
+        "points": 13.00,
+        "started": true
+      },
+      {
+        "playerId": "16192",
+        "points": 13.30,
+        "started": false
+      },
+      {
+        "playerId": "13630",
+        "points": 4.00,
+        "started": false
+      },
+      {
+        "playerId": "9431",
+        "points": 24.80,
+        "started": false
+      },
+      {
+        "playerId": "13319",
+        "points": 13.50,
+        "started": false
+      },
+      {
+        "playerId": "16684",
+        "points": 6.70,
+        "started": false
+      },
+      {
+        "playerId": "17105",
+        "points": 2.30,
+        "started": false
+      },
+      {
+        "playerId": "14833",
+        "points": 0.00,
+        "started": false
+      },
+      {
+        "playerId": "7836",
+        "points": 2.70,
+        "started": false
+      }
+    ]
+  },
+  {
+    "week": 2,
+    "franchiseId": "0005",
+    "score": 112.5,
+    "players": [
+      {
+        "playerId": "16581",
+        "points": 14.10,
+        "started": true
+      },
+      {
+        "playerId": "16162",
+        "points": 20.30,
+        "started": true
+      },
+      {
+        "playerId": "14835",
+        "points": 12.00,
+        "started": true
+      },
+      {
+        "playerId": "15789",
+        "points": 12.10,
+        "started": true
+      },
+      {
+        "playerId": "16213",
+        "points": 19.00,
+        "started": true
+      },
+      {
+        "playerId": "13772",
+        "points": 23.00,
+        "started": true
+      },
+      {
+        "playerId": "15979",
+        "points": 2.00,
+        "started": true
+      },
+      {
+        "playerId": "0530",
+        "points": 10.00,
+        "started": true
+      },
+      {
+        "playerId": "15290",
+        "points": 0,
+        "started": false
+      },
+      {
+        "playerId": "16627",
+        "points": 5.00,
+        "started": false
+      },
+      {
+        "playerId": "14800",
+        "points": 3.60,
+        "started": false
+      },
+      {
+        "playerId": "16582",
+        "points": 12.20,
+        "started": false
+      },
+      {
+        "playerId": "0532",
+        "points": 8.00,
+        "started": false
+      },
+      {
+        "playerId": "15721",
+        "points": 11.30,
+        "started": false
+      },
+      {
+        "playerId": "16193",
+        "points": 5.20,
+        "started": false
+      },
+      {
+        "playerId": "0524",
+        "points": 17.00,
+        "started": false
+      }
+    ]
+  },
+  {
+    "week": 2,
+    "franchiseId": "0012",
+    "score": 82.2,
+    "players": [
+      {
+        "playerId": "13593",
+        "points": 13.20,
+        "started": true
+      },
+      {
+        "playerId": "15715",
+        "points": 23.40,
+        "started": true
+      },
+      {
+        "playerId": "16598",
+        "points": 11.00,
+        "started": true
+      },
+      {
+        "playerId": "16615",
+        "points": 0.60,
+        "started": true
+      },
+      {
+        "playerId": "16616",
+        "points": 5.80,
+        "started": true
+      },
+      {
+        "playerId": "16214",
+        "points": 14.20,
+        "started": true
+      },
+      {
+        "playerId": "16846",
+        "points": 7.00,
+        "started": true
+      },
+      {
+        "playerId": "0523",
+        "points": 7.00,
+        "started": true
+      },
+      {
+        "playerId": "17043",
+        "points": 13.60,
+        "started": false
+      },
+      {
+        "playerId": "16620",
+        "points": 11.00,
+        "started": false
+      },
+      {
+        "playerId": "15761",
+        "points": 5.30,
+        "started": false
+      },
+      {
+        "playerId": "14860",
+        "points": 0,
+        "started": false
+      },
+      {
+        "playerId": "16603",
+        "points": 0.00,
+        "started": false
+      },
+      {
+        "playerId": "0511",
+        "points": 10.00,
+        "started": false
+      },
+      {
+        "playerId": "16169",
+        "points": 0,
+        "started": false
+      },
+      {
+        "playerId": "16150",
+        "points": 14.60,
+        "started": false
+      }
+    ]
+  },
+  {
+    "week": 2,
+    "franchiseId": "0006",
+    "score": 66.9,
+    "players": [
+      {
+        "playerId": "14783",
+        "points": 14.40,
+        "started": true
+      },
+      {
+        "playerId": "16161",
+        "points": 9.60,
+        "started": true
+      },
+      {
+        "playerId": "15256",
+        "points": 6.50,
+        "started": true
+      },
+      {
+        "playerId": "16809",
+        "points": 10.60,
+        "started": true
+      },
+      {
+        "playerId": "15756",
+        "points": 4.30,
+        "started": true
+      },
+      {
+        "playerId": "16222",
+        "points": 2.50,
+        "started": true
+      },
+      {
+        "playerId": "12860",
+        "points": 6.00,
+        "started": true
+      },
+      {
+        "playerId": "0528",
+        "points": 13.00,
+        "started": true
+      },
+      {
+        "playerId": "14109",
+        "points": 6.00,
+        "started": false
+      },
+      {
+        "playerId": "14073",
+        "points": 0,
+        "started": false
+      },
+      {
+        "playerId": "13116",
+        "points": 26.40,
+        "started": false
+      },
+      {
+        "playerId": "15799",
+        "points": 18.30,
+        "started": false
+      },
+      {
+        "playerId": "17501",
+        "points": 5.20,
+        "started": false
+      },
+      {
+        "playerId": "17499",
+        "points": 1.40,
+        "started": false
+      },
+      {
+        "playerId": "17512",
+        "points": 3.90,
+        "started": false
+      },
+      {
+        "playerId": "13132",
+        "points": 4.70,
+        "started": false
+      }
+    ]
+  },
+  {
+    "week": 2,
+    "franchiseId": "0002",
+    "score": 78.9,
+    "players": [
+      {
+        "playerId": "14777",
+        "points": 14.80,
+        "started": true
+      },
+      {
+        "playerId": "13604",
+        "points": 2.50,
+        "started": true
+      },
+      {
+        "playerId": "16181",
+        "points": 9.70,
+        "started": true
+      },
+      {
+        "playerId": "15282",
+        "points": 25.70,
+        "started": true
+      },
+      {
+        "playerId": "17497",
+        "points": 4.20,
+        "started": true
+      },
+      {
+        "playerId": "13299",
+        "points": 16.00,
+        "started": true
+      },
+      {
+        "playerId": "16843",
+        "points": 4.00,
+        "started": true
+      },
+      {
+        "playerId": "0525",
+        "points": 2.00,
+        "started": true
+      },
+      {
+        "playerId": "16190",
+        "points": 0,
+        "started": false
+      },
+      {
+        "playerId": "16604",
+        "points": 7.60,
+        "started": false
+      },
+      {
+        "playerId": "14842",
+        "points": 0,
+        "started": false
+      },
+      {
+        "playerId": "16186",
+        "points": 3.10,
+        "started": false
+      },
+      {
+        "playerId": "17256",
+        "points": 5.30,
+        "started": false
+      },
+      {
+        "playerId": "15712",
+        "points": 2.90,
+        "started": false
+      },
+      {
+        "playerId": "14861",
+        "points": 8.60,
+        "started": false
+      },
+      {
+        "playerId": "14059",
+        "points": 10.00,
+        "started": false
+      }
+    ]
+  },
+  {
+    "week": 2,
+    "franchiseId": "0008",
+    "score": 75.8,
+    "players": [
+      {
+        "playerId": "15698",
+        "points": 26.50,
+        "started": true
+      },
+      {
+        "playerId": "15253",
+        "points": 6.10,
+        "started": true
+      },
+      {
+        "playerId": "17042",
+        "points": 8.30,
+        "started": true
+      },
+      {
+        "playerId": "13635",
+        "points": -0.10,
+        "started": true
+      },
+      {
+        "playerId": "14136",
+        "points": 5.00,
+        "started": true
+      },
+      {
+        "playerId": "13672",
+        "points": 0.00,
+        "started": true
+      },
+      {
+        "playerId": "12437",
+        "points": 7.00,
+        "started": true
+      },
+      {
+        "playerId": "0504",
+        "points": 23.00,
+        "started": true
+      },
+      {
+        "playerId": "16211",
+        "points": 0,
+        "started": false
+      },
+      {
+        "playerId": "17071",
+        "points": 12.60,
+        "started": false
+      },
+      {
+        "playerId": "15329",
+        "points": 2.00,
+        "started": false
+      },
+      {
+        "playerId": "16206",
+        "points": 2.80,
+        "started": false
+      },
+      {
+        "playerId": "12186",
+        "points": 19.20,
+        "started": false
+      },
+      {
+        "playerId": "16597",
+        "points": 1.60,
+        "started": false
+      },
+      {
+        "playerId": "13590",
+        "points": 10.90,
+        "started": false
+      },
+      {
+        "playerId": "14138",
+        "points": 4.40,
+        "started": false
+      }
+    ]
+  },
+  {
+    "week": 2,
+    "franchiseId": "0003",
+    "score": 103.7,
+    "players": [
+      {
+        "playerId": "14779",
+        "points": 6.60,
+        "started": true
+      },
+      {
+        "playerId": "14802",
+        "points": 27.20,
+        "started": true
+      },
+      {
+        "playerId": "15710",
+        "points": 14.70,
+        "started": true
+      },
+      {
+        "playerId": "11675",
+        "points": 38.50,
+        "started": true
+      },
+      {
+        "playerId": "15751",
+        "points": 6.90,
+        "started": true
+      },
+      {
+        "playerId": "15798",
+        "points": 5.80,
+        "started": true
+      },
+      {
+        "playerId": "14983",
+        "points": 5.00,
+        "started": true
+      },
+      {
+        "playerId": "0512",
+        "points": -1.00,
+        "started": true
+      },
+      {
+        "playerId": "17045",
+        "points": 7.50,
+        "started": false
+      },
+      {
+        "playerId": "13163",
+        "points": 7.30,
+        "started": false
+      },
+      {
+        "playerId": "16184",
+        "points": 0.90,
+        "started": false
+      },
+      {
+        "playerId": "16165",
+        "points": 8.00,
+        "started": false
+      },
+      {
+        "playerId": "15694",
+        "points": 11.10,
+        "started": false
+      },
+      {
+        "playerId": "13066",
+        "points": 6.50,
+        "started": false
+      },
+      {
+        "playerId": "15331",
+        "points": 5.40,
+        "started": false
+      },
+      {
+        "playerId": "16148",
+        "points": 22.10,
+        "started": false
+      }
+    ]
+  },
+  {
+    "week": 2,
+    "franchiseId": "0009",
+    "score": 68.6,
+    "players": [
+      {
+        "playerId": "15237",
+        "points": 4.90,
+        "started": true
+      },
+      {
+        "playerId": "16167",
+        "points": 10.80,
+        "started": true
+      },
+      {
+        "playerId": "12626",
+        "points": 16.20,
+        "started": true
+      },
+      {
+        "playerId": "17075",
+        "points": 7.80,
+        "started": true
+      },
+      {
+        "playerId": "15754",
+        "points": 18.60,
+        "started": true
+      },
+      {
+        "playerId": "17104",
+        "points": 0.80,
+        "started": true
+      },
+      {
+        "playerId": "11936",
+        "points": 4.50,
+        "started": true
+      },
+      {
+        "playerId": "0509",
+        "points": 5.00,
+        "started": true
+      },
+      {
+        "playerId": "15284",
+        "points": 20.80,
+        "started": false
+      },
+      {
+        "playerId": "15768",
+        "points": 1.60,
+        "started": false
+      },
+      {
+        "playerId": "16593",
+        "points": 9.70,
+        "started": false
+      },
+      {
+        "playerId": "15757",
+        "points": 1.40,
+        "started": false
+      },
+      {
+        "playerId": "14782",
+        "points": 12.80,
+        "started": false
+      },
+      {
+        "playerId": "12676",
+        "points": 5.50,
+        "started": false
+      },
+      {
+        "playerId": "17477",
+        "points": 13.30,
+        "started": false
+      },
+      {
+        "playerId": "16212",
+        "points": 3.80,
+        "started": false
+      }
+    ]
+  }
+]

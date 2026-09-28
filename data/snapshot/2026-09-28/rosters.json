@@ -1,0 +1,915 @@
+[
+  {
+    "franchiseId": "0001",
+    "slots": [
+      {
+        "playerId": "15281",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16641",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16580",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17051",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17070",
+        "status": "Roster"
+      },
+      {
+        "playerId": "14071",
+        "status": "Roster"
+      },
+      {
+        "playerId": "14102",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16618",
+        "status": "Roster"
+      },
+      {
+        "playerId": "14823",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15779",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17482",
+        "status": "Roster"
+      },
+      {
+        "playerId": "0510",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16596",
+        "status": "Roster"
+      },
+      {
+        "playerId": "13719",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17485",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17107",
+        "status": "Roster"
+      }
+    ]
+  },
+  {
+    "franchiseId": "0002",
+    "slots": [
+      {
+        "playerId": "16181",
+        "status": "Roster"
+      },
+      {
+        "playerId": "13604",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15282",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16190",
+        "status": "Roster"
+      },
+      {
+        "playerId": "14777",
+        "status": "Roster"
+      },
+      {
+        "playerId": "13299",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17497",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16604",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16186",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17256",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15712",
+        "status": "Roster"
+      },
+      {
+        "playerId": "14861",
+        "status": "Roster"
+      },
+      {
+        "playerId": "14059",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16843",
+        "status": "Roster"
+      },
+      {
+        "playerId": "0506",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16778",
+        "status": "Roster"
+      }
+    ]
+  },
+  {
+    "franchiseId": "0003",
+    "slots": [
+      {
+        "playerId": "14802",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15751",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15710",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17045",
+        "status": "Roster"
+      },
+      {
+        "playerId": "11675",
+        "status": "Roster"
+      },
+      {
+        "playerId": "13163",
+        "status": "Roster"
+      },
+      {
+        "playerId": "14779",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16184",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15798",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15694",
+        "status": "Roster"
+      },
+      {
+        "playerId": "13066",
+        "status": "Roster"
+      },
+      {
+        "playerId": "0512",
+        "status": "Roster"
+      },
+      {
+        "playerId": "14983",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16148",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16626",
+        "status": "Roster"
+      },
+      {
+        "playerId": "13592",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15972",
+        "status": "InjuredReserve"
+      }
+    ]
+  },
+  {
+    "franchiseId": "0004",
+    "slots": [
+      {
+        "playerId": "16185",
+        "status": "Roster"
+      },
+      {
+        "playerId": "14836",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15708",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17472",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17102",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15742",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16188",
+        "status": "Roster"
+      },
+      {
+        "playerId": "14127",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15261",
+        "status": "Roster"
+      },
+      {
+        "playerId": "14056",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16414",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16628",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17500",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16164",
+        "status": "Roster"
+      },
+      {
+        "playerId": "0527",
+        "status": "Roster"
+      },
+      {
+        "playerId": "12140",
+        "status": "Roster"
+      }
+    ]
+  },
+  {
+    "franchiseId": "0005",
+    "slots": [
+      {
+        "playerId": "16162",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15290",
+        "status": "Roster"
+      },
+      {
+        "playerId": "14835",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16627",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16581",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15789",
+        "status": "Roster"
+      },
+      {
+        "playerId": "14800",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16582",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16213",
+        "status": "Roster"
+      },
+      {
+        "playerId": "0532",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15721",
+        "status": "Roster"
+      },
+      {
+        "playerId": "13772",
+        "status": "Roster"
+      },
+      {
+        "playerId": "0530",
+        "status": "Roster"
+      },
+      {
+        "playerId": "0524",
+        "status": "Roster"
+      },
+      {
+        "playerId": "13354",
+        "status": "Roster"
+      },
+      {
+        "playerId": "11150",
+        "status": "Roster"
+      }
+    ]
+  },
+  {
+    "franchiseId": "0006",
+    "slots": [
+      {
+        "playerId": "16161",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15256",
+        "status": "Roster"
+      },
+      {
+        "playerId": "14109",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15756",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16222",
+        "status": "Roster"
+      },
+      {
+        "playerId": "14783",
+        "status": "Roster"
+      },
+      {
+        "playerId": "14073",
+        "status": "Roster"
+      },
+      {
+        "playerId": "13116",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15799",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17501",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17499",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16809",
+        "status": "Roster"
+      },
+      {
+        "playerId": "0528",
+        "status": "Roster"
+      },
+      {
+        "playerId": "12860",
+        "status": "Roster"
+      },
+      {
+        "playerId": "13132",
+        "status": "Roster"
+      }
+    ]
+  },
+  {
+    "franchiseId": "0007",
+    "slots": [
+      {
+        "playerId": "15287",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15711",
+        "status": "Roster"
+      },
+      {
+        "playerId": "13589",
+        "status": "Roster"
+      },
+      {
+        "playerId": "14797",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17081",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17052",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16614",
+        "status": "Roster"
+      },
+      {
+        "playerId": "11244",
+        "status": "Roster"
+      },
+      {
+        "playerId": "14085",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17066",
+        "status": "Roster"
+      },
+      {
+        "playerId": "12611",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16195",
+        "status": "Roster"
+      },
+      {
+        "playerId": "0518",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16269",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16680",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15293",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17514",
+        "status": "InjuredReserve"
+      }
+    ]
+  },
+  {
+    "franchiseId": "0008",
+    "slots": [
+      {
+        "playerId": "16211",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17042",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15253",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17071",
+        "status": "Roster"
+      },
+      {
+        "playerId": "13635",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15329",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16206",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15698",
+        "status": "Roster"
+      },
+      {
+        "playerId": "12186",
+        "status": "Roster"
+      },
+      {
+        "playerId": "14136",
+        "status": "Roster"
+      },
+      {
+        "playerId": "13590",
+        "status": "Roster"
+      },
+      {
+        "playerId": "14138",
+        "status": "Roster"
+      },
+      {
+        "playerId": "0504",
+        "status": "Roster"
+      },
+      {
+        "playerId": "12437",
+        "status": "Roster"
+      },
+      {
+        "playerId": "13672",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16432",
+        "status": "Roster"
+      }
+    ]
+  },
+  {
+    "franchiseId": "0009",
+    "slots": [
+      {
+        "playerId": "16167",
+        "status": "Roster"
+      },
+      {
+        "playerId": "12626",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15754",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17104",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15284",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15237",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16593",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17075",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15757",
+        "status": "Roster"
+      },
+      {
+        "playerId": "14782",
+        "status": "Roster"
+      },
+      {
+        "playerId": "12676",
+        "status": "Roster"
+      },
+      {
+        "playerId": "0509",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17099",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15319",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15368",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17474",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15768",
+        "status": "InjuredReserve"
+      },
+      {
+        "playerId": "17477",
+        "status": "InjuredReserve"
+      }
+    ]
+  },
+  {
+    "franchiseId": "0010",
+    "slots": [
+      {
+        "playerId": "14832",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17044",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15794",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17473",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15753",
+        "status": "Roster"
+      },
+      {
+        "playerId": "11671",
+        "status": "Roster"
+      },
+      {
+        "playerId": "12620",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16187",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17068",
+        "status": "Roster"
+      },
+      {
+        "playerId": "13671",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17053",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17039",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16287",
+        "status": "Roster"
+      },
+      {
+        "playerId": "0531",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17668",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16788",
+        "status": "Roster"
+      }
+    ]
+  },
+  {
+    "franchiseId": "0011",
+    "slots": [
+      {
+        "playerId": "13130",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15762",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15259",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16194",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16192",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16579",
+        "status": "Roster"
+      },
+      {
+        "playerId": "13630",
+        "status": "Roster"
+      },
+      {
+        "playerId": "13674",
+        "status": "Roster"
+      },
+      {
+        "playerId": "9431",
+        "status": "Roster"
+      },
+      {
+        "playerId": "13319",
+        "status": "Roster"
+      },
+      {
+        "playerId": "0515",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16684",
+        "status": "Roster"
+      },
+      {
+        "playerId": "14717",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17105",
+        "status": "Roster"
+      },
+      {
+        "playerId": "14833",
+        "status": "Roster"
+      },
+      {
+        "playerId": "7836",
+        "status": "Roster"
+      }
+    ]
+  },
+  {
+    "franchiseId": "0012",
+    "slots": [
+      {
+        "playerId": "15715",
+        "status": "Roster"
+      },
+      {
+        "playerId": "13593",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16615",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16598",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16616",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16214",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17043",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16620",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15761",
+        "status": "Roster"
+      },
+      {
+        "playerId": "14860",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16603",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16846",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16169",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16150",
+        "status": "Roster"
+      },
+      {
+        "playerId": "0523",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17222",
+        "status": "Roster"
+      },
+      {
+        "playerId": "14104",
+        "status": "InjuredReserve"
+      }
+    ]
+  },
+  {
+    "franchiseId": "0099",
+    "slots": [
+      {
+        "playerId": "16384",
+        "status": "Roster"
+      },
+      {
+        "playerId": "12616",
+        "status": "Roster"
+      },
+      {
+        "playerId": "15255",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16678",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16165",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16747",
+        "status": "Roster"
+      },
+      {
+        "playerId": "14080",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16201",
+        "status": "Roster"
+      },
+      {
+        "playerId": "14842",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17080",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17073",
+        "status": "Roster"
+      },
+      {
+        "playerId": "11222",
+        "status": "Roster"
+      },
+      {
+        "playerId": "17103",
+        "status": "Roster"
+      },
+      {
+        "playerId": "12263",
+        "status": "Roster"
+      },
+      {
+        "playerId": "16896",
+        "status": "Roster"
+      },
+      {
+        "playerId": "0513",
+        "status": "Roster"
+      }
+    ]
+  }
+]

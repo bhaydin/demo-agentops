@@ -1,0 +1,2792 @@
+[
+  {
+    "playerId": "10514",
+    "status": "RETIRED",
+    "details": "Personal",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "11317",
+    "status": "Questionable",
+    "details": "Hamstring",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "11348",
+    "status": "RETIRED",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "11640",
+    "status": "RETIRED",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "11644",
+    "status": "RETIRED",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "11706",
+    "status": "Out",
+    "details": "Knee",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "11768",
+    "status": "Questionable",
+    "details": "Foot",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "11938",
+    "status": "RETIRED",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "12229",
+    "status": "Questionable",
+    "details": "Ankle",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "12238",
+    "status": "IR",
+    "details": "Undisclosed",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "12361",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "12447",
+    "status": "Questionable",
+    "details": "Knee",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "12699",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "12782",
+    "status": "IR",
+    "details": "Groin",
+    "expectedReturn": "Nov 8, 2026"
+  },
+  {
+    "playerId": "12785",
+    "status": "IR",
+    "details": "Ankle",
+    "expectedReturn": "Oct 25, 2026"
+  },
+  {
+    "playerId": "12801",
+    "status": "Out",
+    "details": "Knee - ACL",
+    "expectedReturn": "Oct 18, 2026"
+  },
+  {
+    "playerId": "12923",
+    "status": "RETIRED",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "13124",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 5, 2026"
+  },
+  {
+    "playerId": "13131",
+    "status": "Out",
+    "details": "Foot",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "13143",
+    "status": "IR-R",
+    "details": "Quadriceps",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "13146",
+    "status": "IR-R",
+    "details": "Foot",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "13154",
+    "status": "Holdout",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "13192",
+    "status": "IR",
+    "details": "Lower Leg",
+    "expectedReturn": "Nov 1, 2026"
+  },
+  {
+    "playerId": "13198",
+    "status": "IR",
+    "details": "Knee",
+    "expectedReturn": "Oct 18, 2026"
+  },
+  {
+    "playerId": "13216",
+    "status": "Questionable",
+    "details": "Hamstring",
+    "expectedReturn": "Jul 1, 2026"
+  },
+  {
+    "playerId": "13224",
+    "status": "Questionable",
+    "details": "Knee - ACL",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "13228",
+    "status": "Out",
+    "details": "Forearm",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "13230",
+    "status": "IR",
+    "details": "Quadriceps",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "13260",
+    "status": "Out",
+    "details": "Hamstring",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "13262",
+    "status": "IR",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "13266",
+    "status": "RETIRED",
+    "details": "Personal",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "13294",
+    "status": "Out",
+    "details": "Hamstring",
+    "expectedReturn": "Oct 5, 2026"
+  },
+  {
+    "playerId": "13296",
+    "status": "IR-PUP",
+    "details": "Quadriceps",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "13308",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Jul 1, 2026"
+  },
+  {
+    "playerId": "13347",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "13377",
+    "status": "IR",
+    "details": "Groin",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "13414",
+    "status": "Questionable",
+    "details": "Shoulder",
+    "expectedReturn": "Jul 1, 2026"
+  },
+  {
+    "playerId": "13434",
+    "status": "IR",
+    "details": "Achilles",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "13633",
+    "status": "IR-R",
+    "details": "Calf",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "13641",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "13652",
+    "status": "Questionable",
+    "details": "Knee",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "13674",
+    "status": "Out",
+    "details": "Knee - MCL",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "13675",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "13683",
+    "status": "IR",
+    "details": "Quadriceps",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "13700",
+    "status": "IR-PUP",
+    "details": "Undisclosed",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "13702",
+    "status": "Questionable",
+    "details": "Concussion",
+    "expectedReturn": "Jul 1, 2026"
+  },
+  {
+    "playerId": "13713",
+    "status": "Out",
+    "details": "Groin",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "13715",
+    "status": "IR",
+    "details": "Hamstring",
+    "expectedReturn": "Oct 25, 2026"
+  },
+  {
+    "playerId": "13736",
+    "status": "IR-PUP",
+    "details": "Knee",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "13742",
+    "status": "Out",
+    "details": "Achilles",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "13748",
+    "status": "Questionable",
+    "details": "Knee",
+    "expectedReturn": "Jul 1, 2026"
+  },
+  {
+    "playerId": "13763",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Jul 1, 2026"
+  },
+  {
+    "playerId": "13767",
+    "status": "IR",
+    "details": "Foot",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "13777",
+    "status": "Questionable",
+    "details": "Knee",
+    "expectedReturn": "Jul 1, 2026"
+  },
+  {
+    "playerId": "13806",
+    "status": "IR-R",
+    "details": "Undisclosed",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "13862",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "13919",
+    "status": "Questionable",
+    "details": "Leg",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "13926",
+    "status": "Questionable",
+    "details": "Chest",
+    "expectedReturn": "Jul 1, 2026"
+  },
+  {
+    "playerId": "13952",
+    "status": "Out",
+    "details": "Groin",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "13953",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "13959",
+    "status": "RETIRED",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "13965",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "14060",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Jul 1, 2026"
+  },
+  {
+    "playerId": "14062",
+    "status": "RETIRED",
+    "details": "Personal",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "14073",
+    "status": "Suspended",
+    "details": "Personal",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "14080",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "14104",
+    "status": "IR",
+    "details": "Ankle",
+    "expectedReturn": "Nov 1, 2026"
+  },
+  {
+    "playerId": "14105",
+    "status": "Out",
+    "details": "Ankle",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "14110",
+    "status": "IR-R",
+    "details": "Undisclosed",
+    "expectedReturn": "Oct 8, 2026"
+  },
+  {
+    "playerId": "14112",
+    "status": "RETIRED",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "14118",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "14122",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "14141",
+    "status": "Questionable",
+    "details": "Ankle",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "14147",
+    "status": "Out",
+    "details": "Calf",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "14162",
+    "status": "Questionable",
+    "details": "Foot",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "14164",
+    "status": "Out",
+    "details": "Shoulder",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "14168",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "14179",
+    "status": "Out",
+    "details": "Calf",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "14205",
+    "status": "Questionable",
+    "details": "Leg",
+    "expectedReturn": "Aug 28, 2026"
+  },
+  {
+    "playerId": "14212",
+    "status": "Questionable",
+    "details": "Hamstring",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "14257",
+    "status": "IR-PUP",
+    "details": "Quadriceps",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "14292",
+    "status": "Questionable",
+    "details": "Foot",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "14302",
+    "status": "Out",
+    "details": "Ribs",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "14315",
+    "status": "Out",
+    "details": "Ankle",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "14452",
+    "status": "Questionable",
+    "details": "Foot",
+    "expectedReturn": "Jul 1, 2026"
+  },
+  {
+    "playerId": "14486",
+    "status": "IR",
+    "details": "Abdomen",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "14555",
+    "status": "IR",
+    "details": "Achilles",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "14798",
+    "status": "Questionable",
+    "details": "Neck",
+    "expectedReturn": "Jul 1, 2026"
+  },
+  {
+    "playerId": "14817",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "14823",
+    "status": "Out",
+    "details": "Toe",
+    "expectedReturn": "Oct 1, 2026"
+  },
+  {
+    "playerId": "14840",
+    "status": "Holdout",
+    "details": "Personal",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "14845",
+    "status": "Questionable",
+    "details": "Knee - ACL",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "14852",
+    "status": "Questionable",
+    "details": "Knee - ACL",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "14875",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "14882",
+    "status": "Questionable",
+    "details": "Pectoral",
+    "expectedReturn": "Sep 28, 2026"
+  },
+  {
+    "playerId": "14890",
+    "status": "Questionable",
+    "details": "Biceps",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "14902",
+    "status": "Questionable",
+    "details": "Concussion",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "14918",
+    "status": "IR",
+    "details": "Groin",
+    "expectedReturn": "Oct 25, 2026"
+  },
+  {
+    "playerId": "14948",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "14950",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "14978",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "15016",
+    "status": "RETIRED",
+    "details": "Personal",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "15081",
+    "status": "IR-PUP",
+    "details": "Neck",
+    "expectedReturn": "Oct 18, 2026"
+  },
+  {
+    "playerId": "15094",
+    "status": "IR",
+    "details": "Foot",
+    "expectedReturn": "Oct 26, 2026"
+  },
+  {
+    "playerId": "15097",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "15117",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "15239",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 5, 2026"
+  },
+  {
+    "playerId": "15250",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "15257",
+    "status": "IR",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "15258",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "15262",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "15263",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "15290",
+    "status": "Out",
+    "details": "Hamstring",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "15301",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "15330",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "15350",
+    "status": "IR-PUP",
+    "details": "Knee - ACL",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "15351",
+    "status": "IR-PUP",
+    "details": "Neck",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "15376",
+    "status": "IR",
+    "details": "Back",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "15379",
+    "status": "RETIRED",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "15380",
+    "status": "Out",
+    "details": "Hip",
+    "expectedReturn": "Oct 1, 2026"
+  },
+  {
+    "playerId": "15394",
+    "status": "IR",
+    "details": "Knee",
+    "expectedReturn": "Oct 18, 2026"
+  },
+  {
+    "playerId": "15401",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "15402",
+    "status": "Out",
+    "details": "Hamstring",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "15414",
+    "status": "Out",
+    "details": "Back",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "15419",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "15423",
+    "status": "IR",
+    "details": "Finger",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "15431",
+    "status": "IR-R",
+    "details": "Undisclosed",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "15440",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "15441",
+    "status": "IR",
+    "details": "Groin",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "15468",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "15476",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "15484",
+    "status": "Suspended",
+    "details": "Personal",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "15515",
+    "status": "Suspended",
+    "details": "Suspension",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "15604",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 20, 2026"
+  },
+  {
+    "playerId": "15699",
+    "status": "IR",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "15723",
+    "status": "IR",
+    "details": "Knee",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "15726",
+    "status": "IR",
+    "details": "Calf",
+    "expectedReturn": "Oct 25, 2026"
+  },
+  {
+    "playerId": "15733",
+    "status": "Questionable",
+    "details": "Hamstring",
+    "expectedReturn": "Sep 20, 2026"
+  },
+  {
+    "playerId": "15738",
+    "status": "IR",
+    "details": "Hip",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "15749",
+    "status": "IR",
+    "details": "Back",
+    "expectedReturn": "Dec 6, 2026"
+  },
+  {
+    "playerId": "15768",
+    "status": "IR",
+    "details": "Heel",
+    "expectedReturn": "Oct 25, 2026"
+  },
+  {
+    "playerId": "15777",
+    "status": "IR",
+    "details": "Knee",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "15782",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 20, 2026"
+  },
+  {
+    "playerId": "15795",
+    "status": "Out",
+    "details": "Forearm",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "15803",
+    "status": "IR",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "15804",
+    "status": "IR-R",
+    "details": "Back",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "15820",
+    "status": "Suspended",
+    "details": "Suspension",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "15822",
+    "status": "Out",
+    "details": "Calf",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "15826",
+    "status": "IR",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "15829",
+    "status": "Questionable",
+    "details": "Knee",
+    "expectedReturn": "Jul 1, 2026"
+  },
+  {
+    "playerId": "15839",
+    "status": "Out",
+    "details": "Illness",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "15852",
+    "status": "IR-PUP",
+    "details": "Calf",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "15858",
+    "status": "Questionable",
+    "details": "Knee",
+    "expectedReturn": "Sep 15, 2026"
+  },
+  {
+    "playerId": "15862",
+    "status": "Out",
+    "details": "Shoulder",
+    "expectedReturn": "Oct 5, 2026"
+  },
+  {
+    "playerId": "15864",
+    "status": "IR",
+    "details": "Achilles",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "15867",
+    "status": "IR-PUP",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "15870",
+    "status": "IR-R",
+    "details": "Knee",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "15871",
+    "status": "IR-PUP",
+    "details": "Knee",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "15872",
+    "status": "IR",
+    "details": "Knee",
+    "expectedReturn": "Dec 19, 2026"
+  },
+  {
+    "playerId": "15878",
+    "status": "IR",
+    "details": "Toe",
+    "expectedReturn": "Oct 25, 2026"
+  },
+  {
+    "playerId": "15879",
+    "status": "Questionable",
+    "details": "Achilles",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "15885",
+    "status": "IR-R",
+    "details": "Pectoral",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "15888",
+    "status": "Out",
+    "details": "Hamstring",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "15889",
+    "status": "Out",
+    "details": "Hamstring",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "15891",
+    "status": "RETIRED",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "15893",
+    "status": "Questionable",
+    "details": "Knee",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "15910",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 5, 2026"
+  },
+  {
+    "playerId": "15920",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "15925",
+    "status": "Questionable",
+    "details": "Achilles",
+    "expectedReturn": "Oct 18, 2026"
+  },
+  {
+    "playerId": "15926",
+    "status": "IR-R",
+    "details": "Undisclosed",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "15931",
+    "status": "IR",
+    "details": "Quadriceps",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "15945",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "15948",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "15953",
+    "status": "IR",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "15959",
+    "status": "Questionable",
+    "details": "Ankle",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "15972",
+    "status": "IR",
+    "details": "Thumb",
+    "expectedReturn": "Oct 25, 2026"
+  },
+  {
+    "playerId": "15973",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "15995",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "15998",
+    "status": "RETIRED",
+    "details": "Personal",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "16017",
+    "status": "IR",
+    "details": "Groin",
+    "expectedReturn": "Oct 25, 2026"
+  },
+  {
+    "playerId": "16026",
+    "status": "Questionable",
+    "details": "Hamstring",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "16036",
+    "status": "IR",
+    "details": "Knee - MCL",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "16037",
+    "status": "Questionable",
+    "details": "Neck",
+    "expectedReturn": "Jul 1, 2026"
+  },
+  {
+    "playerId": "16045",
+    "status": "IR-NFI",
+    "details": "Back",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "16059",
+    "status": "IR-R",
+    "details": "Shoulder",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "16063",
+    "status": "IR",
+    "details": "Ankle",
+    "expectedReturn": "Oct 25, 2026"
+  },
+  {
+    "playerId": "16064",
+    "status": "IR",
+    "details": "Leg",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "16075",
+    "status": "IR",
+    "details": "Neck",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "16077",
+    "status": "IR",
+    "details": "Foot",
+    "expectedReturn": "Dec 17, 2026"
+  },
+  {
+    "playerId": "16135",
+    "status": "IR",
+    "details": "Knee",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "16139",
+    "status": "IR-PUP",
+    "details": "Undisclosed",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "16159",
+    "status": "Out",
+    "details": "Personal",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16169",
+    "status": "IR-PUP",
+    "details": "Knee - ACL",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "16184",
+    "status": "Out",
+    "details": "Neck",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16189",
+    "status": "Out",
+    "details": "Foot",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16204",
+    "status": "IR-R",
+    "details": "Knee - ACL \u002B MCL",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "16207",
+    "status": "IR",
+    "details": "Thumb",
+    "expectedReturn": "Nov 1, 2026"
+  },
+  {
+    "playerId": "16210",
+    "status": "IR",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "16211",
+    "status": "Out",
+    "details": "Hip",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16215",
+    "status": "IR-PUP",
+    "details": "Neck",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "16220",
+    "status": "IR-R",
+    "details": "Thumb",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "16226",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 5, 2026"
+  },
+  {
+    "playerId": "16231",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "16236",
+    "status": "IR",
+    "details": "Shoulder",
+    "expectedReturn": "Oct 18, 2026"
+  },
+  {
+    "playerId": "16238",
+    "status": "IR-PUP",
+    "details": "Achilles",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "16240",
+    "status": "Out",
+    "details": "Undisclosed",
+    "expectedReturn": "Oct 1, 2026"
+  },
+  {
+    "playerId": "16244",
+    "status": "IR-PUP",
+    "details": "Achilles",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "16255",
+    "status": "Out",
+    "details": "Calf",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16256",
+    "status": "IR",
+    "details": "Knee - ACL",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "16283",
+    "status": "Out",
+    "details": "Hamstring",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16289",
+    "status": "IR-R",
+    "details": "Knee",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "16290",
+    "status": "IR",
+    "details": "Achilles",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "16295",
+    "status": "Out",
+    "details": "Knee",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16306",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "16309",
+    "status": "IR",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "16315",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16316",
+    "status": "Questionable",
+    "details": "Knee",
+    "expectedReturn": "Jul 1, 2026"
+  },
+  {
+    "playerId": "16321",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "16322",
+    "status": "Out",
+    "details": "Hamstring",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16326",
+    "status": "IR-R",
+    "details": "Knee",
+    "expectedReturn": "Oct 8, 2026"
+  },
+  {
+    "playerId": "16330",
+    "status": "IR",
+    "details": "Undisclosed",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "16335",
+    "status": "IR-R",
+    "details": "Undisclosed",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "16338",
+    "status": "IR",
+    "details": "Knee",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "16350",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16363",
+    "status": "IR-PUP",
+    "details": "Achilles",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "16379",
+    "status": "Questionable",
+    "details": "Achilles",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "16385",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16393",
+    "status": "IR",
+    "details": "Knee",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "16425",
+    "status": "IR",
+    "details": "Knee",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "16444",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16446",
+    "status": "RETIRED",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "16451",
+    "status": "IR-PUP",
+    "details": "Knee - ACL",
+    "expectedReturn": "Oct 12, 2026"
+  },
+  {
+    "playerId": "16461",
+    "status": "IR",
+    "details": "Concussion",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "16483",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "16486",
+    "status": "Out",
+    "details": "Concussion",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16492",
+    "status": "IR",
+    "details": "Shoulder",
+    "expectedReturn": "Oct 29, 2026"
+  },
+  {
+    "playerId": "16553",
+    "status": "Questionable",
+    "details": "Foot",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "16572",
+    "status": "Out",
+    "details": "Hamstring",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16579",
+    "status": "Out",
+    "details": "Hamstring",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16581",
+    "status": "Out",
+    "details": "Elbow",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16584",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16594",
+    "status": "IR",
+    "details": "Knee",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "16595",
+    "status": "Questionable",
+    "details": "Thigh",
+    "expectedReturn": "Sep 27, 2026"
+  },
+  {
+    "playerId": "16597",
+    "status": "IR",
+    "details": "Abdomen",
+    "expectedReturn": "Nov 8, 2026"
+  },
+  {
+    "playerId": "16610",
+    "status": "Out",
+    "details": "Foot",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16622",
+    "status": "IR",
+    "details": "Knee - PCL",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "16624",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "16625",
+    "status": "IR",
+    "details": "Knee",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "16626",
+    "status": "Out",
+    "details": "Finger",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16631",
+    "status": "RETIRED",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "16634",
+    "status": "Questionable",
+    "details": "Hamstring",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "16639",
+    "status": "Out",
+    "details": "Knee",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16643",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16648",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16658",
+    "status": "Suspended",
+    "details": "Suspension",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16669",
+    "status": "IR-R",
+    "details": "Undisclosed",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "16671",
+    "status": "Suspended",
+    "details": "Personal",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16676",
+    "status": "Out",
+    "details": "Hamstring",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16679",
+    "status": "Out",
+    "details": "Calf",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16686",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "16687",
+    "status": "Questionable",
+    "details": "Groin",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "16688",
+    "status": "IR-PUP",
+    "details": "Pectoral",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "16692",
+    "status": "IR",
+    "details": "Pectoral",
+    "expectedReturn": "Nov 23, 2026"
+  },
+  {
+    "playerId": "16706",
+    "status": "IR-PUP",
+    "details": "Ankle",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "16707",
+    "status": "IR-R",
+    "details": "Forearm",
+    "expectedReturn": "Oct 8, 2026"
+  },
+  {
+    "playerId": "16717",
+    "status": "Out",
+    "details": "Back",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16726",
+    "status": "IR",
+    "details": "Knee",
+    "expectedReturn": "Oct 18, 2026"
+  },
+  {
+    "playerId": "16730",
+    "status": "IR",
+    "details": "Hamstring",
+    "expectedReturn": "Oct 19, 2026"
+  },
+  {
+    "playerId": "16733",
+    "status": "IR",
+    "details": "Undisclosed",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "16737",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16740",
+    "status": "IR",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "16742",
+    "status": "IR",
+    "details": "Knee",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "16743",
+    "status": "IR",
+    "details": "Biceps",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "16744",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "16748",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "16756",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16762",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16765",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "16774",
+    "status": "Out",
+    "details": "Knee",
+    "expectedReturn": "Oct 25, 2026"
+  },
+  {
+    "playerId": "16780",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16799",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16800",
+    "status": "IR",
+    "details": "Knee - ACL",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "16810",
+    "status": "IR",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "16815",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "16817",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16834",
+    "status": "IR",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "16836",
+    "status": "IR",
+    "details": "Leg",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "16854",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "16858",
+    "status": "IR-PUP",
+    "details": "Leg",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "16865",
+    "status": "Suspended",
+    "details": "Suspension",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "16875",
+    "status": "IR",
+    "details": "Quadriceps",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "16882",
+    "status": "Questionable",
+    "details": "Thumb",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "16889",
+    "status": "IR-PUP",
+    "details": "Knee",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "16900",
+    "status": "IR",
+    "details": "Ankle",
+    "expectedReturn": "Oct 22, 2026"
+  },
+  {
+    "playerId": "16928",
+    "status": "IR",
+    "details": "Ankle",
+    "expectedReturn": "Nov 1, 2026"
+  },
+  {
+    "playerId": "16957",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 20, 2026"
+  },
+  {
+    "playerId": "17001",
+    "status": "IR",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "17032",
+    "status": "IR",
+    "details": "Knee - Meniscus",
+    "expectedReturn": "Jan 17, 2027"
+  },
+  {
+    "playerId": "17033",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17035",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17036",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 1, 2026"
+  },
+  {
+    "playerId": "17037",
+    "status": "IR-R",
+    "details": "Back",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "17040",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17041",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17046",
+    "status": "Questionable",
+    "details": "Hamstring",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "17047",
+    "status": "IR",
+    "details": "Knee",
+    "expectedReturn": "Oct 18, 2026"
+  },
+  {
+    "playerId": "17056",
+    "status": "IR-R",
+    "details": "Ankle",
+    "expectedReturn": "Oct 18, 2026"
+  },
+  {
+    "playerId": "17060",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17083",
+    "status": "IR",
+    "details": "Knee - ACL",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "17087",
+    "status": "IR",
+    "details": "Undisclosed",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "17091",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "17096",
+    "status": "IR-R",
+    "details": "Ankle",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "17106",
+    "status": "Out",
+    "details": "Thumb",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17111",
+    "status": "Questionable",
+    "details": "Foot",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "17113",
+    "status": "IR-PUP",
+    "details": "Knee - ACL",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "17115",
+    "status": "Suspended",
+    "details": "Suspension",
+    "expectedReturn": "Nov 8, 2026"
+  },
+  {
+    "playerId": "17119",
+    "status": "IR",
+    "details": "Knee - ACL",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "17122",
+    "status": "IR",
+    "details": "Knee - ACL",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "17127",
+    "status": "IR",
+    "details": "Neck",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "17130",
+    "status": "IR-R",
+    "details": "Ankle",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "17138",
+    "status": "IR-R",
+    "details": "Leg",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "17139",
+    "status": "Out",
+    "details": "Appendix",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17148",
+    "status": "IR",
+    "details": "Knee",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "17151",
+    "status": "IR-PUP",
+    "details": "Knee - ACL",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "17152",
+    "status": "IR-PUP",
+    "details": "Knee - ACL",
+    "expectedReturn": "Oct 18, 2026"
+  },
+  {
+    "playerId": "17159",
+    "status": "IR",
+    "details": "Hamstring",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "17170",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17172",
+    "status": "Out",
+    "details": "Shoulder",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17173",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17175",
+    "status": "IR",
+    "details": "Knee - ACL",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "17177",
+    "status": "IR",
+    "details": "Undisclosed",
+    "expectedReturn": "Oct 25, 2026"
+  },
+  {
+    "playerId": "17183",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "17188",
+    "status": "IR",
+    "details": "Shoulder",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "17194",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17205",
+    "status": "IR",
+    "details": "Hamstring",
+    "expectedReturn": "Oct 18, 2026"
+  },
+  {
+    "playerId": "17206",
+    "status": "IR-R",
+    "details": "Achilles",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "17208",
+    "status": "Out",
+    "details": "Quadriceps",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17211",
+    "status": "IR",
+    "details": "Hamstring",
+    "expectedReturn": "Nov 1, 2026"
+  },
+  {
+    "playerId": "17212",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "17215",
+    "status": "IR",
+    "details": "Neck",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "17216",
+    "status": "IR-PUP",
+    "details": "Knee",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "17217",
+    "status": "IR-NFI",
+    "details": "Neck",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "17219",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17226",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17227",
+    "status": "IR",
+    "details": "Knee - ACL",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "17228",
+    "status": "Out",
+    "details": "Calf",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17236",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17237",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 5, 2026"
+  },
+  {
+    "playerId": "17243",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17246",
+    "status": "IR",
+    "details": "Ankle",
+    "expectedReturn": "Oct 18, 2026"
+  },
+  {
+    "playerId": "17253",
+    "status": "IR-R",
+    "details": "Lower Body",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "17257",
+    "status": "IR-R",
+    "details": "Undisclosed",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "17259",
+    "status": "IR",
+    "details": "Knee",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "17278",
+    "status": "Questionable",
+    "details": "Concussion",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "17285",
+    "status": "IR",
+    "details": "Undisclosed",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "17298",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "17303",
+    "status": "IR-R",
+    "details": "Undisclosed",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "17308",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17325",
+    "status": "Questionable",
+    "details": "Leg",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "17329",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "17340",
+    "status": "IR-R",
+    "details": "Hamstring",
+    "expectedReturn": "Oct 18, 2026"
+  },
+  {
+    "playerId": "17351",
+    "status": "IR",
+    "details": "Elbow",
+    "expectedReturn": "Oct 18, 2026"
+  },
+  {
+    "playerId": "17356",
+    "status": "IR",
+    "details": "Knee",
+    "expectedReturn": "Oct 25, 2026"
+  },
+  {
+    "playerId": "17367",
+    "status": "IR-R",
+    "details": "Undisclosed",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "17383",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17385",
+    "status": "IR-R",
+    "details": "Undisclosed",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "17386",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17394",
+    "status": "RETIRED",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "17400",
+    "status": "IR",
+    "details": "Knee - ACL",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "17412",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17416",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "17434",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "17463",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17465",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17466",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17468",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 1, 2026"
+  },
+  {
+    "playerId": "17477",
+    "status": "IR",
+    "details": "Ankle",
+    "expectedReturn": "Oct 25, 2026"
+  },
+  {
+    "playerId": "17479",
+    "status": "RETIRED",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "17484",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "17486",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "17489",
+    "status": "IR",
+    "details": "Neck",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "17498",
+    "status": "IR-R",
+    "details": "Hamstring",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "17502",
+    "status": "IR",
+    "details": "Ankle",
+    "expectedReturn": "Oct 18, 2026"
+  },
+  {
+    "playerId": "17504",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17505",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17508",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17509",
+    "status": "IR",
+    "details": "Knee",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "17513",
+    "status": "Questionable",
+    "details": "Foot",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "17514",
+    "status": "IR",
+    "details": "Ankle",
+    "expectedReturn": "Nov 22, 2026"
+  },
+  {
+    "playerId": "17516",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "17517",
+    "status": "IR",
+    "details": "Wrist",
+    "expectedReturn": "Oct 18, 2026"
+  },
+  {
+    "playerId": "17522",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "17523",
+    "status": "IR",
+    "details": "Knee",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "17526",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17529",
+    "status": "Out",
+    "details": "Quadriceps",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17531",
+    "status": "RETIRED",
+    "details": "Personal",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "17541",
+    "status": "Out",
+    "details": "Hamstring",
+    "expectedReturn": "Oct 5, 2026"
+  },
+  {
+    "playerId": "17544",
+    "status": "IR",
+    "details": "Hamstring",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "17545",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17550",
+    "status": "Out",
+    "details": "Groin",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17566",
+    "status": "IR-NFI",
+    "details": "Personal",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "17569",
+    "status": "IR",
+    "details": "Ankle",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "17578",
+    "status": "IR",
+    "details": "Knee",
+    "expectedReturn": "Oct 25, 2026"
+  },
+  {
+    "playerId": "17582",
+    "status": "Out",
+    "details": "Concussion",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17585",
+    "status": "Out",
+    "details": "Toe",
+    "expectedReturn": "Oct 5, 2026"
+  },
+  {
+    "playerId": "17589",
+    "status": "Out",
+    "details": "Shoulder",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17594",
+    "status": "IR",
+    "details": "Ankle",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "17595",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17596",
+    "status": "IR",
+    "details": "Ankle",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "17597",
+    "status": "Out",
+    "details": "Hand",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17599",
+    "status": "Out",
+    "details": "Ankle",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17602",
+    "status": "Out",
+    "details": "Elbow",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17607",
+    "status": "Out",
+    "details": "Thigh",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17608",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17610",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17612",
+    "status": "IR",
+    "details": "Knee - Meniscus",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "17615",
+    "status": "IR-R",
+    "details": "Undisclosed",
+    "expectedReturn": "Oct 8, 2026"
+  },
+  {
+    "playerId": "17618",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17625",
+    "status": "IR-R",
+    "details": "Ankle",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "17631",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17634",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 1, 2026"
+  },
+  {
+    "playerId": "17635",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17638",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17646",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17647",
+    "status": "IR",
+    "details": "Knee - ACL",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "17650",
+    "status": "IR",
+    "details": "Calf",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "17652",
+    "status": "IR-R",
+    "details": "Undisclosed",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "17656",
+    "status": "IR-R",
+    "details": "Undisclosed",
+    "expectedReturn": "Oct 12, 2026"
+  },
+  {
+    "playerId": "17657",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 1, 2026"
+  },
+  {
+    "playerId": "17659",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17661",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17663",
+    "status": "IR-NFI",
+    "details": "Undisclosed",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "17671",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17673",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 1, 2026"
+  },
+  {
+    "playerId": "17681",
+    "status": "IR",
+    "details": "Pectoral",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "17682",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17684",
+    "status": "IR-R",
+    "details": "Undisclosed",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "17685",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 1, 2026"
+  },
+  {
+    "playerId": "17687",
+    "status": "IR-R",
+    "details": "Upper Body",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "17690",
+    "status": "IR",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "17695",
+    "status": "IR",
+    "details": "Knee",
+    "expectedReturn": "Oct 22, 2026"
+  },
+  {
+    "playerId": "17699",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17702",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17708",
+    "status": "Questionable",
+    "details": "Illness",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "17710",
+    "status": "IR",
+    "details": "Knee",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "17713",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17718",
+    "status": "IR",
+    "details": "Undisclosed",
+    "expectedReturn": "Feb 15, 2027"
+  },
+  {
+    "playerId": "17732",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "17737",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "17738",
+    "status": "Questionable",
+    "details": "Undisclosed",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "17741",
+    "status": "Suspended",
+    "details": "Suspension",
+    "expectedReturn": "Oct 25, 2026"
+  },
+  {
+    "playerId": "17743",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 5, 2026"
+  },
+  {
+    "playerId": "17744",
+    "status": "Questionable",
+    "details": "Hamstring",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "17747",
+    "status": "IR",
+    "details": "Undisclosed",
+    "expectedReturn": "Oct 11, 2026"
+  },
+  {
+    "playerId": "17748",
+    "status": "Questionable",
+    "details": "Foot",
+    "expectedReturn": "Sep 13, 2026"
+  },
+  {
+    "playerId": "17750",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17751",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17754",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17760",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17761",
+    "status": "Out",
+    "details": "Hamstring",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17762",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17765",
+    "status": "Out",
+    "details": "Ankle",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17767",
+    "status": "Out",
+    "details": "Ankle",
+    "expectedReturn": "Oct 4, 2026"
+  },
+  {
+    "playerId": "17774",
+    "status": "Out",
+    "details": "Coach\u0027s Decision",
+    "expectedReturn": "Oct 5, 2026"
+  },
+  {
+    "playerId": "9694",
+    "status": "Questionable",
+    "details": "Neck",
+    "expectedReturn": "Jul 1, 2026"
+  }
+]

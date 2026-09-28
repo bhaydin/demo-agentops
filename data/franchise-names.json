@@ -1,4 +1,17 @@
 {
   "$comment": "Maintainer controlled. Maps MFL franchise IDs to the display names shown on stage. Never put real owner names here. Filled in before the Phase 1 snapshot capture; Phase 1 may refine this shape.",
-  "franchises": {}
+  "franchises": { 
+    "0001": "Anchorage Falling",
+    "0002": "Indiana Joneses",
+    "0003": "Toledo Intimidators",
+    "0004": "Gary Characters",
+    "0005": "Everglades City",
+    "0006": "Texas Tornadoes",
+    "0007": "Delk Runners",
+    "0008": "Iron City Beers",
+    "0009": "Reno Football Club",
+    "0010": "Jackson Mississippis",
+    "0011": "Gang Evergreen",
+    "0012": "Florida Men"
+  }
 }

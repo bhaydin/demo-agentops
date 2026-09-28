@@ -1,0 +1,98 @@
+[
+  {
+    "franchiseId": "0007",
+    "wins": 2,
+    "losses": 0,
+    "ties": 0,
+    "pointsFor": 286.00,
+    "pointsAgainst": 159.10
+  },
+  {
+    "franchiseId": "0003",
+    "wins": 2,
+    "losses": 0,
+    "ties": 0,
+    "pointsFor": 209.00,
+    "pointsAgainst": 172.30
+  },
+  {
+    "franchiseId": "0005",
+    "wins": 2,
+    "losses": 0,
+    "ties": 0,
+    "pointsFor": 210.00,
+    "pointsAgainst": 163.90
+  },
+  {
+    "franchiseId": "0010",
+    "wins": 1,
+    "losses": 1,
+    "ties": 0,
+    "pointsFor": 214.50,
+    "pointsAgainst": 241.20
+  },
+  {
+    "franchiseId": "0009",
+    "wins": 1,
+    "losses": 1,
+    "ties": 0,
+    "pointsFor": 189.30,
+    "pointsAgainst": 181.00
+  },
+  {
+    "franchiseId": "0004",
+    "wins": 1,
+    "losses": 1,
+    "ties": 0,
+    "pointsFor": 226.60,
+    "pointsAgainst": 209.20
+  },
+  {
+    "franchiseId": "0011",
+    "wins": 1,
+    "losses": 1,
+    "ties": 0,
+    "pointsFor": 195.30,
+    "pointsAgainst": 199.60
+  },
+  {
+    "franchiseId": "0002",
+    "wins": 1,
+    "losses": 1,
+    "ties": 0,
+    "pointsFor": 166.60,
+    "pointsAgainst": 173.30
+  },
+  {
+    "franchiseId": "0012",
+    "wins": 1,
+    "losses": 1,
+    "ties": 0,
+    "pointsFor": 159.50,
+    "pointsAgainst": 187.60
+  },
+  {
+    "franchiseId": "0006",
+    "wins": 0,
+    "losses": 2,
+    "ties": 0,
+    "pointsFor": 170.60,
+    "pointsAgainst": 187.50
+  },
+  {
+    "franchiseId": "0008",
+    "wins": 0,
+    "losses": 2,
+    "ties": 0,
+    "pointsFor": 162.90,
+    "pointsAgainst": 198.00
+  },
+  {
+    "franchiseId": "0001",
+    "wins": 0,
+    "losses": 2,
+    "ties": 0,
+    "pointsFor": 153.80,
+    "pointsAgainst": 271.40
+  }
+]
