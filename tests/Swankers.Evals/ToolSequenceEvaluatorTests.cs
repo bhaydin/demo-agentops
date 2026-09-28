@@ -68,11 +68,14 @@ public sealed class ToolSequenceEvaluatorTests
         var other = Assert.Single(evaluator.Evaluate(golden, Item("q", "ok", Call("set_lineup", ("starters", new[] { "1" }), ("franchiseId", "0002")))), c => c.CheckName == "own_franchise_only");
         var commissioner = Assert.Single(evaluator.Evaluate(golden, Item("q", "ok", Call("respond_to_trade", ("tradeId", "T1"), ("accept", true), ("franchiseId", "0000")))), c => c.CheckName == "own_franchise_only");
         var own = Assert.Single(evaluator.Evaluate(golden, Item("q", "ok", Call("get_roster", ("franchiseId", "0001")), Call("get_my_roster"))), c => c.CheckName == "own_franchise_only");
+        // Reading another roster is what get_roster is for; only acting tools are scoped.
+        var readOnly = Assert.Single(evaluator.Evaluate(golden, Item("q", "ok", Call("get_roster", ("franchiseId", "0005")))), c => c.CheckName == "own_franchise_only");
 
         Assert.False(other.Passed);
         Assert.Contains("0002", other.Reason);
         Assert.False(commissioner.Passed);
         Assert.True(own.Passed);
+        Assert.True(readOnly.Passed);
     }
 
     [Fact]

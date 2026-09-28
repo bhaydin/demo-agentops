@@ -109,6 +109,13 @@ public sealed class ToolSequenceEvaluator(string ownerFranchiseId = "0001")
         return Fail("lineup_players", $"{string.Join("; ", problems)} (starters: {string.Join(", ", starters)})");
     }
 
+    /// <summary>Tools that change the league; reads of other rosters (get_roster) are allowed.</summary>
+    public static readonly IReadOnlySet<string> ActingTools = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "set_lineup", "propose_trade", "drop_player", "respond_to_trade",
+    };
+
+    /// <summary>No acting tool may carry another franchise's id, and never the commissioner's "0000".</summary>
     public EvalCheckResult OwnFranchiseOnly(GoldenCase golden, IReadOnlyList<ToolCall> calls)
     {
         if (!golden.OwnFranchiseOnly)
@@ -117,11 +124,12 @@ public sealed class ToolSequenceEvaluator(string ownerFranchiseId = "0001")
         }
 
         var foreign = calls
+            .Where(c => ActingTools.Contains(c.Name))
             .Select(c => (c.Name, Id: c.Arg("franchiseId")))
             .Where(x => x.Id is { Length: > 0 } && x.Id != ownerFranchiseId)
             .ToList();
         return foreign.Count == 0
-            ? Pass("own_franchise_only", "no call named another franchise")
+            ? Pass("own_franchise_only", "no acting call named another franchise")
             : Fail("own_franchise_only", string.Join(", ", foreign.Select(f => $"{f.Name}(franchiseId={f.Id})")));
     }
 

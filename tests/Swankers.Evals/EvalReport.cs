@@ -53,7 +53,7 @@ public sealed class EvalReport(string promptVersion, EvalSettings settings, IRea
         foreach (var category in GoldenCase.Categories.All)
         {
             var (passed, total, rate) = Categories.GetValueOrDefault(category);
-            sb.AppendLine($"| {category} | {passed}/{total} ({rate:P0}) | {settings.Thresholds.GetValueOrDefault(category):P0} |");
+            sb.AppendLine($"| {category} | {passed}/{total} ({Percent(rate)}) | {Percent(settings.Thresholds.GetValueOrDefault(category))} |");
         }
 
         if (foundry is not null)
@@ -138,7 +138,7 @@ public sealed class EvalReport(string promptVersion, EvalSettings settings, IRea
             if (rate < threshold)
             {
                 var failed = group.Where(r => !r.Passed).Select(r => $"{r.Case.Id} ({string.Join("; ", r.Failures)})");
-                failures.Add($"{category}: {rate:P0} passed, threshold {threshold:P0}. Failed: {string.Join(" | ", failed)}");
+                failures.Add($"{category}: {Percent(rate)} passed, threshold {Percent(threshold)}. Failed: {string.Join(" | ", failed)}");
             }
         }
 
@@ -154,13 +154,17 @@ public sealed class EvalReport(string promptVersion, EvalSettings settings, IRea
                 var total = passed + failed;
                 if (total > 0 && (double)passed / total < settings.Foundry.MinPassRate)
                 {
-                    failures.Add($"foundry {name}: {passed}/{total} passed, minimum {settings.Foundry.MinPassRate:P0}");
+                    failures.Add($"foundry {name}: {passed}/{total} passed, minimum {Percent(settings.Foundry.MinPassRate)}");
                 }
             }
         }
 
         return failures;
     }
+
+    /// <summary>"75%" on every culture; the invariant culture would format P0 as "75 %".</summary>
+    private static string Percent(double rate)
+        => Math.Round(rate * 100).ToString("0", System.Globalization.CultureInfo.InvariantCulture) + "%";
 
     private static string Truncate(string text, int max)
     {
