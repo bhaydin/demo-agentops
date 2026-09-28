@@ -30,6 +30,9 @@ public sealed class McpTestHost : IAsyncDisposable
         _factory = factory;
     }
 
+    /// <summary>Where this host's SimLeague persists state.json (tests can block it to force save failures).</summary>
+    public string StateDirectory => Path.Combine(_root, "sim");
+
     public static async Task<McpTestHost> StartAsync(bool commissionerGateEnabled = true, bool ownerGateEnabled = true)
     {
         var root = Path.Combine(Path.GetTempPath(), "swankers-mcp-tests", Path.GetRandomFileName());

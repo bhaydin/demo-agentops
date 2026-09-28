@@ -53,8 +53,40 @@ public class ConfirmationGateTests
 
         var outcome = await gate.ResolveAsync(pending.ConfirmationId, approve: true, CT);
 
-        Assert.Equal("no longer on roster", outcome!.Error);
-        Assert.Equal("no longer on roster", Assert.Single(gate.Recent).Error);
+        Assert.Equal("failed", outcome!.Status);
+        Assert.Equal("no longer on roster", outcome.Error);
+        var record = Assert.Single(gate.Recent);
+        Assert.Equal("failed", record.Status);
+        Assert.Equal("no longer on roster", record.Error);
+        Assert.Empty(gate.Pending);
+        Assert.Null(await gate.ResolveAsync(pending.ConfirmationId, approve: true, CT)); // terminal: no retry
+    }
+
+    [Fact]
+    public async Task Unexpected_failures_also_end_in_a_terminal_record()
+    {
+        // Codex Phase 2 review #3: a persistence failure must not make the decision disappear.
+        var gate = new ConfirmationGate();
+        var pending = gate.Create("drop_player", "Drop X", "owner:0001", "0001",
+            new Dictionary<string, object?>(), _ => throw new IOException("disk full"));
+
+        var outcome = await gate.ResolveAsync(pending.ConfirmationId, approve: true, CT);
+
+        Assert.Equal("failed", outcome!.Status);
+        Assert.Contains("IOException", outcome.Error);
+        Assert.Equal("failed", Assert.Single(gate.Recent).Status);
+        Assert.Empty(gate.Pending);
+    }
+
+    [Fact]
+    public async Task Outcomes_carry_a_status()
+    {
+        var gate = new ConfirmationGate();
+        var ok = gate.Create("t", "s", "owner:0001", "0001", new Dictionary<string, object?>(), _ => Task.FromResult<object>(1));
+        var no = gate.Create("t", "s", "owner:0001", "0001", new Dictionary<string, object?>(), _ => Task.FromResult<object>(1));
+
+        Assert.Equal("executed", (await gate.ResolveAsync(ok.ConfirmationId, approve: true, CT))!.Status);
+        Assert.Equal("denied", (await gate.ResolveAsync(no.ConfirmationId, approve: false, CT))!.Status);
     }
 
     [Fact]

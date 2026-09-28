@@ -166,6 +166,26 @@ public class McpServerTests
     }
 
     [Fact]
+    public async Task Failed_approval_ends_in_a_terminal_record_and_changes_nothing()
+    {
+        // Codex Phase 2 review #3: block SimLeague's temp file so the approved drop cannot persist.
+        await using var host = await StartAsync();
+        var owner = await host.ConnectAsync(OwnerCredential, CT);
+        await CallAsync(owner, "get_my_roster", null, CT); // seeds state.json
+        var pending = await CallAsync(owner, "drop_player", new Dictionary<string, object?> { ["playerId"] = "1002" }, CT);
+        Directory.CreateDirectory(Path.Combine(host.StateDirectory, "state.json.tmp"));
+
+        var outcome = await host.ResolveAsync(Prop(pending, "confirmationId").GetString()!, approve: true, CT);
+
+        Assert.Equal("failed", Prop(outcome, "status").GetString());
+        Assert.False(string.IsNullOrEmpty(Prop(outcome, "error").GetString()));
+        Assert.Contains("1002", PlayerIds(await CallAsync(owner, "get_my_roster", null, CT)));
+        var confirmations = await host.Http().GetFromJsonAsync<JsonElement>("/api/confirmations", CT);
+        Assert.Empty(Prop(confirmations, "pending").EnumerateArray());
+        Assert.Single(Prop(confirmations, "recent").EnumerateArray(), r => Prop(r, "status").GetString() == "failed");
+    }
+
+    [Fact]
     public async Task Commissioner_with_gate_off_executes_immediately()
     {
         // DEMO: intentionally vulnerable (Friday talk). Gate off must be selected explicitly.

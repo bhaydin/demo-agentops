@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
+using ModelContextProtocol;
 
 namespace Swankers.Mcp.Gate;
 
@@ -13,13 +14,15 @@ public sealed record PendingConfirmation(
     IReadOnlyDictionary<string, object?> Arguments,
     DateTimeOffset CreatedAtUtc);
 
+/// <summary><paramref name="Status"/> is executed | denied | failed | canceled.</summary>
 public sealed record ResolvedConfirmation(
     PendingConfirmation Confirmation,
     bool Approved,
+    string Status,
     DateTimeOffset ResolvedAtUtc,
     string? Error);
 
-public sealed record ConfirmationOutcome(bool Approved, object? Result, string? Error);
+public sealed record ConfirmationOutcome(bool Approved, string Status, object? Result, string? Error);
 
 /// <summary>What the agent gets back instead of a result when the gate holds an action.</summary>
 public sealed record PendingConfirmationResult(string Status, string ConfirmationId, string Summary);
@@ -27,7 +30,9 @@ public sealed record PendingConfirmationResult(string Status, string Confirmatio
 /// <summary>
 /// Holds irreversible actions until a human approves or denies them through the REST endpoint.
 /// Approval is deliberately not an MCP tool: nothing here is reachable from the agent except
-/// <see cref="Create"/>, so the agent cannot approve its own actions.
+/// <see cref="Create"/>, so the agent cannot approve its own actions. Every decision ends in a
+/// terminal record (executed, denied, failed, canceled); a failed action is not retried, the
+/// agent asks again and a new confirmation is created.
 /// </summary>
 public sealed class ConfirmationGate(TimeProvider? time = null)
 {
@@ -35,6 +40,9 @@ public sealed class ConfirmationGate(TimeProvider? time = null)
     private readonly TimeProvider _time = time ?? TimeProvider.System;
     private readonly ConcurrentDictionary<string, Entry> _pending = new(StringComparer.Ordinal);
     private readonly ConcurrentQueue<ResolvedConfirmation> _recent = new();
+
+    /// <summary>Serializes approvals (and reset) so an action can never run half-way through another.</summary>
+    private readonly SemaphoreSlim _execution = new(1, 1);
 
     private sealed record Entry(PendingConfirmation Info, Func<CancellationToken, Task<object>> Execute);
 
@@ -64,30 +72,45 @@ public sealed class ConfirmationGate(TimeProvider? time = null)
         }
     }
 
-    /// <summary>Approves (executes) or denies a pending action. Null when the id is unknown.</summary>
+    /// <summary>
+    /// Approves (executes) or denies a pending action. Null when the id is unknown or already
+    /// resolved. The entry stays pending while it executes and is removed only afterwards, with
+    /// a terminal record either way.
+    /// </summary>
     public async Task<ConfirmationOutcome?> ResolveAsync(string id, bool approve, CancellationToken cancellationToken)
     {
-        if (!_pending.TryRemove(id, out var entry))
+        await _execution.WaitAsync(cancellationToken);
+        try
         {
-            return null;
-        }
+            if (!_pending.TryGetValue(id, out var entry))
+            {
+                return null;
+            }
 
-        object? result = null;
-        string? error = null;
-        if (approve)
-        {
+            if (!approve)
+            {
+                return Finish(entry, approved: false, "denied", result: null, error: null);
+            }
+
             try
             {
-                result = await entry.Execute(cancellationToken);
+                var result = await entry.Execute(cancellationToken);
+                return Finish(entry, approved: true, "executed", result, error: null);
             }
-            catch (Exception ex) when (ex is InvalidOperationException or KeyNotFoundException)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                error = ex.Message;
+                Finish(entry, approved: true, "canceled", result: null, error: "Approval request was canceled.");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return Finish(entry, approved: true, "failed", result: null, error: Describe(ex));
             }
         }
-
-        Remember(new ResolvedConfirmation(entry.Info, approve, _time.GetUtcNow(), error));
-        return new ConfirmationOutcome(approve, result, error);
+        finally
+        {
+            _execution.Release();
+        }
     }
 
     /// <summary>Drops every pending and recent confirmation (demo reset).</summary>
@@ -98,6 +121,19 @@ public sealed class ConfirmationGate(TimeProvider? time = null)
         {
         }
     }
+
+    private ConfirmationOutcome Finish(Entry entry, bool approved, string status, object? result, string? error)
+    {
+        _pending.TryRemove(entry.Info.Id, out _);
+        Remember(new ResolvedConfirmation(entry.Info, approved, status, _time.GetUtcNow(), error));
+        return new ConfirmationOutcome(approved, status, result, error);
+    }
+
+    /// <summary>League validation messages are safe to show; anything else is reported by type.</summary>
+    private static string Describe(Exception ex)
+        => ex is InvalidOperationException or KeyNotFoundException or McpException
+            ? ex.Message
+            : $"{ex.GetType().Name}: {ex.Message}";
 
     private void Remember(ResolvedConfirmation resolved)
     {
