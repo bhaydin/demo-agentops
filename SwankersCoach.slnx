@@ -8,6 +8,11 @@
     <File Path="global.json" />
     <File Path="nuget.config" />
     <File Path="README.md" />
+    <File Path="azure.yaml" />
+  </Folder>
+  <Folder Name="/infra/">
+    <File Path="infra/main.bicep" />
+    <File Path="infra/main.parameters.json" />
   </Folder>
   <Folder Name="/docs/">
     <File Path="docs/ARCHITECTURE.md" />
@@ -27,6 +32,7 @@
     <Project Path="tests/Swankers.Mcp.Tests/Swankers.Mcp.Tests.csproj" />
   </Folder>
   <Folder Name="/tools/">
+    <Project Path="tools/Swankers.AgentDeploy/Swankers.AgentDeploy.csproj" />
     <Project Path="tools/Swankers.SnapshotCapture/Swankers.SnapshotCapture.csproj" />
   </Folder>
 </Solution>
