@@ -10,6 +10,7 @@ Priority if time runs short: evals and the reset script are never cut. The web a
 
 ## Phase 0: Repository scaffold (Sun Sep 27)
 Owner: Claude Code
+Review owner: Codex (Phase 0 gate review completed; see review notes below)
 
 - [x] `global.json` pinning the current .NET LTS SDK (verify version)
 - [x] `SwankersCoach.slnx` with all projects from AGENTS.md layout
@@ -55,6 +56,8 @@ Gate: `dotnet build` and `dotnet test` pass locally and in CI. Summary lists eve
 Transitive prereleases pinned by the lock files: Azure.AI.AgentServer.Core 1.0.0-beta.29, Azure.AI.AgentServer.Responses 1.0.0-beta.8.
 
 **Known doc drift:** the Learn evaluation page shows `new FoundryEvals(chatConfiguration, ...)` in `Microsoft.Agents.AI.AzureAI`. The shipped package has `Microsoft.Agents.AI.Foundry.FoundryEvals(AIProjectClient, string model, ...)`. Phase 5 codes against the package.
+
+**Codex review (2026-09-27, commit `1fd81f2`):** locked restore, Release build (0 warnings/errors), and all three scaffold tests independently passed. CI at that commit is also green ([run 36331497889](https://github.com/bhaydin/demo-agentops/actions/runs/36331497889)). One local-startup finding: Mcp and Coach both default to `http://localhost:5000`; running them together reproduces an address-in-use failure. Add distinct development launch profiles or document explicit ports before Phase 3 integration. This does not block Phase 1. Current tests prove runner discovery only; live Azure quota, agent/judge compatibility, and application behavior remain unverified at this scaffold gate.
 
 ## Phase 1: League gateway (Sun–Mon)
 Owner:
