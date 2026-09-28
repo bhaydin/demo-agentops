@@ -1,0 +1,18 @@
+# Keep the remote build context small; only sources, props, and data are needed.
+**/bin/
+**/obj/
+**/.vs/
+**/.idea/
+.git/
+.github/
+.azure/
+.claude/
+artifacts/
+docs/
+knowledge/
+tests/
+tools/
+demo/
+data/sim/
+*.md
+!data/**/*.md
