@@ -25,6 +25,9 @@
   <ItemGroup>
     <!-- Versioned instructions ship with the app so the hosted container has them. -->
     <Content Include="prompts\*.md" CopyToOutputDirectory="PreserveNewest" />
+    <!-- League knowledge ships too, so a published artifact works outside the checkout
+         (from a checkout the repo's knowledge/ folder is preferred, for live edits). -->
+    <Content Include="..\..\knowledge\*.md" Exclude="..\..\knowledge\README.md" Link="knowledge\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

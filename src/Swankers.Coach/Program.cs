@@ -49,13 +49,17 @@ var startupLogger = startupLogging.CreateLogger("Swankers.Coach.Startup");
 var contentRoot = builder.WebApplicationBuilder.Environment.ContentRootPath;
 
 var instructions = new PromptLibrary(PromptLibrary.DefaultDirectory).Load(options.PromptVersion);
-var knowledgeRoot = RepoPaths.Resolve(options.KnowledgeRoot, contentRoot);
+startupLogger.LogInformation("Instructions {PromptVersion} loaded from {PromptsDirectory}.", options.PromptVersion, PromptLibrary.DefaultDirectory);
+
+var knowledgeRoot = ResolveKnowledgeRoot(options.KnowledgeRoot, contentRoot);
 var knowledge = KnowledgeSearch.Load(knowledgeRoot);
 if (knowledge.SectionCount == 0)
 {
     throw new InvalidOperationException(
         $"No knowledge documents found under '{knowledgeRoot}' (content root '{contentRoot}', working directory '{Environment.CurrentDirectory}'). Set Coach:KnowledgeRoot.");
 }
+
+startupLogger.LogInformation("Loaded {Sections} knowledge sections from {KnowledgeRoot}.", knowledge.SectionCount, knowledgeRoot);
 
 // Connect to the league MCP server up front: a Coach with no tools is not worth starting.
 var mcpTools = new McpToolSource(options, mcpCredential, startupLogging);
@@ -87,3 +91,18 @@ app.Run();
 
 static string FirstNonEmpty(string? first, string? second)
     => !string.IsNullOrWhiteSpace(first) ? first : second ?? "";
+
+// From a checkout, use the repo's knowledge/ (live edits); otherwise the copy shipped next
+// to the binaries, which is what a published artifact or container has.
+static string ResolveKnowledgeRoot(string configured, string contentRoot)
+{
+    if (Path.IsPathRooted(configured))
+    {
+        return configured;
+    }
+
+    var fromRepo = RepoPaths.Resolve(configured, contentRoot);
+    return Directory.Exists(fromRepo) && Directory.EnumerateFiles(fromRepo, "*.md").Any()
+        ? fromRepo
+        : Path.Combine(AppContext.BaseDirectory, "knowledge");
+}

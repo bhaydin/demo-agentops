@@ -46,6 +46,18 @@ public class KnowledgeSearchTests
     }
 
     [Fact]
+    public void Knowledge_documents_ship_next_to_the_binaries()
+    {
+        // Codex Phase 3 review #4: a published artifact must not depend on the checkout.
+        var shipped = Path.Combine(AppContext.BaseDirectory, "knowledge");
+
+        Assert.True(Directory.Exists(shipped), $"missing {shipped}");
+        Assert.True(Directory.EnumerateFiles(shipped, "*.md").Count() >= 6);
+        Assert.DoesNotContain(Directory.EnumerateFiles(shipped), f => Path.GetFileName(f) == "README.md");
+        Assert.True(KnowledgeSearch.Load(shipped).SectionCount >= 15);
+    }
+
+    [Fact]
     public void Exposes_the_search_tool_under_its_stable_name()
     {
         var tool = Load().AsTool();
