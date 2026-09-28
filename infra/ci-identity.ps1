@@ -46,12 +46,17 @@ if (-not $sp) {
 }
 Write-Host "Application $($app.appId), service principal $($sp.id)"
 
-# Federated credentials: main branch, pull requests, and the protected environment.
+# Federated credentials: main branch, pull requests, and the protected environment. GitHub's
+# OIDC subject can carry the owner and repository ids ("repo:owner@123/name@456:..."), so both
+# the classic and the id-qualified subject are registered.
+$repoInfo = gh api "repos/$Repo" --jq '{id: .id, ownerId: .owner.id, owner: .owner.login, name: .name}' | ConvertFrom-Json
+$repoWithIds = "$($repoInfo.owner)@$($repoInfo.ownerId)/$($repoInfo.name)@$($repoInfo.id)"
 $existing = (Invoke-Az @('ad', 'app', 'federated-credential', 'list', '--id', $app.id, '-o', 'json')) | ConvertFrom-Json
-$subjects = @{
-    'github-main'        = "repo:${Repo}:ref:refs/heads/main"
-    'github-pull-request' = "repo:${Repo}:pull_request"
-    "github-env-$Environment" = "repo:${Repo}:environment:$Environment"
+$subjects = @{}
+foreach ($form in @(@{ Suffix = ''; Repo = $Repo }, @{ Suffix = '-ids'; Repo = $repoWithIds })) {
+    $subjects["github-main$($form.Suffix)"] = "repo:$($form.Repo):ref:refs/heads/main"
+    $subjects["github-pull-request$($form.Suffix)"] = "repo:$($form.Repo):pull_request"
+    $subjects["github-env-$Environment$($form.Suffix)"] = "repo:$($form.Repo):environment:$Environment"
 }
 foreach ($name in $subjects.Keys) {
     if ($existing | Where-Object { $_.subject -eq $subjects[$name] }) { Write-Host "Federated credential exists: $($subjects[$name])"; continue }
