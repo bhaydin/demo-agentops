@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environmentName": {
+      "value": "${AZURE_ENV_NAME}"
+    },
+    "location": {
+      "value": "${AZURE_LOCATION}"
+    },
+    "tagClient": {
+      "value": "${AZURE_TAG_CLIENT=Concurrency}"
+    },
+    "tagPrimaryOwner": {
+      "value": "${AZURE_TAG_PRIMARY_OWNER}"
+    },
+    "tagExpectedDeleteDate": {
+      "value": "${AZURE_TAG_EXPECTED_DELETE_DATE=2026-12-31}"
+    },
+    "commissionerGateEnabled": {
+      "value": "${MCP_COMMISSIONER_GATE_ENABLED=true}"
+    },
+    "mcpImageName": {
+      "value": "${SERVICE_MCP_IMAGE_NAME=}"
+    },
+    "webImageName": {
+      "value": "${SERVICE_WEB_IMAGE_NAME=}"
+    },
+    "coachAgentPrincipalId": {
+      "value": "${COACH_AGENT_PRINCIPAL_ID=}"
+    }
+  }
+}
