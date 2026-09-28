@@ -7,7 +7,7 @@ A fantasy football coaching agent ("Coach") for the Swankers league on MyFantasy
 
 Reads use real league data from MFL export requests. Writes only ever go to a simulated league (`SimLeague`). Nothing in this repo writes to MFL.
 
-> **Status:** Phase 0 scaffold. Projects compile but don't do anything yet. See [docs/BUILD-PLAN.md](docs/BUILD-PLAN.md).
+> **Status:** Phases 0–3 done (league gateway, MCP server, Coach agent, local tracing); Phase 4 adds the Azure deployment. See [docs/BUILD-PLAN.md](docs/BUILD-PLAN.md).
 
 ## Start here
 
@@ -45,6 +45,24 @@ dotnet run --project src/Swankers.Coach -- --KeyVault:Uri <vault-uri> --Coach:Pr
 
 Then talk to it over the Responses protocol: `POST http://localhost:8088/responses` with `{"input": "Should I start X or Y this week?"}`. Stage configurations: `--Coach:PromptVersion v2` (Thursday's regression) and `--Coach:McpCredentialKey Mcp:CommissionerCredential` (Friday's "before"). For a local trace view, run `aspire dashboard run` and set `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317` for both services.
 
+## Deploy to Azure
+
+Two steps: `azd up` for the Container Apps services, then the Coach hosted agent. Needs the Azure Developer CLI (1.32+), Azure CLI (2.80+), a login to the subscription (`az login`, `azd auth login`), the shared resources in `rg-swankers-shared` (Key Vault `kv-swankers-vxzd` and the Foundry account/project from `infra/modules/foundry.bicep`, deployed once by the maintainer), and the Foundry User role on that account.
+
+```
+azd env new swankers-dev --location northcentralus
+azd env set AZURE_TAG_PRIMARY_OWNER <you@example.com>     # policy tags; Client and ExpectedDeleteDate have defaults
+azd up                                                     # rg-swankers-dev: Log Analytics, App Insights, ACR, Container Apps (mcp, web)
+pwsh tools/Swankers.AgentDeploy/deploy-coach.ps1           # Coach versions v1-owner, v2-owner, v1-commissioner; routed to v1-owner
+```
+
+- Images are built in the environment's Container Registry (`remoteBuild`), so no local Docker is needed.
+- The MCP server is public behind its credentials: `MCP_ENDPOINT` (streamable HTTP) and `MCP_BASE_URL/api` (demo REST, `X-Demo-Admin-Key`). Secrets still come from the shared vault; the container apps read them with managed identity.
+- Coach runs as a Foundry hosted agent (code bundle, no image) in the shared project. Each `create` is an immutable version; `dotnet run --project tools/Swankers.AgentDeploy -- route --version <n>` moves the endpoint (the Thursday rollback), `-- list` shows what is live. See [tools/Swankers.AgentDeploy/README.md](tools/Swankers.AgentDeploy/README.md).
+- Friday "before" (DEMO, intentionally vulnerable): `azd env set MCP_COMMISSIONER_GATE_ENABLED false` and `azd provision` turn the gate off for commissioner-credential calls; the hardened default is on.
+- Traces: `appi-swankers-dev` in Application Insights and the Foundry project's Tracing page (the project is connected to the same resource).
+- `azd down` removes only `rg-swankers-dev`; the vault, the Foundry account, and the model deployment stay.
+
 ## Layout
 
 | Path | What it is |
@@ -54,6 +72,8 @@ Then talk to it over the Responses protocol: `POST http://localhost:8088/respons
 | `src/Swankers.Coach` | Microsoft Agent Framework agent, hosted in Microsoft Foundry |
 | `src/Swankers.Web` | Blazor chat, league ticker, approval dialog |
 | `tools/Swankers.SnapshotCapture` | Pulls MFL exports into `data/snapshot` (maintainer runs it) |
+| `tools/Swankers.AgentDeploy` | Publishes Coach to Foundry as hosted agent versions; routes the endpoint |
+| `infra/` | azd Bicep: the disposable environment (`main.bicep`) and the shared Foundry module |
 | `tests/` | Unit tests and evals |
 | `knowledge/` | Markdown docs for Foundry IQ grounding |
 | `data/` | Anonymized snapshots, demo scenarios, franchise display names |

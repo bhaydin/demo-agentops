@@ -213,7 +213,7 @@ The Phase 3 gate should remain open. Real-model start/sit/pushback behavior and 
 - #4 `knowledge/*.md` ships next to the Coach binaries (README excluded); startup prefers the repo folder from a checkout and falls back to the shipped copy, logging what it loaded before connecting to MCP. Verified by publishing to a scratch folder and running the executable from outside the checkout: prompt and 23 knowledge sections loaded, then the expected failure at an unreachable MCP endpoint (`80e5972`).
 
 ## Phase 4: Azure deploy (Tue)
-Owner:
+Owner: Claude Code
 
 - [ ] `infra/` Bicep + `azure.yaml` for azd: Foundry project, model, App Insights, Container Apps (Mcp, Web), ACR, Key Vault
 - [ ] Hosted agent deployment for Coach
@@ -297,3 +297,9 @@ Gate: two clean rehearsals in a row.
 | 2026-09-28 | Coach reads its MCP credential by configuration key (`Coach:McpCredentialKey`) | No agent version carries a secret value; the Friday "before" flips one non-secret setting to `Mcp:CommissionerCredential` |
 | 2026-09-28 | `tests/Swankers.Coach.Tests` added to the layout | Coach's prompt, knowledge, and tool-discovery wiring is tested without a model |
 | 2026-09-28 | Aspire CLI (`dotnet tool install -g Aspire.Cli`, `aspire dashboard run`) for local traces | No Docker on the maintainer's ARM64 machine |
+| 2026-09-28 | Coach deploys as a Foundry hosted agent **code bundle** (`dotnet_10`, bundled publish output) through `tools/Swankers.AgentDeploy`, not `host: azure.ai.agent` | No image build on the ARM64 machine; the tool owns versions and endpoint routing, which is the Thursday rollback lever |
+| 2026-09-28 | MCP and Web are Container Apps built with ACR remote build (`docker.remoteBuild: true`) | Same reason: no local Docker; `azd up` works from a clean clone |
+| 2026-09-28 | Disposable azd environment `swankers-dev` (`rg-swankers-dev`) references the shared vault and Foundry as `existing`; App Insights lives in the dev group and is connected to the shared project | `azd down` between rehearsals never touches secrets, the model deployment, or its quota |
+| 2026-09-28 | Add `Azure.Monitor.OpenTelemetry.Exporter` 1.9.0 to Swankers.Mcp (100% sampling) | ARCHITECTURE §8 names Application Insights as the Azure trace sink; the hosted runtime already carries the exporter (1.7.0) for Coach |
+| 2026-09-28 | The Coach agent identity (created by Foundry on first deploy) gets Key Vault Secrets User via `COACH_AGENT_PRINCIPAL_ID` + `azd provision` | Hosted agents run as their own Entra agent identity, not the project identity; the assignment cannot exist before the agent does |
+| 2026-09-28 | MCP container runs one replica with SimLeague state on its disk; the image bakes in the snapshot and demo scenarios | Sim state is process-local by design; a restart reseeds from the snapshot, same as `demo/reset.ps1` |
