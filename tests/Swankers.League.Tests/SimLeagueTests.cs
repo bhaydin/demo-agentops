@@ -46,15 +46,19 @@ public sealed class SimLeagueTests : IAsyncLifetime
         };
         System.Diagnostics.ActivitySource.AddActivityListener(listener);
 
+        // The listener is process-wide and test classes run in parallel, so only count spans
+        // parented under this test's own activity.
+        using var scope = new System.Diagnostics.Activity("test.sim_reads").Start();
         await _sim.GetRosterAsync("0001", CT);
         await _sim.GetInjuriesAsync(null, CT);
         await _sim.GetProjectionsAsync(4, CT);
+        var mine = stopped.Where(a => a.RootId == scope.RootId).ToList();
 
-        var roster = Assert.Single(stopped, a => a.OperationName == "sim.get_roster");
+        var roster = Assert.Single(mine, a => a.OperationName == "sim.get_roster");
         Assert.Equal("0001", roster.GetTagItem("league.franchise_id"));
         Assert.Equal("2026-09-27", roster.GetTagItem("league.snapshot_id"));
-        Assert.Contains(stopped, a => a.OperationName == "sim.get_injuries");
-        Assert.Contains(stopped, a => a.OperationName == "sim.get_projections");
+        Assert.Contains(mine, a => a.OperationName == "sim.get_injuries");
+        Assert.Contains(mine, a => a.OperationName == "sim.get_projections");
     }
 
     [Fact]
