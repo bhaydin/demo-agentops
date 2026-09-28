@@ -36,11 +36,11 @@ builder.Services
 // Optional: live injury reports when MFL credentials are configured.
 builder.Services.AddOptions<MflOptions>().Bind(builder.Configuration.GetSection(MflOptions.SectionName));
 
-// Data directories: absolute from config, or repo-relative (see DataPaths).
+// Data directories: absolute from config, or repo-relative (see Swankers.League.RepoPaths).
 var configured = builder.Configuration.GetSection(McpOptions.SectionName).Get<McpOptions>() ?? new McpOptions();
-var snapshotRoot = DataPaths.Resolve(configured.SnapshotRoot, builder.Environment.ContentRootPath);
-var stateDirectory = DataPaths.Resolve(configured.StateDirectory, builder.Environment.ContentRootPath);
-var scenarioRoot = DataPaths.Resolve(configured.ScenarioRoot, builder.Environment.ContentRootPath);
+var snapshotRoot = RepoPaths.Resolve(configured.SnapshotRoot, builder.Environment.ContentRootPath);
+var stateDirectory = RepoPaths.Resolve(configured.StateDirectory, builder.Environment.ContentRootPath);
+var scenarioRoot = RepoPaths.Resolve(configured.ScenarioRoot, builder.Environment.ContentRootPath);
 builder.Services.PostConfigure<McpOptions>(o =>
 {
     o.SnapshotRoot = snapshotRoot;

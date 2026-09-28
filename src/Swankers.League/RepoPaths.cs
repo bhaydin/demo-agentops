@@ -1,13 +1,14 @@
-namespace Swankers.Mcp;
+namespace Swankers.League;
 
 /// <summary>
-/// Resolves the data directories (snapshots, sim state, scenarios). Absolute paths are used as
-/// configured. A relative path is taken from the current directory when it exists there;
-/// otherwise from the repo root, found by walking up from the content root to
-/// SwankersCoach.slnx. This keeps <c>dotnet run --project</c> (which runs from the project
-/// folder) and Visual Studio working without per-machine configuration.
+/// Resolves repo-relative data directories (snapshots, sim state, scenarios, knowledge).
+/// Absolute paths are used as configured. A relative path is taken from the current directory
+/// when it exists there; otherwise from the repo root, found by walking up from the content
+/// root to SwankersCoach.slnx. <c>dotnet run --project</c> runs from the project folder (and
+/// ignores a launch profile's workingDirectory), so this keeps local runs working without
+/// per-machine configuration.
 /// </summary>
-public static class DataPaths
+public static class RepoPaths
 {
     private const string RepoMarker = "SwankersCoach.slnx";
 
