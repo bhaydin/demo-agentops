@@ -255,7 +255,7 @@ Owner: Claude Code
 - [x] `.github/workflows/evals.yml` gates promotion of a new agent version
 - [x] Demonstrate: v1 passes, v2 fails on injury-check cases
 
-Gate: CI shows v1 green and v2 red for the right reason. **Status:** shown locally (below); the CI run waits on the maintainer-approved identity setup (`infra/ci-identity.ps1`), after which `evals.yml` is dispatched once for the record.
+Gate: CI shows v1 green and v2 red for the right reason. **Met:** `evals.yml` [run 36480046231](https://github.com/bhaydin/demo-agentops/actions/runs/36480046231) (dispatch, `v1,v2`, no promote): job **evals (v1) green** (17/17 in every category; Foundry `task_adherence` 17/17, `intent_resolution` 16/17, `tool_call_accuracy` 11/15 report-only), job **evals (v2) red** on `injury_check` 3/4: `ic-04` never called `get_player_news` ("no need for an injury deep dive"); v2's other categories 100%, `task_adherence` 17/17. Reports uploaded as `evals-v1` / `evals-v2` artifacts. The first dispatch (36479806664) failed at Azure login: GitHub's OIDC subject carries owner and repository ids (`repo:bhaydin@3877779/demo-agentops@1391034072:…`), so `ci-identity.ps1` now registers both subject forms (`996a83e`).
 
 ### Phase 5 record (2026-09-28)
 
