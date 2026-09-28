@@ -20,7 +20,13 @@ public sealed record EvalSettings
         public bool Required { get; init; }
 
         public IReadOnlyList<string> Evaluators { get; init; } = ["task_adherence", "intent_resolution", "tool_call_accuracy"];
+
+        /// <summary>Evaluators whose pass rate gates the run; the rest are run and reported only.</summary>
+        public IReadOnlyList<string> Gated { get; init; } = ["task_adherence", "intent_resolution"];
+
         public double MinPassRate { get; init; } = 0.8;
+
+        public bool IsGated(string evaluator) => Gated.Contains(evaluator, StringComparer.OrdinalIgnoreCase);
     }
 
     public static string DefaultPath => Path.Combine(AppContext.BaseDirectory, "evalsettings.json");

@@ -65,7 +65,7 @@ pwsh tools/Swankers.AgentDeploy/deploy-coach.ps1           # Coach versions v1-o
 
 ## Evals
 
-`tests/Swankers.Evals` holds the golden set (`golden/*.jsonl`, 17 cases: start/sit, injury check, pushback, adversarial) and the gate. The gate runs the Coach in-process, built exactly like the hosted version but with the MCP server hosted in the test on the repo's real snapshot, then scores each case with deterministic rules (`ToolSequenceEvaluator`: expected and forbidden tools, `get_player_news` before any start/sit call, lineup contents, own-franchise scope), an LLM judge for pushback, and Foundry's `task_adherence` / `intent_resolution` / `tool_call_accuracy` evaluators (report link in the output). Thresholds live in `evalsettings.json`.
+`tests/Swankers.Evals` holds the golden set (`golden/*.jsonl`, 17 cases: start/sit, injury check, pushback, adversarial) and the gate. The gate runs the Coach in-process, built exactly like the hosted version but with the MCP server hosted in the test on the repo's real snapshot, then scores each case with deterministic rules (`ToolSequenceEvaluator`: expected and forbidden tools, `get_player_news` before any start/sit call, lineup contents, own-franchise scope), an LLM judge for pushback, and Foundry's `task_adherence` / `intent_resolution` / `tool_call_accuracy` evaluators (portal report links in the output; `tool_call_accuracy` is reported but not gated, because its judge penalizes the read-everything pattern v1 must follow). Thresholds live in `evalsettings.json`.
 
 ```
 azd env get-value FOUNDRY_PROJECT_ENDPOINT              # the gate skips itself when this is not set

@@ -72,7 +72,7 @@ public sealed class EvalReport(string promptVersion, EvalSettings settings, IRea
 
             foreach (var (name, (passed, failed)) in foundry.PerEvaluator.OrderBy(kv => kv.Key))
             {
-                sb.AppendLine($"- {name}: {passed} passed, {failed} failed");
+                sb.AppendLine($"- {name}: {passed} passed, {failed} failed{(settings.Foundry.IsGated(name) ? "" : " (report only)")}");
             }
         }
 
@@ -149,7 +149,7 @@ public sealed class EvalReport(string promptVersion, EvalSettings settings, IRea
                 failures.Add($"foundry: {foundry.Error}");
             }
 
-            foreach (var (name, (passed, failed)) in foundry.PerEvaluator)
+            foreach (var (name, (passed, failed)) in foundry.PerEvaluator.Where(kv => settings.Foundry.IsGated(kv.Key)))
             {
                 var total = passed + failed;
                 if (total > 0 && (double)passed / total < settings.Foundry.MinPassRate)

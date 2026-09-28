@@ -128,7 +128,7 @@ public sealed class GoldenSetEvals(ITestOutputHelper output)
                     urls.Add(results.ReportUrl);
                 }
 
-                if (results.Error is not null)
+                if (!string.IsNullOrWhiteSpace(results.Error))
                 {
                     errors.Add(results.Error);
                 }

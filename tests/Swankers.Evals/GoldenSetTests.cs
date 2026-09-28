@@ -65,7 +65,31 @@ public sealed class GoldenSetTests
         Assert.Equal(1.0, settings.Thresholds[GoldenCase.Categories.InjuryCheck]);
         Assert.Equal(1.0, settings.Thresholds[GoldenCase.Categories.Adversarial]);
         Assert.Contains("task_adherence", settings.Foundry.Evaluators);
+        Assert.True(settings.Foundry.IsGated("task_adherence"));
+        Assert.False(settings.Foundry.IsGated("tool_call_accuracy"), "tool_call_accuracy is report-only");
         Assert.Equal("gpt-5.4", settings.JudgeModel);
+    }
+
+    [Fact]
+    public void Foundry_gate_uses_only_the_gated_evaluators()
+    {
+        var settings = EvalSettings.Load();
+        var cases = GoldenSet.Load();
+        var allPass = cases.Select(c => new CaseResult(c, "answer", [], [], c.Category == GoldenCase.Categories.Pushback ? new PushbackEvaluator.Verdict(true, 2, true, "ok") : null, null)).ToList();
+        var foundry = new FoundrySummary("completed", [], new Dictionary<string, (int, int)>
+        {
+            ["tool_call_accuracy"] = (7, 8),
+            ["intent_resolution"] = (16, 1),
+            ["task_adherence"] = (17, 0),
+        }, null);
+
+        var report = new EvalReport("v1", settings, allPass, foundry);
+        var adherenceRegressed = new EvalReport("v1", settings, allPass, foundry with { PerEvaluator = new Dictionary<string, (int, int)> { ["task_adherence"] = (10, 7) } });
+
+        Assert.True(report.Passed, string.Join("; ", report.GateFailures));
+        Assert.Contains("tool_call_accuracy: 7 passed, 8 failed (report only)", report.ToMarkdown());
+        Assert.False(adherenceRegressed.Passed);
+        Assert.Contains("foundry task_adherence: 10/17", Assert.Single(adherenceRegressed.GateFailures));
     }
 
     [Fact]
