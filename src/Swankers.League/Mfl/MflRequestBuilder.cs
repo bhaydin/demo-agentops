@@ -31,7 +31,7 @@ public sealed class MflRequestBuilder(MflOptions options)
         => Compose(options.ApiHost, type, args, withCredentials: false);
 
     private Uri LeagueRequest(string type, string? args = null)
-        => Compose(options.LeagueHost, type, $"L={options.LeagueId}{(args is null ? "" : "&" + args)}", withCredentials: true);
+        => Compose(options.Host, type, $"L={options.LeagueId}{(args is null ? "" : "&" + args)}", withCredentials: true);
 
     private Uri Compose(string host, string type, string? args, bool withCredentials)
     {

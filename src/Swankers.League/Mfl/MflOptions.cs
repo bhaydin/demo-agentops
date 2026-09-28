@@ -19,10 +19,10 @@ public sealed class MflOptions
     [RegularExpression("^[0-9]+$")]
     public string LeagueId { get; set; } = "";
 
-    /// <summary>The league's own host, e.g. "www42.myfantasyleague.com".</summary>
+    /// <summary>The league's own host, e.g. "www42.myfantasyleague.com" (Key Vault: Mfl--Host).</summary>
     [Required]
     [RegularExpression(@"^www\d{2}\.myfantasyleague\.com$")]
-    public string LeagueHost { get; set; } = "";
+    public string Host { get; set; } = "";
 
     /// <summary>Host for requests that take no league id; MFL spreads these across servers.</summary>
     [RegularExpression(@"^[a-z0-9.-]+\.myfantasyleague\.com$")]
