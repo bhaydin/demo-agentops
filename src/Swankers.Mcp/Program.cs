@@ -2,6 +2,7 @@
 // Scope comes from the credential, irreversible tools wait for human approval, approval is
 // never a tool. Vulnerable paths are marked DEMO and must be selected explicitly in config.
 using Azure.Identity;
+using Azure.Monitor.OpenTelemetry.Exporter;
 using ModelContextProtocol.Protocol;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -82,6 +83,17 @@ builder.Services.AddOpenTelemetry()
         if (!string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]))
         {
             tracing.AddOtlpExporter();
+        }
+
+        // Azure: Application Insights, the same resource the Foundry project traces into. Keep
+        // every span so a Coach trace sampled upstream is never missing its MCP half.
+        if (!string.IsNullOrWhiteSpace(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
+        {
+            tracing.AddAzureMonitorTraceExporter(o =>
+            {
+                o.SamplingRatio = 1.0f;
+                o.TracesPerSecond = null;
+            });
         }
     });
 
