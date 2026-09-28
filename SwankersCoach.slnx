@@ -21,6 +21,7 @@
     <Project Path="src/Swankers.Web/Swankers.Web.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Swankers.Coach.Tests/Swankers.Coach.Tests.csproj" />
     <Project Path="tests/Swankers.Evals/Swankers.Evals.csproj" />
     <Project Path="tests/Swankers.League.Tests/Swankers.League.Tests.csproj" />
     <Project Path="tests/Swankers.Mcp.Tests/Swankers.Mcp.Tests.csproj" />

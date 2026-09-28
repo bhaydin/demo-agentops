@@ -40,3 +40,6 @@ jobs:
 
       - name: Test (Mcp)
         run: dotnet test tests/Swankers.Mcp.Tests --no-build -c Release
+
+      - name: Test (Coach)
+        run: dotnet test tests/Swankers.Coach.Tests --no-build -c Release
