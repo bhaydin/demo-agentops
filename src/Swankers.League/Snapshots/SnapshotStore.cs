@@ -16,40 +16,86 @@ public sealed class SnapshotStore(string rootDirectory)
         Converters = { new JsonStringEnumConverter() },
     };
 
+    /// <summary>Every file a complete snapshot has. The manifest is written last.</summary>
+    private static readonly string[] FileNames =
+    [
+        "franchises.json", "players.json", "rosters.json", "injuries.json", "matchups.json",
+        "projections.json", "weekly-results.json", "standings.json", "transactions.json",
+        "pending-trades.json", "manifest.json",
+    ];
+
+    private const string StagingSuffix = ".tmp";
+    private const string RetiredSuffix = ".old";
+
+    /// <summary>Ids of complete snapshots only; staging, retired, and partial directories are ignored.</summary>
     public IReadOnlyList<string> ListIds()
         => !Directory.Exists(rootDirectory)
             ? []
             : [.. Directory.EnumerateDirectories(rootDirectory)
                 .Select(d => Path.GetFileName(d)!)
-                .Where(id => File.Exists(ManifestPath(id)))
+                .Where(id => !id.EndsWith(StagingSuffix, StringComparison.Ordinal)
+                          && !id.EndsWith(RetiredSuffix, StringComparison.Ordinal)
+                          && IsComplete(Path.Combine(rootDirectory, id)))
                 .Order(StringComparer.Ordinal)];
 
+    /// <summary>
+    /// Writes into a staging directory (manifest last) and publishes with a directory rename,
+    /// so an interrupted save can never be discovered as a snapshot and a same-id recapture
+    /// replaces the old snapshot whole rather than file by file.
+    /// </summary>
     public async Task SaveAsync(Snapshot snapshot, CancellationToken cancellationToken)
     {
-        var directory = Path.Combine(rootDirectory, snapshot.Manifest.Id);
-        Directory.CreateDirectory(directory);
+        var final = Path.Combine(rootDirectory, snapshot.Manifest.Id);
+        var staging = final + StagingSuffix;
+        Directory.CreateDirectory(staging);
 
-        await WriteAsync(directory, "manifest.json", snapshot.Manifest, cancellationToken);
-        await WriteAsync(directory, "franchises.json", snapshot.Franchises, cancellationToken);
-        await WriteAsync(directory, "players.json", snapshot.Players, cancellationToken);
-        await WriteAsync(directory, "rosters.json", snapshot.Rosters, cancellationToken);
-        await WriteAsync(directory, "injuries.json", snapshot.Injuries, cancellationToken);
-        await WriteAsync(directory, "matchups.json", snapshot.Matchups, cancellationToken);
-        await WriteAsync(directory, "projections.json", snapshot.Projections, cancellationToken);
-        await WriteAsync(directory, "weekly-results.json", snapshot.WeeklyResults, cancellationToken);
-        await WriteAsync(directory, "standings.json", snapshot.Standings, cancellationToken);
-        await WriteAsync(directory, "transactions.json", snapshot.Transactions, cancellationToken);
-        await WriteAsync(directory, "pending-trades.json", snapshot.PendingTrades, cancellationToken);
+        await WriteAsync(staging, "franchises.json", snapshot.Franchises, cancellationToken);
+        await WriteAsync(staging, "players.json", snapshot.Players, cancellationToken);
+        await WriteAsync(staging, "rosters.json", snapshot.Rosters, cancellationToken);
+        await WriteAsync(staging, "injuries.json", snapshot.Injuries, cancellationToken);
+        await WriteAsync(staging, "matchups.json", snapshot.Matchups, cancellationToken);
+        await WriteAsync(staging, "projections.json", snapshot.Projections, cancellationToken);
+        await WriteAsync(staging, "weekly-results.json", snapshot.WeeklyResults, cancellationToken);
+        await WriteAsync(staging, "standings.json", snapshot.Standings, cancellationToken);
+        await WriteAsync(staging, "transactions.json", snapshot.Transactions, cancellationToken);
+        await WriteAsync(staging, "pending-trades.json", snapshot.PendingTrades, cancellationToken);
+        await WriteAsync(staging, "manifest.json", snapshot.Manifest, cancellationToken);
+
+        Publish(staging, final);
     }
+
+    private static void Publish(string staging, string final)
+    {
+        var retired = final + RetiredSuffix;
+        if (Directory.Exists(retired))
+        {
+            Directory.Delete(retired, recursive: true);
+        }
+
+        if (Directory.Exists(final))
+        {
+            Directory.Move(final, retired);
+        }
+
+        Directory.Move(staging, final);
+
+        if (Directory.Exists(retired))
+        {
+            Directory.Delete(retired, recursive: true);
+        }
+    }
+
+    private static bool IsComplete(string directory)
+        => FileNames.All(name => File.Exists(Path.Combine(directory, name)));
 
     public async Task<Snapshot?> LoadAsync(string id, CancellationToken cancellationToken)
     {
-        if (!File.Exists(ManifestPath(id)))
+        var directory = Path.Combine(rootDirectory, id);
+        if (!IsComplete(directory))
         {
             return null;
         }
 
-        var directory = Path.Combine(rootDirectory, id);
         var manifest = await ReadAsync<SnapshotManifest>(directory, "manifest.json", cancellationToken);
         if (manifest is null)
         {
@@ -74,8 +120,6 @@ public sealed class SnapshotStore(string rootDirectory)
         => ListIds() is [.., var latest]
             ? await LoadAsync(latest, cancellationToken)
             : null;
-
-    private string ManifestPath(string id) => Path.Combine(rootDirectory, id, "manifest.json");
 
     private static async Task WriteAsync<T>(
         string directory, string fileName, T value, CancellationToken cancellationToken)

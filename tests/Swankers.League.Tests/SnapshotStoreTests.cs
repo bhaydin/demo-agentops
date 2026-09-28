@@ -48,6 +48,53 @@ public sealed class SnapshotStoreTests : IDisposable
     }
 
     [Fact]
+    public async Task Interrupted_save_never_becomes_the_latest_snapshot()
+    {
+        // Codex Phase 1 review #3. Make the rosters write fail mid-save by planting a directory
+        // where the temp file would go; the manifest is written last, so nothing is discoverable.
+        var store = new SnapshotStore(_root);
+        await store.SaveAsync(SyntheticSnapshot.Build("2026-09-20", week: 3), CT);
+        Directory.CreateDirectory(Path.Combine(_root, "2026-09-27.tmp", "rosters.json.tmp"));
+
+        await Assert.ThrowsAnyAsync<Exception>(
+            () => store.SaveAsync(SyntheticSnapshot.Build("2026-09-27", week: 4), CT));
+
+        Assert.False(Directory.Exists(Path.Combine(_root, "2026-09-27")));
+        Assert.Equal(["2026-09-20"], store.ListIds());
+        Assert.Equal("2026-09-20", (await store.LoadLatestAsync(CT))!.Manifest.Id);
+        Assert.Null(await store.LoadAsync("2026-09-27", CT));
+    }
+
+    [Fact]
+    public async Task Partial_directory_with_only_a_manifest_is_not_a_snapshot()
+    {
+        var store = new SnapshotStore(_root);
+        await store.SaveAsync(SyntheticSnapshot.Build("2026-09-20", week: 3), CT);
+        var partial = Path.Combine(_root, "2026-09-30");
+        Directory.CreateDirectory(partial);
+        File.Copy(Path.Combine(_root, "2026-09-20", "manifest.json"), Path.Combine(partial, "manifest.json"));
+
+        Assert.Equal(["2026-09-20"], store.ListIds());
+        Assert.Null(await store.LoadAsync("2026-09-30", CT));
+        Assert.Equal("2026-09-20", (await store.LoadLatestAsync(CT))!.Manifest.Id);
+    }
+
+    [Fact]
+    public async Task Same_id_recapture_replaces_the_snapshot_whole()
+    {
+        var store = new SnapshotStore(_root);
+        await store.SaveAsync(SyntheticSnapshot.Build("2026-09-27", week: 3), CT);
+
+        await store.SaveAsync(SyntheticSnapshot.Build("2026-09-27", week: 4), CT);
+
+        Assert.Equal(4, (await store.LoadAsync("2026-09-27", CT))!.Manifest.Week);
+        Assert.Equal(["2026-09-27"], store.ListIds());
+        Assert.DoesNotContain(
+            Directory.EnumerateDirectories(_root).Select(Path.GetFileName),
+            name => name!.EndsWith(".tmp") || name.EndsWith(".old"));
+    }
+
+    [Fact]
     public async Task Empty_store_yields_null_latest_and_empty_reader_results()
     {
         var store = new SnapshotStore(_root);
