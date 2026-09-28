@@ -1,3 +1,4 @@
+using Azure.AI.AgentServer.Core;
 using Azure.AI.Projects;
 using Azure.Identity;
 using Microsoft.Agents.AI;
@@ -19,7 +20,15 @@ public static class CoachAgentFactory
         IReadOnlyList<AITool> tools,
         ILoggerFactory loggerFactory)
     {
-        var project = new AIProjectClient(new Uri(options.ProjectEndpoint), new DefaultAzureCredential());
+        // Hosted: the agent's managed identity. Local: skip the managed-identity probe (it only
+        // logs an error and costs time on a developer machine) and cache the CLI token.
+        var credential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
+        {
+            ExcludeManagedIdentityCredential = !FoundryEnvironment.IsHosted,
+        });
+        var project = new AIProjectClient(
+            new Uri(options.ProjectEndpoint),
+            new CachedTokenCredential(credential));
 
         AIAgent agent = project.AsAIAgent(
             model: options.ModelDeployment,

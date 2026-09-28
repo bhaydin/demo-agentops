@@ -7,6 +7,7 @@ using Azure.Identity;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Foundry.Hosting;
 using Microsoft.Extensions.AI;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Swankers.Coach;
 using Swankers.Coach.Knowledge;
@@ -82,6 +83,7 @@ builder.RegisterProtocol("responses", endpoints => endpoints.MapFoundryResponses
 // The agent host owns the OpenTelemetry pipeline (OTLP / Application Insights from environment);
 // we add our sources so agent, tool, and league spans join the same trace as the MCP server.
 builder.ConfigureTracing(tracing => tracing
+    .ConfigureResource(resource => resource.AddService("Swankers.Coach"))
     .AddSource(CoachDiagnostics.ActivitySourceName)
     .AddSource(OpenTelemetryAgent.DefaultSourceName)
     .AddSource(LeagueDiagnostics.ActivitySourceName));
