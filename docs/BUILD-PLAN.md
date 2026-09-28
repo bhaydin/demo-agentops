@@ -118,6 +118,7 @@ Add targeted regressions for these cases. Implementation files were not changed 
 
 ## Phase 2: MCP server (Mon)
 Owner: Claude Code
+Review owner: Codex (Phase 2 code review completed; changes requested below)
 
 - [x] Tools per ARCHITECTURE.md, snake_case, with clear descriptions
 - [x] Credential-to-scope mapping (owner vs commissioner), including franchiseId handling and `"0000"`
@@ -147,6 +148,24 @@ Gate: exercise every tool through the MCP Inspector (or equivalent) with both cr
 **Known limits:** the SDK logs every tool error (including intended scope denials) at error level; the gate is in-memory (a restart clears pending confirmations, which suits the demo); `set_lineup` always targets the current week.
 
 **Maintainer gate steps:** add the three `Mcp--*` secrets to the vault; run `dotnet run --project src/Swankers.Mcp -- --KeyVault:Uri <vault-uri>` (or set `Mcp__OwnerCredential`, `Mcp__CommissionerCredential`, `Mcp__DemoAdminKey` as environment variables for a local session); connect MCP Inspector to `http://localhost:5210/mcp` with `Authorization: Bearer <credential>` for each credential and exercise the tools; review the `// DEMO:` markers.
+
+**Codex review (commit `617f73a`):** locked restore and Release build independently pass with 0 warnings/errors; 81/81 tests pass (55 League, 25 Mcp, 1 Evals), and CI at this commit is green. The seven Phase 1 fixes have targeted regression coverage. An isolated harness using synthetic snapshots, the existing in-process MCP host, actual MCP/REST requests, and stubbed injury HTTP reproduced these Phase 2 findings:
+
+- P1: gated commissioner `drop_player(franchiseId: "0000")` resolves its target again at approval. A confirmation summarized a drop from `0001`; after an intervening accepted trade, approving it dropped the player from `0099`. Bind approval to the concrete target and reject stale preconditions.
+- P1: reset and approval execution are not coordinated. With both real REST requests queued behind the league write gate, reset returned 200, then the previously queued approval dropped a player from the reset league and repopulated recent confirmations. Reset must drain or invalidate in-flight work, not only clear pending entries.
+- P2: confirmation removal precedes execution and only two exception types are recorded. A forced persistence failure returned HTTP 500 and left neither a pending confirmation nor a recent failure record; the player correctly remained rostered. Preserve a terminal failed/canceled outcome or a safely retryable pending entry.
+- P2: `get_player_news` reports `source: "mfl-live"` after an upstream 503 serves snapshot fallback. Propagate actual source/freshness so stale injury data is not presented as current.
+- P2: effective-franchise telemetry is inaccurate for cross-franchise reads and commissioner `0000` operations. Reading `0002` as owner `0001` returned `0002` but traced effective `0001`; a resolved commissioner drop retained effective `0000`. Record the actual affected/read franchise in the span and confirmation metadata.
+
+Changes requested before closing Phase 2. The maintainer's Inspector and vulnerable-path review remain open. Implementation files were not changed by this review; the reproduction harness is under ignored `artifacts/phase2-review/`.
+
+**Resolution (Claude Code, 2026-09-28):** all five fixed, one commit per finding, each with a regression test (tests 81 → 90, all green in Release):
+
+- #1 `RunIrreversibleAsync` takes a prepare step that resolves the concrete target once; the confirmation stores it and execution is a closure over it, with SimLeague re-validating preconditions (regression: queue a `0000` drop, trade the player away, approve → fails against the original franchise).
+- #2 `ConfirmationGate.ResetAsync` takes the execution lock, cancels pending confirmations with a terminal record, clears history, and reseeds the league while still holding the lock (regressions: in-flight approval finishes before the league reset; a late approval after reset gets 404).
+- #3 entries stay pending while executing; every failure is recorded (`executed` | `denied` | `failed` | `canceled`), the endpoint returns 200 with the error, a failed action is terminal and the agent asks again (regressions: gate-level `IOException`, end to end with a blocked state file).
+- #4 `MflExportClient` returns `Sourced<T>` (live | cache | snapshot + time + id) for injuries; `get_player_news` reports the real source and `asOf` (regression: stubbed MFL 503 → `snapshot <id>`).
+- #5 `ToolContext.SetEffective` updates the span tag and confirmation metadata for cross-franchise reads and resolved `0000` targets (regression via an ActivityListener on the in-process server).
 
 ## Phase 3: Coach agent, local (Mon)
 Owner:
