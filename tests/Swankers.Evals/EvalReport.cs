@@ -22,7 +22,7 @@ public sealed record CaseResult(
             .Concat(Error is null ? [] : [$"error: {Error}"]);
 }
 
-public sealed record FoundrySummary(string? Status, Uri? ReportUrl, IReadOnlyDictionary<string, (int Passed, int Failed)> PerEvaluator, string? Error);
+public sealed record FoundrySummary(string? Status, IReadOnlyList<Uri> ReportUrls, IReadOnlyDictionary<string, (int Passed, int Failed)> PerEvaluator, string? Error);
 
 /// <summary>Markdown for humans (test output, CI log, artifact) and JSON for the promotion job.</summary>
 public sealed class EvalReport(string promptVersion, EvalSettings settings, IReadOnlyList<CaseResult> results, FoundrySummary? foundry)
@@ -60,9 +60,9 @@ public sealed class EvalReport(string promptVersion, EvalSettings settings, IRea
         {
             sb.AppendLine();
             sb.AppendLine($"## Foundry evaluators ({foundry.Status ?? "n/a"})");
-            if (foundry.ReportUrl is not null)
+            foreach (var url in foundry.ReportUrls)
             {
-                sb.AppendLine($"Report: {foundry.ReportUrl}");
+                sb.AppendLine($"Report: {url}");
             }
 
             if (foundry.Error is not null)
@@ -106,7 +106,7 @@ public sealed class EvalReport(string promptVersion, EvalSettings settings, IRea
         passed = Passed,
         gateFailures = GateFailures,
         categories = Categories.ToDictionary(kv => kv.Key, kv => new { kv.Value.Passed, kv.Value.Total, kv.Value.Rate }),
-        foundry = foundry is null ? null : new { foundry.Status, foundry.ReportUrl, foundry.Error, perEvaluator = foundry.PerEvaluator.ToDictionary(kv => kv.Key, kv => new { kv.Value.Passed, kv.Value.Failed }) },
+        foundry = foundry is null ? null : new { foundry.Status, reportUrls = foundry.ReportUrls.Select(u => u.ToString()), foundry.Error, perEvaluator = foundry.PerEvaluator.ToDictionary(kv => kv.Key, kv => new { kv.Value.Passed, kv.Value.Failed }) },
         cases = results.Select(r => new { r.Case.Id, r.Case.Category, r.Passed, failures = r.Failures, tools = r.Calls.Select(c => c.Name) }),
     }, new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true });
 

@@ -68,12 +68,10 @@ public sealed class ToolSequenceEvaluator(string ownerFranchiseId = "0001")
         }
 
         var news = calls.Where(c => c.Name == "get_player_news").Select(c => c.Arg("player") ?? "").ToList();
-        var unchecked_ = golden.NewsCheckFor
-            .Where(player => !news.Any(arg => arg.Contains(player, StringComparison.OrdinalIgnoreCase)))
-            .ToList();
+        var unchecked_ = golden.NewsCheckFor.Where(player => !news.Any(player.Matches)).ToList();
         return unchecked_.Count == 0
-            ? Pass("news_before_recommendation", $"get_player_news called for {string.Join(", ", golden.NewsCheckFor)}")
-            : Fail("news_before_recommendation", $"get_player_news was not called for {string.Join(", ", unchecked_)} (news calls: {(news.Count == 0 ? "none" : string.Join(", ", news))})");
+            ? Pass("news_before_recommendation", $"get_player_news called for {string.Join(", ", golden.NewsCheckFor.Select(p => p.Name))}")
+            : Fail("news_before_recommendation", $"get_player_news was not called for {string.Join(", ", unchecked_.Select(p => p.Name))} (news calls: {(news.Count == 0 ? "none" : string.Join(", ", news))})");
     }
 
     public static EvalCheckResult LineupPlayers(GoldenCase golden, IReadOnlyList<ToolCall> calls)

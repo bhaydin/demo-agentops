@@ -85,32 +85,69 @@ public sealed class GoldenSetEvals(ITestOutputHelper output)
         }
     }
 
-    /// <summary>Cloud evaluators over the same items; a service error is reported, not thrown.</summary>
+    /// <summary>Evaluators that need tool definitions in the item data.</summary>
+    private static readonly HashSet<string> ToolEvaluators = new(StringComparer.OrdinalIgnoreCase)
+    {
+        FoundryEvals.ToolCallAccuracy, FoundryEvals.ToolSelection, FoundryEvals.ToolInputAccuracy, FoundryEvals.ToolOutputUtilization, FoundryEvals.ToolCallSuccess,
+    };
+
+    /// <summary>
+    /// Cloud evaluators over the same items, as two runs: the 1.22.0-preview provider sends
+    /// tool_definitions whenever items carry tools but does not map that field for the
+    /// non-tool evaluators, and the service rejects the run (EvalValidationFailed). So the
+    /// non-tool evaluators see items without tools and the tool evaluators see items with them.
+    /// A service error is reported, not thrown.
+    /// </summary>
     private static async Task<FoundrySummary> RunFoundryAsync(CoachUnderTest coach, EvalSettings settings, string version, List<(GoldenCase Case, EvalItem Item)> items)
     {
         if (items.Count == 0)
         {
-            return new FoundrySummary("skipped", null, new Dictionary<string, (int, int)>(), "no items");
+            return new FoundrySummary("skipped", [], new Dictionary<string, (int, int)>(), "no items");
         }
 
-        try
+        var withTools = items.Select(i => i.Item).ToList();
+        var withoutTools = items.Select(i => new EvalItem(i.Item.Query, i.Item.Response, i.Item.Conversation) { ExpectedOutput = i.Item.ExpectedOutput }).ToList();
+        var runs = new List<(string[] Evaluators, IReadOnlyList<EvalItem> Items, string Name)>
         {
-            var evals = new FoundryEvals(coach.Project, settings.JudgeModel, settings.Foundry.Evaluators.ToArray());
-            var results = await evals.EvaluateAsync(items.Select(i => i.Item).ToList(), $"swankers-coach-{version}", CT);
-            var perEvaluator = new Dictionary<string, (int Passed, int Failed)>();
-            if (results.PerEvaluator is not null)
+            (settings.Foundry.Evaluators.Where(e => !ToolEvaluators.Contains(e)).ToArray(), withoutTools, $"swankers-coach-{version}"),
+            (settings.Foundry.Evaluators.Where(ToolEvaluators.Contains).ToArray(), withTools, $"swankers-coach-{version}-tools"),
+        };
+
+        var perEvaluator = new Dictionary<string, (int Passed, int Failed)>();
+        var urls = new List<Uri>();
+        var statuses = new List<string>();
+        var errors = new List<string>();
+        foreach (var (evaluators, runItems, name) in runs.Where(r => r.Evaluators.Length > 0))
+        {
+            try
             {
-                foreach (var (name, summary) in results.PerEvaluator)
+                var results = await new FoundryEvals(coach.Project, settings.JudgeModel, evaluators).EvaluateAsync(runItems, name, CT);
+                statuses.Add(results.Status ?? "unknown");
+                if (results.ReportUrl is not null)
                 {
-                    perEvaluator[name] = (summary.Passed, summary.Failed);
+                    urls.Add(results.ReportUrl);
+                }
+
+                if (results.Error is not null)
+                {
+                    errors.Add(results.Error);
+                }
+
+                if (results.PerEvaluator is not null)
+                {
+                    foreach (var (evaluator, summary) in results.PerEvaluator)
+                    {
+                        perEvaluator[evaluator] = (summary.Passed, summary.Failed);
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                statuses.Add("error");
+                errors.Add($"{name}: {ex.GetType().Name}: {ex.Message}");
+            }
+        }
 
-            return new FoundrySummary(results.Status, results.ReportUrl, perEvaluator, results.Error);
-        }
-        catch (Exception ex)
-        {
-            return new FoundrySummary("error", null, new Dictionary<string, (int, int)>(), $"{ex.GetType().Name}: {ex.Message}");
-        }
+        return new FoundrySummary(string.Join("+", statuses), urls, perEvaluator, errors.Count == 0 ? null : string.Join(" | ", errors));
     }
 }

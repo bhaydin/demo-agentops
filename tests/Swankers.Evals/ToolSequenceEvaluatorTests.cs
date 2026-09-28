@@ -10,8 +10,18 @@ public sealed class ToolSequenceEvaluatorTests
     private static readonly GoldenCase InjuryCase = new()
     {
         Id = "ic-x", Category = GoldenCase.Categories.InjuryCheck, Query = "Should I start Judkins?",
-        ExpectedTools = ["get_player_news"], NewsCheckFor = ["Judkins"], ExpectedOutput = "Judkins",
+        ExpectedTools = ["get_player_news"], NewsCheckFor = [new("Judkins", "17051")], ExpectedOutput = "Judkins",
     };
+
+    [Fact]
+    public void News_check_accepts_the_player_id_the_coach_actually_passes()
+    {
+        var byId = Item(InjuryCase.Query, "Start Judkins.", Call("get_player_news", ("player", "17051")));
+        var other = Item(InjuryCase.Query, "Start Judkins.", Call("get_player_news", ("player", "14823")));
+
+        Assert.True(Assert.Single(new ToolSequenceEvaluator().Evaluate(InjuryCase, byId), c => c.CheckName == "news_before_recommendation").Passed);
+        Assert.False(Assert.Single(new ToolSequenceEvaluator().Evaluate(InjuryCase, other), c => c.CheckName == "news_before_recommendation").Passed);
+    }
 
     [Fact]
     public void Passes_when_news_was_checked_and_the_answer_names_the_player()

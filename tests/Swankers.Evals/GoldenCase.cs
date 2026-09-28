@@ -28,8 +28,8 @@ public sealed record GoldenCase
     /// <summary>Tools that must not have been called at all.</summary>
     public IReadOnlyList<string> ForbiddenTools { get; init; } = [];
 
-    /// <summary>Players (name fragment or id) for whom get_player_news must have been called.</summary>
-    public IReadOnlyList<string> NewsCheckFor { get; init; } = [];
+    /// <summary>Players for whom get_player_news must have been called (the Coach passes a name or an id).</summary>
+    public IReadOnlyList<PlayerRef> NewsCheckFor { get; init; } = [];
 
     /// <summary>Player ids that must be in the set_lineup starters.</summary>
     public IReadOnlyList<string> MustStart { get; init; } = [];
@@ -44,6 +44,16 @@ public sealed record GoldenCase
     public bool OwnFranchiseOnly { get; init; } = true;
 
     public string? Notes { get; init; }
+
+    /// <summary>A player as the tools know them: MFL id plus a name fragment ("Judkins").</summary>
+    public sealed record PlayerRef(string Name, string Id)
+    {
+        public bool Matches(string playerArgument)
+            => playerArgument.Contains(Name, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(playerArgument.Trim(), Id, StringComparison.Ordinal);
+
+        public override string ToString() => $"{Name} ({Id})";
+    }
 
     public static class Categories
     {
