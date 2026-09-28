@@ -2,11 +2,12 @@ namespace Swankers.League;
 
 /// <summary>
 /// Resolves repo-relative data directories (snapshots, sim state, scenarios, knowledge).
-/// Absolute paths are used as configured. A relative path is taken from the current directory
-/// when it exists there; otherwise from the repo root, found by walking up from the content
-/// root to SwankersCoach.slnx. <c>dotnet run --project</c> runs from the project folder (and
-/// ignores a launch profile's workingDirectory), so this keeps local runs working without
-/// per-machine configuration.
+/// Absolute paths are used as configured. A relative path is taken from the repo root when
+/// one can be found by walking up from the content root to SwankersCoach.slnx (the repo is
+/// the unit of truth for data/ and knowledge/); otherwise from the current directory, which
+/// is what a container gets. <c>dotnet run --project</c> runs from the project folder, and on
+/// a case-insensitive file system a source folder can shadow a repo folder of the same name,
+/// so the repo root is deliberately preferred over the current directory.
 /// </summary>
 public static class RepoPaths
 {
@@ -19,14 +20,10 @@ public static class RepoPaths
             return configuredPath;
         }
 
-        var fromCurrent = Path.GetFullPath(configuredPath);
-        if (Directory.Exists(fromCurrent))
-        {
-            return fromCurrent;
-        }
-
-        var repoRoot = FindRepoRoot(contentRoot);
-        return repoRoot is null ? fromCurrent : Path.Combine(repoRoot, configuredPath);
+        var repoRoot = FindRepoRoot(contentRoot) ?? FindRepoRoot(Environment.CurrentDirectory);
+        return repoRoot is null
+            ? Path.GetFullPath(configuredPath)
+            : Path.GetFullPath(Path.Combine(repoRoot, configuredPath)); // normalizes separators
     }
 
     public static string? FindRepoRoot(string start)
