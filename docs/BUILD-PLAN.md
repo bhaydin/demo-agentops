@@ -117,7 +117,7 @@ Add targeted regressions for these cases. Implementation files were not changed 
 - #7 request spacing lives in a singleton `MflRateLimiter` shared by every DI-created client; the regression resolves two clients from the real registration.
 
 ## Phase 2: MCP server (Mon)
-Owner:
+Owner: Claude Code
 
 - [ ] Tools per ARCHITECTURE.md, snake_case, with clear descriptions
 - [ ] Credential-to-scope mapping (owner vs commissioner), including franchiseId handling and `"0000"`

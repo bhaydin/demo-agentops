@@ -43,6 +43,14 @@ public sealed partial class SimLeague
             t.Status == TradeStatus.Pending &&
             (t.FromFranchiseId == franchiseId || t.ToFranchiseId == franchiseId))];
 
+    /// <summary>A trade by id in any status, or null.</summary>
+    public async Task<Trade?> GetTradeAsync(string tradeId, CancellationToken ct)
+        => (await RequireStateAsync(ct)).Trades.FirstOrDefault(t => t.Id == tradeId);
+
+    /// <summary>The league's current week, as seeded from the snapshot.</summary>
+    public async Task<int> GetCurrentWeekAsync(CancellationToken ct)
+        => (await RequireStateAsync(ct)).Week;
+
     /// <summary>The declared lineup, if any, for a franchise and week (used by the web ticker).</summary>
     public async Task<Lineup?> GetLineupAsync(string franchiseId, int week, CancellationToken ct)
         => (await RequireStateAsync(ct)).Lineups
