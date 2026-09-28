@@ -36,11 +36,22 @@ builder.Services
 // Optional: live injury reports when MFL credentials are configured.
 builder.Services.AddOptions<MflOptions>().Bind(builder.Configuration.GetSection(MflOptions.SectionName));
 
-var paths = builder.Configuration.GetSection(McpOptions.SectionName).Get<McpOptions>() ?? new McpOptions();
-builder.Services.AddSingleton(new SnapshotStore(paths.SnapshotRoot));
+// Data directories: absolute from config, or repo-relative (see DataPaths).
+var configured = builder.Configuration.GetSection(McpOptions.SectionName).Get<McpOptions>() ?? new McpOptions();
+var snapshotRoot = DataPaths.Resolve(configured.SnapshotRoot, builder.Environment.ContentRootPath);
+var stateDirectory = DataPaths.Resolve(configured.StateDirectory, builder.Environment.ContentRootPath);
+var scenarioRoot = DataPaths.Resolve(configured.ScenarioRoot, builder.Environment.ContentRootPath);
+builder.Services.PostConfigure<McpOptions>(o =>
+{
+    o.SnapshotRoot = snapshotRoot;
+    o.StateDirectory = stateDirectory;
+    o.ScenarioRoot = scenarioRoot;
+});
+
+builder.Services.AddSingleton(new SnapshotStore(snapshotRoot));
 builder.Services.AddSingleton<ISnapshotLeagueReader>(sp => new SnapshotLeagueReader(sp.GetRequiredService<SnapshotStore>()));
 builder.Services.AddSingleton(sp => new SimLeague(
-    sp.GetRequiredService<SnapshotStore>(), paths.StateDirectory, logger: sp.GetRequiredService<ILogger<SimLeague>>()));
+    sp.GetRequiredService<SnapshotStore>(), stateDirectory, logger: sp.GetRequiredService<ILogger<SimLeague>>()));
 builder.Services.AddMflExportClient();
 builder.Services.AddTransient<IInjurySource, InjurySource>();
 
@@ -75,6 +86,19 @@ builder.Services.AddOpenTelemetry()
     });
 
 var app = builder.Build();
+
+// Fail fast with the resolved path: a missing snapshot would otherwise surface as 500s later.
+var snapshotIds = app.Services.GetRequiredService<SnapshotStore>().ListIds();
+if (snapshotIds.Count == 0)
+{
+    throw new InvalidOperationException(
+        $"No snapshot found under '{snapshotRoot}'. Capture one with tools/Swankers.SnapshotCapture " +
+        "or set Mcp:SnapshotRoot to a directory containing data/snapshot/<id>/.");
+}
+
+app.Logger.LogInformation(
+    "SimLeague seeds from snapshot {SnapshotId} under {SnapshotRoot}; state in {StateDirectory}.",
+    snapshotIds[^1], snapshotRoot, stateDirectory);
 
 // Every MCP request needs a known credential; the resolved scope rides on the request.
 app.UseWhen(
