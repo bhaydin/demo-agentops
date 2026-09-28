@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Swankers.League\Swankers.League.csproj" />
+    <ProjectReference Include="..\..\tools\Swankers.SnapshotCapture\Swankers.SnapshotCapture.csproj" />
   </ItemGroup>
 
 </Project>

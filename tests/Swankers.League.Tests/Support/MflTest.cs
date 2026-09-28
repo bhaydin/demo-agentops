@@ -13,7 +13,7 @@ internal static class MflTest
     {
         ApiKey = ApiKey,
         LeagueId = "12345",
-        LeagueHost = "www42.myfantasyleague.com",
+        Host = "www42.myfantasyleague.com",
         UserAgent = "SwankersTest/1.0",
         Year = 2026,
         MinRequestSpacing = spacing ?? TimeSpan.Zero,
