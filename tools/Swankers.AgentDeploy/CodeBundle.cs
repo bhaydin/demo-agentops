@@ -17,6 +17,7 @@ public static class CodeBundle
         using (var archive = new ZipArchive(buffer, ZipArchiveMode.Create, leaveOpen: true))
         {
             var files = Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories)
+                .Where(file => !string.Equals(Path.GetFileName(file), CoachPublisher.OwnershipMarker, StringComparison.Ordinal))
                 .Order(StringComparer.Ordinal);
             foreach (var file in files)
             {

@@ -43,3 +43,6 @@ jobs:
 
       - name: Test (Coach)
         run: dotnet test tests/Swankers.Coach.Tests --no-build -c Release
+
+      - name: Test (AgentDeploy)
+        run: dotnet test tests/Swankers.AgentDeploy.Tests --no-build -c Release
