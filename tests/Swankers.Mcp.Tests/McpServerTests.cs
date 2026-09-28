@@ -104,6 +104,39 @@ public class McpServerTests
     }
 
     [Fact]
+    public async Task Approval_is_bound_to_the_target_resolved_at_confirmation_time()
+    {
+        // Codex Phase 2 review #1: a "0000" drop must not re-resolve its target at approval.
+        await using var host = await StartAsync();
+        var commissioner = await host.ConnectAsync(CommissionerCredential, CT);
+        var owner = await host.ConnectAsync(OwnerCredential, CT);
+
+        // Queue a drop of 1003, who is on The Fleecers (0099) right now.
+        var pending = await CallAsync(commissioner, "drop_player",
+            new Dictionary<string, object?> { ["playerId"] = "1003", ["franchiseId"] = "0000" }, CT);
+        var dropId = Prop(pending, "confirmationId").GetString()!;
+        var confirmations = await host.Http().GetFromJsonAsync<JsonElement>("/api/confirmations", CT);
+        var queued = Prop(confirmations, "pending").EnumerateArray().Single(c => Prop(c, "id").GetString() == dropId);
+        Assert.Equal("0099", Prop(queued, "effectiveFranchiseId").GetString());
+
+        // Meanwhile 1003 moves to 0001 through an accepted trade.
+        var trade = await CallAsync(commissioner, "propose_trade", new Dictionary<string, object?>
+        {
+            ["toFranchiseId"] = "0001", ["give"] = new[] { "1003" }, ["get"] = new[] { "1005" },
+            ["note"] = "swap", ["franchiseId"] = "0099",
+        }, CT);
+        var accept = await CallAsync(owner, "respond_to_trade",
+            new Dictionary<string, object?> { ["tradeId"] = Prop(trade, "id").GetString(), ["accept"] = true }, CT);
+        await host.ResolveAsync(Prop(accept, "confirmationId").GetString()!, approve: true, CT);
+        Assert.Contains("1003", PlayerIds(await CallAsync(owner, "get_my_roster", null, CT)));
+
+        // Approving the stale drop must fail against 0099, not drop 1003 from 0001.
+        var outcome = await host.ResolveAsync(dropId, approve: true, CT);
+        Assert.Contains("0099", Prop(outcome, "error").GetString());
+        Assert.Contains("1003", PlayerIds(await CallAsync(owner, "get_my_roster", null, CT)));
+    }
+
+    [Fact]
     public async Task Commissioner_with_gate_off_executes_immediately()
     {
         // DEMO: intentionally vulnerable (Friday talk). Gate off must be selected explicitly.

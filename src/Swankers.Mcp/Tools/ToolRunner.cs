@@ -10,13 +10,31 @@ public sealed class ToolContext(CallerScope scope, string effectiveFranchiseId, 
 {
     public CallerScope Scope { get; } = scope;
 
-    public string EffectiveFranchiseId { get; } = effectiveFranchiseId;
+    /// <summary>The franchise the call reads or acts on. Starts as the scope decision; tools narrow it.</summary>
+    public string EffectiveFranchiseId { get; private set; } = effectiveFranchiseId;
 
     public Activity? Activity { get; } = activity;
 
     /// <summary>executed | pending | gate_off | denied_scope | error</summary>
     public string Decision { get; set; } = "executed";
+
+    /// <summary>Records the concrete franchise affected (e.g. a cross-franchise read, or the roster a "0000" drop resolved to).</summary>
+    public void SetEffective(string franchiseId)
+    {
+        EffectiveFranchiseId = franchiseId;
+        Activity?.SetTag(McpDiagnostics.EffectiveFranchiseTag, franchiseId);
+    }
 }
+
+/// <summary>
+/// An irreversible action after its target has been resolved exactly once. The gate stores
+/// <paramref name="TargetFranchiseId"/> and <paramref name="Summary"/>; <paramref name="Execute"/>
+/// acts on that same target and re-validates preconditions instead of resolving again.
+/// </summary>
+public sealed record PreparedAction(
+    string TargetFranchiseId,
+    string Summary,
+    Func<CancellationToken, Task<object>> Execute);
 
 /// <summary>
 /// Runs every tool call the same way: one span, scope resolved from the credential, the gate
@@ -41,12 +59,11 @@ public sealed class ToolRunner(
         activity?.SetTag(McpDiagnostics.CallerScopeTag, scope.Label);
         activity?.SetTag(McpDiagnostics.RequestedFranchiseTag, requestedFranchiseId ?? "");
 
-        ToolContext? context = null;
         try
         {
             var effective = ScopePolicy.ResolveEffectiveFranchise(scope, requestedFranchiseId);
-            activity?.SetTag(McpDiagnostics.EffectiveFranchiseTag, effective);
-            context = new ToolContext(scope, effective, activity);
+            var context = new ToolContext(scope, effective, activity);
+            context.SetEffective(effective);
 
             var result = await body(context);
             activity?.SetTag(McpDiagnostics.GateDecisionTag, context.Decision);
@@ -73,30 +90,31 @@ public sealed class ToolRunner(
     }
 
     /// <summary>
-    /// Irreversible tools: when the caller's gate is on, park the action and return a pending
-    /// confirmation; only the REST approval endpoint can run it. When the gate is off, run it now.
+    /// Irreversible tools: <paramref name="prepare"/> resolves the concrete target once. With the
+    /// caller's gate on, the prepared action is parked and only the REST approval endpoint runs
+    /// it; with the gate off it runs now.
     /// </summary>
     public Task<object> RunIrreversibleAsync(
         string tool,
         string? requestedFranchiseId,
         IReadOnlyDictionary<string, object?> arguments,
-        Func<ToolContext, Task<string>> summarize,
-        Func<ToolContext, CancellationToken, Task<object>> execute,
+        Func<ToolContext, Task<PreparedAction>> prepare,
         CancellationToken cancellationToken)
         => RunAsync<object>(tool, ToolTier.Irreversible, requestedFranchiseId, async context =>
         {
-            var summary = await summarize(context);
+            var action = await prepare(context);
+            context.SetEffective(action.TargetFranchiseId);
+
             if (context.Scope.GateEnabled)
             {
                 context.Decision = "pending";
                 return gate.Create(
-                    tool, summary, context.Scope.Label, context.EffectiveFranchiseId, arguments,
-                    ct => execute(context, ct));
+                    tool, action.Summary, context.Scope.Label, action.TargetFranchiseId, arguments, action.Execute);
             }
 
             // DEMO: intentionally vulnerable (Friday talk). See docs/ARCHITECTURE.md#security-demo.
             // Gate off: the irreversible action runs immediately, with no human in the loop.
             context.Decision = "gate_off";
-            return await execute(context, cancellationToken);
+            return await action.Execute(cancellationToken);
         }, cancellationToken);
 }

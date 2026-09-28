@@ -9,7 +9,9 @@ namespace Swankers.Mcp.Tools;
 
 /// <summary>
 /// Irreversible tools. With the gate on they return a pending confirmation that only a human
-/// can approve through the web app (REST); there is no approve tool.
+/// can approve through the web app (REST); there is no approve tool. The target is resolved
+/// once, when the confirmation is created; execution acts on that target and SimLeague
+/// re-validates the preconditions (player still rostered there, trade still pending).
 /// </summary>
 [McpServerToolType]
 public sealed class IrreversibleTools(ToolRunner runner, SimLeague sim, LeagueViews views)
@@ -24,16 +26,18 @@ public sealed class IrreversibleTools(ToolRunner runner, SimLeague sim, LeagueVi
             "drop_player",
             franchiseId,
             new Dictionary<string, object?> { ["playerId"] = playerId, ["franchiseId"] = franchiseId },
-            summarize: async context =>
+            prepare: async context =>
             {
-                var (target, name, player) = await ResolveDropAsync(context, playerId, cancellationToken);
-                return $"Drop {player.Name} ({player.Position}, {player.Team}) from {name} ({target})";
-            },
-            execute: async (context, ct) =>
-            {
-                var (target, name, player) = await ResolveDropAsync(context, playerId, ct);
-                await sim.DropPlayerAsync(target, playerId, ct);
-                return new DropResult(target, name, player, $"Dropped {player.Name} from {name}.");
+                var (target, targetName, player) = await ResolveDropAsync(context, playerId, cancellationToken);
+                return new PreparedAction(
+                    target,
+                    $"Drop {player.Name} ({player.Position}, {player.Team}) from {targetName} ({target})",
+                    async ct =>
+                    {
+                        // Bound to the resolved target: SimLeague throws if the player has since moved.
+                        await sim.DropPlayerAsync(target, playerId, ct);
+                        return new DropResult(target, targetName, player, $"Dropped {player.Name} from {targetName}.");
+                    });
             },
             cancellationToken);
 
@@ -45,16 +49,12 @@ public sealed class IrreversibleTools(ToolRunner runner, SimLeague sim, LeagueVi
         [Description("Franchise to act for; omit for your own")] string? franchiseId = null,
         CancellationToken cancellationToken = default)
     {
-        var arguments = new Dictionary<string, object?>
-        {
-            ["tradeId"] = tradeId, ["accept"] = accept, ["franchiseId"] = franchiseId,
-        };
-
         if (!accept)
         {
             return runner.RunAsync<object>("respond_to_trade", ToolTier.Write, franchiseId, async context =>
             {
                 var (trade, responder) = await ResolveTradeAsync(context, tradeId, cancellationToken);
+                context.SetEffective(responder);
                 var rejected = await sim.RespondToTradeAsync(trade.Id, accept: false, responder, cancellationToken);
                 return await views.TradeAsync(rejected, cancellationToken);
             }, cancellationToken);
@@ -63,19 +63,21 @@ public sealed class IrreversibleTools(ToolRunner runner, SimLeague sim, LeagueVi
         return runner.RunIrreversibleAsync(
             "respond_to_trade",
             franchiseId,
-            arguments,
-            summarize: async context =>
+            new Dictionary<string, object?> { ["tradeId"] = tradeId, ["accept"] = accept, ["franchiseId"] = franchiseId },
+            prepare: async context =>
             {
                 var (trade, responder) = await ResolveTradeAsync(context, tradeId, cancellationToken);
                 var view = await views.TradeAsync(trade, cancellationToken);
-                return $"Accept trade {trade.Id} from {view.FromFranchiseName}: " +
-                       $"{view.ToFranchiseName} gives {Names(view.Get)} and receives {Names(view.Give)}";
-            },
-            execute: async (context, ct) =>
-            {
-                var (trade, responder) = await ResolveTradeAsync(context, tradeId, ct);
-                var accepted = await sim.RespondToTradeAsync(trade.Id, accept: true, responder, ct);
-                return await views.TradeAsync(accepted, ct);
+                return new PreparedAction(
+                    responder,
+                    $"Accept trade {trade.Id} from {view.FromFranchiseName}: " +
+                    $"{view.ToFranchiseName} gives {Names(view.Get)} and receives {Names(view.Give)}",
+                    async ct =>
+                    {
+                        // Bound to this trade and responder: SimLeague rejects it if no longer pending.
+                        var accepted = await sim.RespondToTradeAsync(trade.Id, accept: true, responder, ct);
+                        return await views.TradeAsync(accepted, ct);
+                    });
             },
             cancellationToken);
     }
