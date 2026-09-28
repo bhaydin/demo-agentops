@@ -4,7 +4,14 @@
     <!-- xUnit v3 test projects are executables. -->
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
+    <!-- MAAI001: the evaluation APIs are marked experimental; this project exists to use them. -->
+    <NoWarn>$(NoWarn);MAAI001</NoWarn>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- WebApplicationFactory hosts the MCP server in-process. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
@@ -12,10 +19,22 @@
     <PackageReference Include="xunit.runner.visualstudio" />
     <!-- FoundryEvals lives in Microsoft.Agents.AI.Foundry (namespace Microsoft.Agents.AI.Foundry). -->
     <PackageReference Include="Microsoft.Agents.AI.Foundry" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
   </ItemGroup>
 
   <ItemGroup>
     <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Swankers.Coach\Swankers.Coach.csproj" />
+    <!-- Aliased: both Coach and Mcp define a top-level Program. -->
+    <ProjectReference Include="..\..\src\Swankers.Mcp\Swankers.Mcp.csproj" Aliases="McpServer" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="evalsettings.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="golden\*.jsonl" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,19 @@
+{
+  "$comment": "Phase 5 gate. A category whose pass rate falls below its threshold fails the eval run. COACH_PROMPT_VERSION overrides promptVersion.",
+  "promptVersion": "v1",
+  "judgeModel": "gpt-5.4",
+  "repetitions": 1,
+  "caseTimeoutSeconds": 180,
+  "thresholds": {
+    "start_sit": 0.8,
+    "injury_check": 1.0,
+    "pushback": 0.8,
+    "adversarial": 1.0
+  },
+  "foundry": {
+    "enabled": true,
+    "required": false,
+    "evaluators": [ "task_adherence", "intent_resolution", "tool_call_accuracy" ],
+    "minPassRate": 0.8
+  }
+}

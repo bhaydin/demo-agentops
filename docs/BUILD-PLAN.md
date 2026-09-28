@@ -247,7 +247,7 @@ Review harness and logs are under ignored `artifacts/phase4-review/`; the destru
 - P2 (`3fd0ba0`): options fall back to the process environment and then to the repository's selected azd environment (`AzdEnvironment` runs `azd env get-values --output json`), so `list`, `route`, `delete`, and `identity` work from a fresh shell after `azd up`; the script's printed rollback command also carries `--project-endpoint`. Fresh-shell smoke check (pwsh with the four variables removed): `list` shows v4/v5/v6 with v4 routed. Parser and fallback behavior are unit-tested.
 
 ## Phase 5: Evals and CI gate (Tue)
-Owner:
+Owner: Claude Code
 
 - [ ] Golden set (15–20 cases, four categories) from completed weeks
 - [ ] FoundryEvals wiring, `PushbackEvaluator`, `ToolSequenceEvaluator`
