@@ -37,7 +37,8 @@ param(
 $ErrorActionPreference = 'Stop'
 $foundryUserRole = '53ca6127-db72-4b80-b1b0-d745d6d5456d' # Foundry User (formerly Azure AI User)
 
-function Invoke-Az { param([string[]] $AzArgs) $out = & az @AzArgs 2>&1; if ($LASTEXITCODE -ne 0) { throw "az $($AzArgs[0..1] -join ' ') failed: $out" }; return $out }
+# Always returns a string (empty when az printed nothing), so callers can .Trim() safely.
+function Invoke-Az { param([string[]] $AzArgs) $out = & az @AzArgs 2>&1; if ($LASTEXITCODE -ne 0) { throw "az $($AzArgs[0..1] -join ' ') failed: $out" }; return (@($out) | ForEach-Object { "$_" }) -join "`n" }
 
 function Ensure-App {
     param([string] $Name)
@@ -51,7 +52,7 @@ function Ensure-App {
         Write-Host "Creating service principal for $Name"
         $sp = (Invoke-Az @('ad', 'sp', 'create', '--id', $app.appId, '-o', 'json')) | ConvertFrom-Json
     }
-    Write-Host "$Name: application $($app.appId), service principal $($sp.id)"
+    Write-Host "${Name}: application $($app.appId), service principal $($sp.id)"
     return @{ App = $app; Sp = $sp }
 }
 
