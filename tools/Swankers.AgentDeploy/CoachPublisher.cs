@@ -32,8 +32,19 @@ public static class CoachPublisher
         throw new InvalidOperationException($"Run from inside the repository ({RepoMarker} not found).");
     }
 
+    /// <summary>Default bundle location: outside the checkout, whose path may contain characters MSBuild rejects.</summary>
+    public static string DefaultOutputDirectory => Path.Combine(Path.GetTempPath(), "swankers-coach-publish");
+
     public static async Task PublishAsync(string repoRoot, string outputDirectory, CancellationToken ct)
     {
+        // `dotnet publish -o` becomes an MSBuild property, and MSBuild splits property values on
+        // ',' and ';' (MSB1006). A OneDrive folder such as "Contoso, Inc" trips this.
+        if (outputDirectory.Contains(',') || outputDirectory.Contains(';'))
+        {
+            throw new ArgumentException(
+                $"Publish output path '{outputDirectory}' contains ',' or ';', which dotnet publish -o cannot pass to MSBuild. Use --output with another folder (default: {DefaultOutputDirectory}).");
+        }
+
         if (Directory.Exists(outputDirectory))
         {
             Directory.Delete(outputDirectory, recursive: true);

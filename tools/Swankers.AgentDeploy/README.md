@@ -21,6 +21,10 @@ dotnet run --project tools/Swankers.AgentDeploy -- create --label v1-owner --pro
 | `v2-owner` | `v2` | `Mcp:OwnerCredential` | Thursday regression and rollback |
 | `v1-commissioner` | `v1` | `Mcp:CommissionerCredential` | Friday "before" (DEMO: intentionally vulnerable) |
 
+The publish output goes to `<temp>/swankers-coach-publish` by default: `dotnet publish -o`
+cannot take a path containing `,` or `;` (MSBuild splits property values there), and this
+checkout may live under such a folder.
+
 Settings come from the azd environment after `azd up` (`FOUNDRY_PROJECT_ENDPOINT`,
 `KEYVAULT_URI`, `MCP_ENDPOINT`, `AZURE_AI_MODEL_DEPLOYMENT_NAME`) or the matching `--` options.
 No version carries a secret: the Coach reads the MCP credential from Key Vault by key at

@@ -24,7 +24,7 @@ try
     var line = CommandLine.Parse(args);
     var agentName = line.Optional("name") ?? "Coach";
     var repoRoot = CoachPublisher.FindRepoRoot();
-    var defaultPublishDir = Path.Combine(repoRoot, "artifacts", "coach-publish");
+    var defaultPublishDir = CoachPublisher.DefaultOutputDirectory;
 
     switch (line.Command)
     {

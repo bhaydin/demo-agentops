@@ -12,7 +12,7 @@ then records the agent identity in the azd environment (COACH_AGENT_PRINCIPAL_ID
 re-provisions so that identity can read the MCP credential from Key Vault.
 
 .PARAMETER SkipPublish
-Reuse artifacts/coach-publish from a previous run.
+Reuse the publish output (in the temp folder) from a previous run.
 
 .PARAMETER SkipProvision
 Do not run `azd provision` for the Key Vault role assignment; print the command instead.
@@ -27,7 +27,8 @@ param(
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $tool = Join-Path $repo 'tools/Swankers.AgentDeploy/Swankers.AgentDeploy.csproj'
-$publishDir = Join-Path $repo 'artifacts/coach-publish'
+# Outside the checkout: `dotnet publish -o` cannot take a path containing ',' or ';' (MSB1006).
+$publishDir = Join-Path ([IO.Path]::GetTempPath()) 'swankers-coach-publish'
 
 function Invoke-Tool {
     param([string[]] $ToolArgs)
