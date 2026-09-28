@@ -1,5 +1,10 @@
+using System.ClientModel;
+using System.ClientModel.Primitives;
+using System.Net.Http.Headers;
+using System.Text.Json;
 using Azure.AI.Projects;
 using Azure.AI.Projects.Agents;
+using Azure.Core;
 using Azure.Identity;
 
 namespace Swankers.AgentDeploy;
@@ -8,20 +13,28 @@ namespace Swankers.AgentDeploy;
 /// Hosted-agent operations against the shared Foundry project: upload a code bundle as a new
 /// immutable version, wait for it to go active, and point the agent endpoint at a version.
 /// Verified against Azure.AI.Projects.Agents 3.0.0-beta.2 and Learn "Deploy a hosted agent
-/// from source code" (updated 2026-09-21).
+/// from source code" (updated 2026-09-21). The upload itself uses the documented REST call:
+/// the SDK's only public code upload zips a folder with Windows separators in the entry names
+/// (see CodeBundle), and its typed multipart path is internal in this beta.
 /// </summary>
 public sealed class AgentDeployer
 {
     private const string Runtime = "dotnet_10";
     private const string EntryAssembly = "Swankers.Coach.dll";
+    private const string ApiVersion = "v1";
+    private static readonly string[] TokenScopes = ["https://ai.azure.com/.default"];
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(10);
+    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromMinutes(10) };
 
+    private readonly TokenCredential _credential = new DefaultAzureCredential();
     private readonly AgentAdministrationClient _admin;
+    private readonly string _projectEndpoint;
     private readonly string _agentName;
 
     public AgentDeployer(string projectEndpoint, string agentName)
     {
-        _admin = new AIProjectClient(new Uri(projectEndpoint), new DefaultAzureCredential()).AgentAdministrationClient;
+        _projectEndpoint = projectEndpoint.TrimEnd('/');
+        _admin = new AIProjectClient(new Uri(_projectEndpoint), _credential).AgentAdministrationClient;
         _agentName = agentName;
     }
 
@@ -44,8 +57,49 @@ public sealed class AgentDeployer
             metadata.Metadata[name] = value;
         }
 
-        // The SDK zips the directory (flat at the root) and sends the SHA-256 for integrity.
-        return await _admin.CreateAgentVersionFromCodeAsync(_agentName, publishDirectory, metadata, ct);
+        var (zip, sha256) = CodeBundle.Create(publishDirectory);
+
+        // First version: POST /agents with x-ms-agent-name (returns the agent envelope).
+        // Later versions: POST /agents/{name}/versions (returns the version).
+        var exists = await AgentExistsAsync(ct);
+        var url = exists
+            ? $"{_projectEndpoint}/agents/{_agentName}/versions?api-version={ApiVersion}"
+            : $"{_projectEndpoint}/agents?api-version={ApiVersion}";
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, url);
+        var token = await _credential.GetTokenAsync(new TokenRequestContext(TokenScopes), ct);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token.Token);
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        request.Headers.Add("x-ms-code-zip-sha256", sha256);
+        if (!exists)
+        {
+            request.Headers.Add("x-ms-agent-name", _agentName);
+        }
+
+        var metadataPart = new ByteArrayContent(ModelReaderWriter.Write(metadata, ModelReaderWriterOptions.Json).ToArray());
+        metadataPart.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+        var codePart = new ByteArrayContent(zip.ToArray());
+        codePart.Headers.ContentType = new MediaTypeHeaderValue("application/zip");
+        request.Content = new MultipartFormDataContent
+        {
+            { metadataPart, "metadata" },
+            { codePart, "code", $"{_agentName}.zip" },
+        };
+
+        using var response = await Http.SendAsync(request, ct);
+        var body = await response.Content.ReadAsStringAsync(ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException(
+                $"Upload failed: HTTP {(int)response.StatusCode} {body[..Math.Min(600, body.Length)]}");
+        }
+
+        using var document = JsonDocument.Parse(body);
+        var versionJson = document.RootElement.TryGetProperty("versions", out var versions) && versions.TryGetProperty("latest", out var latest)
+            ? latest.GetRawText()
+            : body;
+        return ModelReaderWriter.Read<ProjectsAgentVersion>(BinaryData.FromString(versionJson))
+            ?? throw new InvalidOperationException("The service returned no agent version.");
     }
 
     public async Task<ProjectsAgentVersion> WaitForActiveAsync(string version, TimeSpan timeout, Action<string> log, CancellationToken ct)
@@ -89,6 +143,10 @@ public sealed class AgentDeployer
         return _admin.PatchAgentAsync(_agentName, options, ct);
     }
 
+    /// <summary>Removes a version; force so sessions still bound to it are cascaded away.</summary>
+    public Task DeleteVersionAsync(string version, CancellationToken ct)
+        => _admin.DeleteAgentVersionAsync(_agentName, version, force: true, ct);
+
     public async Task<ProjectsAgentRecord> GetAgentAsync(CancellationToken ct)
         => await _admin.GetAgentAsync(_agentName, ct);
 
@@ -108,4 +166,17 @@ public sealed class AgentDeployer
             .OfType<FixedRatioVersionSelectionRule>()
             .OrderByDescending(rule => rule.TrafficPercentage)
             .FirstOrDefault()?.AgentVersion;
+
+    private async Task<bool> AgentExistsAsync(CancellationToken ct)
+    {
+        try
+        {
+            await _admin.GetAgentAsync(_agentName, ct);
+            return true;
+        }
+        catch (ClientResultException ex) when (ex.Status == 404)
+        {
+            return false;
+        }
+    }
 }

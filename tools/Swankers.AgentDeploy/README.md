@@ -13,7 +13,13 @@ pwsh tools/Swankers.AgentDeploy/deploy-coach.ps1        # all three stage versio
 dotnet run --project tools/Swankers.AgentDeploy -- list
 dotnet run --project tools/Swankers.AgentDeploy -- route --version 2      # e.g. switch to v2-owner
 dotnet run --project tools/Swankers.AgentDeploy -- create --label v1-owner --prompt v1 --credential-key Mcp:OwnerCredential --route
+dotnet run --project tools/Swankers.AgentDeploy -- delete --version 1     # never the routed one
 ```
+
+The tool zips the publish folder itself and uploads it with the documented REST call
+(multipart `metadata` + `code`, SHA-256 in `x-ms-code-zip-sha256`): the SDK's folder upload
+writes Windows separators into the entry names, so the hosted container cannot find
+`prompts/` or `knowledge/`, and its typed multipart path is internal in 3.0.0-beta.2.
 
 | Stage | Prompt | Credential key | Used by |
 |---|---|---|---|

@@ -7,6 +7,7 @@
 //   create    --label v1-owner --prompt v1 --credential-key Mcp:OwnerCredential
 //             [--publish-dir <dir>] [--route] [--cpu 1] [--memory 2Gi] [--timeout-minutes 15]
 //   route     --version <n>
+//   delete    --version <n>                                     remove a version (never the routed one)
 //   list
 //   identity                                                    agent identity principal id
 //
@@ -88,6 +89,21 @@ try
             return 0;
         }
 
+        case "delete":
+        {
+            var version = line.Required("version");
+            var deployer = new AgentDeployer(line.Required("project-endpoint", "FOUNDRY_PROJECT_ENDPOINT"), agentName);
+            var routed = AgentDeployer.RoutedVersion(await deployer.GetAgentAsync(ct));
+            if (routed == version)
+            {
+                throw new InvalidOperationException($"v{version} is the routed version; route elsewhere first.");
+            }
+
+            await deployer.DeleteVersionAsync(version, ct);
+            Console.WriteLine($"Deleted {agentName} v{version}.");
+            return 0;
+        }
+
         case "list":
         {
             var deployer = new AgentDeployer(line.Required("project-endpoint", "FOUNDRY_PROJECT_ENDPOINT"), agentName);
@@ -120,7 +136,7 @@ try
         }
 
         default:
-            Console.Error.WriteLine("Usage: publish | create | route | list | identity (see the header of Program.cs).");
+            Console.Error.WriteLine("Usage: publish | create | route | delete | list | identity (see the header of Program.cs).");
             return 2;
     }
 }
