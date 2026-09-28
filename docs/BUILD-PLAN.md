@@ -119,15 +119,34 @@ Add targeted regressions for these cases. Implementation files were not changed 
 ## Phase 2: MCP server (Mon)
 Owner: Claude Code
 
-- [ ] Tools per ARCHITECTURE.md, snake_case, with clear descriptions
-- [ ] Credential-to-scope mapping (owner vs commissioner), including franchiseId handling and `"0000"`
-- [ ] Confirmation gate and REST approval endpoints (approval never a tool)
-- [ ] Demo REST endpoints: state, confirmations, reset, seed scenario
-- [ ] `data/demo/poisoned-trade.json` scenario (benign payload, sim-only)
-- [ ] OpenTelemetry spans with tier, scope, requested vs effective franchiseId, gate decision
-- [ ] Tests: owner cannot act for another franchise, commissioner can, gate blocks irreversible tools, approval endpoint executes the pending action
+- [x] Tools per ARCHITECTURE.md, snake_case, with clear descriptions
+- [x] Credential-to-scope mapping (owner vs commissioner), including franchiseId handling and `"0000"`
+- [x] Confirmation gate and REST approval endpoints (approval never a tool)
+- [x] Demo REST endpoints: state, confirmations, reset, seed scenario
+- [x] `data/demo/poisoned-trade.json` scenario (benign payload, sim-only)
+- [x] OpenTelemetry spans with tier, scope, requested vs effective franchiseId, gate decision
+- [x] Tests: owner cannot act for another franchise, commissioner can, gate blocks irreversible tools, approval endpoint executes the pending action
 
 Gate: exercise every tool through the MCP Inspector (or equivalent) with both credentials. Maintainer reviews the vulnerable-path markers.
+
+### Phase 2 record (code complete 2026-09-28; gate awaits maintainer's Inspector pass)
+
+**Automated evidence:** 81/81 tests green in Release (55 League, 25 Mcp, 1 Evals); CI green at `f4f567c` ([build run 36369839752](https://github.com/bhaydin/demo-agentops/actions/runs/36369839752)). The 25 Mcp tests include a real MCP client against the in-process server: tool list is exactly the ten architecture tools with no approve/confirm tool; unknown credentials get 401; owner denied for another franchise; owner drop parked at the gate and executed only via `POST /api/confirmations/{id}`; commissioner acts for any franchise including `0000`; gate-off executes immediately; poisoned-trade seed with the note verbatim; reject not gated; reset; admin key required; injury news by name. A local smoke run against the real snapshot confirmed the same flows on live data (Anchorage Falling roster, gated RB drop approved via REST, poisoned trade seeded as The Fleecers offering their lowest-projected player for Anchorage's top RB).
+
+**How it works:**
+
+- **Credential → scope.** `Authorization: Bearer <credential>` on the MCP endpoint (401 otherwise). Owner credential → scope `owner:0001`; `franchiseId` must be absent or `0001`, anything else is `Scope denied`. Commissioner credential → any `franchiseId` honored, including `0000`, which acts as the trade's recipient (`respond_to_trade`) or the franchise rostering the player (`drop_player`); `set_lineup`/`propose_trade` still need a named franchise. DEMO-marked in `CredentialResolver`, `ScopePolicy`, `ToolRunner`, `McpOptions`.
+- **Gate.** Per-credential `OwnerGateEnabled` / `CommissionerGateEnabled`, both default true. `drop_player` and `respond_to_trade(accept: true)` return `{status: "pending_confirmation", confirmationId, summary}`; only the REST endpoint executes or denies. Rejecting a trade is not gated. Gate off must be set explicitly (Friday "before": `Mcp:CommissionerGateEnabled=false`).
+- **Reads** come from SimLeague state (seeded from the real snapshot) so sim writes show up; `get_player_news` is injury-only, live from MFL when `Mfl:*` is configured, else the snapshot.
+- **Telemetry.** One `Swankers.Mcp` span per tool call: `mcp.tool.name`, `swankers.tool.tier`, `swankers.caller.scope`, `swankers.franchise.requested`, `swankers.franchise.effective`, `swankers.gate.decision` (`executed` | `pending` | `gate_off` | `denied_scope` | `error`). OTLP export when `OTEL_EXPORTER_OTLP_ENDPOINT` is set.
+- **Demo REST** behind `X-Demo-Admin-Key`: `GET /api/state`, `GET /api/confirmations`, `POST /api/confirmations/{id}` `{approve: bool}`, `POST /api/admin/reset`, `POST /api/admin/seed/{scenario}`.
+- **Secrets** (Key Vault, `--` → `:`): `Mcp--OwnerCredential`, `Mcp--CommissionerCredential`, `Mcp--DemoAdminKey`. The maintainer generates random values; nothing in the repo knows them.
+
+**APIs verified** against the pinned package docs (ModelContextProtocol 2.2.0): `AddMcpServer`, `WithHttpTransport`, `WithTools<T>`, `MapMcp`, `McpServerToolAttribute` (`Name`, `ReadOnly`, `Destructive`, `Idempotent`), `McpException` for model-visible tool errors, per-request execution context (so `IHttpContextAccessor` works in tools), client `HttpClientTransport`/`McpClient.CreateAsync`/`CallToolAsync`.
+
+**Known limits:** the SDK logs every tool error (including intended scope denials) at error level; the gate is in-memory (a restart clears pending confirmations, which suits the demo); `set_lineup` always targets the current week.
+
+**Maintainer gate steps:** add the three `Mcp--*` secrets to the vault; run `dotnet run --project src/Swankers.Mcp -- --KeyVault:Uri <vault-uri>` (or set `Mcp__OwnerCredential`, `Mcp__CommissionerCredential`, `Mcp__DemoAdminKey` as environment variables for a local session); connect MCP Inspector to `http://localhost:5210/mcp` with `Authorization: Bearer <credential>` for each credential and exercise the tools; review the `// DEMO:` markers.
 
 ## Phase 3: Coach agent, local (Mon)
 Owner:
@@ -215,3 +234,9 @@ Gate: two clean rehearsals in a row.
 | 2026-09-28 | Weekly per-player results added to the domain and snapshots | Phase 5 scores start/sit calls against completed weeks' actual points |
 | 2026-09-28 | The Fleecers draft 2 QB / 5 RB / 5 WR / 2 TE / 1 PK / 1 Def from free agents | Matches the measured Swankers roster shape; deterministic per capture |
 | 2026-09-28 | `Microsoft.Extensions.*` 10.0.12 pinned for class libraries | League and the capture tool need Http, Caching.Memory, Options, Logging.Abstractions, Hosting outside the ASP.NET shared framework |
+| 2026-09-28 | MCP credential is `Authorization: Bearer <secret>`; scope derived from which secret matched | Widest client support; the Friday fix is swapping the credential, nothing else |
+| 2026-09-28 | Commissioner `"0000"` acts as the trade recipient / the franchise rostering the player; lineup and propose need a named franchise | Mirrors MFL's league-admin semantics; makes the "before" demo work with either id |
+| 2026-09-28 | Tool reads come from SimLeague state (seeded from the real snapshot); only `get_player_news` reads MFL live | Sim writes must be visible in roster reads; injuries stay current |
+| 2026-09-28 | `get_player_news` is injury-only | MFL exposes no player-news export; the injury check is the eval that matters |
+| 2026-09-28 | Add `Microsoft.AspNetCore.Mvc.Testing` 10.0.12 | Real MCP client against the in-process server proves scope, gate, and "approval is not a tool" |
+| 2026-09-28 | Relative data paths resolve from the repo root (`DataPaths`) | `dotnet run --project` runs from the project folder and ignores launch-profile `workingDirectory` |

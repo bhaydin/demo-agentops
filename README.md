@@ -35,6 +35,8 @@ Each service has its own development port (set in `Properties/launchSettings.jso
 | Coach | `dotnet run --project src/Swankers.Coach` | `http://localhost:8088` (the local port Foundry hosted agents use) |
 | Web | `dotnet run --project src/Swankers.Web` | `http://localhost:5121` (`--launch-profile https` for `https://localhost:7149`) |
 
+The MCP server needs its credentials: pass `-- --KeyVault:Uri <vault-uri>` to load `Mcp--*` secrets from Key Vault (after `az login`), or set `Mcp__OwnerCredential`, `Mcp__CommissionerCredential`, and `Mcp__DemoAdminKey` as environment variables for a local session. It seeds SimLeague from the latest `data/snapshot/<id>/` (resolved from the repo root) and keeps its state in `data/sim/` (ignored by git). MCP clients authenticate with `Authorization: Bearer <credential>`; the demo REST API under `/api` needs `X-Demo-Admin-Key`.
+
 ## Layout
 
 | Path | What it is |
