@@ -14,6 +14,9 @@ Two identities, because eval jobs run pull-request code (Codex Phase 5 P1):
                                              or its hosted agent. Scope, not data actions,
                                              does the separation: the project Responses
                                              gateway refuses model calls without agents/write.
+                                             Plus Cognitive Services OpenAI User on the account
+                                             (no agent actions) so the cloud graders can call
+                                             the judge model.
   swankers-ci-deploy  environment:foundry    Foundry User on the account: creates and routes
                                              agent versions. Only a job that passed the
                                              environment's required review can obtain this
@@ -41,6 +44,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $foundryUserRole = '53ca6127-db72-4b80-b1b0-d745d6d5456d' # Foundry User (formerly Azure AI User)
+$openAiUserRole = '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd' # Cognitive Services OpenAI User
 
 # Always returns a string (empty when az printed nothing), so callers can .Trim() safely.
 function Invoke-Az { param([string[]] $AzArgs) $out = & az @AzArgs 2>&1; if ($LASTEXITCODE -ne 0) { throw "az $($AzArgs[0..1] -join ' ') failed: $out" }; return (@($out) | ForEach-Object { "$_" }) -join "`n" }
@@ -101,6 +105,13 @@ for ($i = 0; $i -lt $repoForms.Count; $i++) {
 Ensure-FederatedCredentials $evals.App $evalsSubjects
 Write-Host "Assigning Foundry User to $EvalsAppName on project $EvalsProject only"
 Invoke-Az @('role', 'assignment', 'create', '--assignee-object-id', $evals.Sp.id, '--assignee-principal-type', 'ServicePrincipal', '--role', $foundryUserRole, '--scope', $evalsProjectScope, '-o', 'none') | Out-Null
+
+# The cloud graders (FoundryEvals) call the judge model through the account's OpenAI endpoint as
+# the caller, where a project-scoped role does not apply (CI run 36511188834: every grader item
+# errored "Principal does not have access to API/Operation"). Cognitive Services OpenAI User at
+# account scope covers those calls and nothing under AIServices/agents.
+Write-Host "Assigning Cognitive Services OpenAI User to $EvalsAppName on $FoundryAccount (cloud graders)"
+Invoke-Az @('role', 'assignment', 'create', '--assignee-object-id', $evals.Sp.id, '--assignee-principal-type', 'ServicePrincipal', '--role', $openAiUserRole, '--scope', $accountScope, '-o', 'none') | Out-Null
 
 # Retire the account-scoped custom role from the first attempt (data-action exclusions cannot
 # separate model calls from agent writes on the project Responses gateway).

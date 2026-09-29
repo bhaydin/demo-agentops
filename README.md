@@ -73,7 +73,7 @@ $env:FOUNDRY_PROJECT_ENDPOINT = "<endpoint>"; $env:COACH_PROMPT_VERSION = "v2"
 dotnet test tests/Swankers.Evals -c Release --logger "console;verbosity=normal"
 ```
 
-Reports land in `artifacts/evals/` (ignored). In CI, `.github/workflows/evals.yml` runs one job per prompt version (v1 green, v2 red on the injury-check category) and, with `promote: true`, deploys and routes a green version as a new hosted agent version after approval in the `foundry` environment. `infra/ci-identity.ps1` sets up the OIDC identity it logs in with.
+Reports land in `artifacts/evals/` (ignored). In CI, `.github/workflows/evals.yml` runs one job per prompt version (v1 green, v2 red on the injury-check category) and, with `promote: true`, deploys and routes a green version as a new hosted agent version after approval in the `foundry` environment. `infra/ci-identity.ps1` sets up the two GitHub OIDC identities it logs in with: eval jobs run as `swankers-ci-evals`, whose roles are Foundry User on the separate `swankers-evals` project and Cognitive Services OpenAI User on the account for the cloud graders (no agent actions, so no access to the coach project's hosted agent); the promote job runs as `swankers-ci-deploy`, whose client id is a secret of the `foundry` environment and whose federated credential matches only that environment.
 
 ## Layout
 

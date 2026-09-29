@@ -3,9 +3,10 @@
 # side by side. With `promote: true` a green version is deployed as a new hosted agent version
 # and routed to, after approval in the `foundry` environment. Auth is GitHub OIDC (no stored
 # secrets, infra/ci-identity.ps1): eval jobs run pull-request code as swankers-ci-evals, whose
-# only role is Foundry User on the separate `swankers-evals` project, so it can call models and
-# run cloud evaluations there but cannot touch the coach project's hosted agent; only the
-# promote job, behind the environment's required review, logs in as swankers-ci-deploy.
+# roles are Foundry User on the separate `swankers-evals` project and Cognitive Services OpenAI
+# User on the account (the cloud graders' model calls; no agent actions), so it can call models
+# and run cloud evaluations but cannot touch the coach project's hosted agent; only the promote
+# job, behind the environment's required review, logs in as swankers-ci-deploy.
 name: evals
 
 on:
