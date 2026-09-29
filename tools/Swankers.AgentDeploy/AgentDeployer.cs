@@ -26,7 +26,14 @@ public sealed class AgentDeployer
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(10);
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromMinutes(10) };
 
-    private readonly TokenCredential _credential = new DefaultAzureCredential();
+    // The tool runs on the maintainer's machine or a CI runner after `az login`, never with a
+    // managed or workload identity; probing for one costs about two minutes off Azure (a stage
+    // switch must take seconds), so those two are excluded from the default chain.
+    private readonly TokenCredential _credential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
+    {
+        ExcludeManagedIdentityCredential = true,
+        ExcludeWorkloadIdentityCredential = true,
+    });
     private readonly AgentAdministrationClient _admin;
     private readonly string _projectEndpoint;
     private readonly string _agentName;
@@ -166,6 +173,34 @@ public sealed class AgentDeployer
             .OfType<FixedRatioVersionSelectionRule>()
             .OrderByDescending(rule => rule.TrafficPercentage)
             .FirstOrDefault()?.AgentVersion;
+
+    /// <summary>A version and the stage label its metadata carries (v1-owner, v2-owner, v0-commissioner).</summary>
+    public sealed record StageVersion(string Version, string? Stage);
+
+    public static StageVersion ToStageVersion(ProjectsAgentVersion version)
+        => new(version.Version, version.Metadata.TryGetValue("stage", out var stage) ? stage : null);
+
+    /// <summary>
+    /// The version to route for a stage label, so the runbook and demo/stage.ps1 never carry
+    /// version numbers: the newest version with that stage (v4 and v7 are both v1-owner; the
+    /// newer is the one CI promoted). Unknown labels list what exists.
+    /// </summary>
+    public static string ResolveLabel(IEnumerable<StageVersion> versions, string label)
+    {
+        var all = versions.ToList();
+        var matches = all
+            .Where(v => string.Equals(v.Stage, label, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(v => int.TryParse(v.Version, out var n) ? n : -1)
+            .ThenByDescending(v => v.Version, StringComparer.Ordinal)
+            .ToList();
+        if (matches.Count == 0)
+        {
+            var stages = all.Where(v => v.Stage is not null).Select(v => $"{v.Stage} (v{v.Version})").Distinct().Order(StringComparer.Ordinal);
+            throw new InvalidOperationException($"No version has stage '{label}'. Available: {string.Join(", ", stages)}.");
+        }
+
+        return matches[0].Version;
+    }
 
     private async Task<bool> AgentExistsAsync(CancellationToken ct)
     {

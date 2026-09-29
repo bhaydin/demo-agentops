@@ -82,10 +82,15 @@ try
 
         case "route":
         {
-            var version = line.Required("version");
+            // --version <n> or --label <stage>; the label resolves to the newest version of that stage.
             var deployer = new AgentDeployer(line.Required("project-endpoint", "FOUNDRY_PROJECT_ENDPOINT"), agentName);
+            var label = line.Optional("label");
+            var version = line.Optional("version")
+                ?? (label is not null
+                    ? AgentDeployer.ResolveLabel((await deployer.ListVersionsAsync(ct)).Select(AgentDeployer.ToStageVersion), label)
+                    : throw new InvalidOperationException("route needs --version <n> or --label <stage> (v1-owner, v2-owner, v0-commissioner)."));
             await deployer.RouteAsync(version, ct);
-            Console.WriteLine($"Endpoint now routes 100% to {agentName} v{version}.");
+            Console.WriteLine($"Endpoint now routes 100% to {agentName} v{version}{(label is null ? "" : $" ({label})")}.");
             Console.WriteLine($"version={version}");
             return 0;
         }
