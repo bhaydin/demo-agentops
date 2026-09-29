@@ -29,15 +29,27 @@ public sealed class CoachChatLiveTests(ITestOutputHelper output)
         var chat = new CoachChat(project, options);
         var versions = new AgentVersionInfo(project, options, TimeProvider.System, NullLogger<AgentVersionInfo>.Instance);
 
+        // COACH_LIVE_MESSAGE overrides the question ("||" separates turns of one conversation),
+        // e.g. to make the Coach attempt a gated action while the web app is open and watch the
+        // approval dialog appear.
+        var messages = (Environment.GetEnvironmentVariable("COACH_LIVE_MESSAGE") is { Length: > 0 } m
+            ? m
+            : "In one sentence: who is my starting quarterback this week?").Split("||", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
         var summary = await versions.GetAsync(ct);
         var session = await chat.StartSessionAsync(ct);
         var reply = new StringBuilder();
-        await foreach (var chunk in chat.StreamAsync(session, "In one sentence: who is my starting quarterback this week?", ct))
+        output.WriteLine($"{summary.AgentName} v{summary.Version} ({summary.Description}; prompt {summary.PromptVersion}, {summary.Credential})");
+        foreach (var message in messages)
         {
-            reply.Append(chunk);
-        }
+            reply.Clear();
+            await foreach (var chunk in chat.StreamAsync(session, message, ct))
+            {
+                reply.Append(chunk);
+            }
 
-        output.WriteLine($"{summary.AgentName} v{summary.Version} ({summary.Description}; prompt {summary.PromptVersion}, {summary.Credential}): {reply}");
+            output.WriteLine($"> {message}\n{reply}");
+        }
         Assert.Null(summary.Error);
         Assert.NotNull(summary.Version);
         Assert.False(string.IsNullOrWhiteSpace(reply.ToString()));
