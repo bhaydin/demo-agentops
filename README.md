@@ -51,7 +51,7 @@ The web app is the stage: chat with the *deployed* Coach on the left (through it
 dotnet run --project src/Swankers.Web -- --KeyVault:Uri <vault-uri> --Mcp:BaseUrl http://localhost:5210 --Coach:ProjectEndpoint <foundry-project-endpoint>
 ```
 
-Point `Mcp:BaseUrl` at the deployed MCP server (`MCP_BASE_URL` in the azd environment) to see the same league the deployed Coach acts on. `tests/Swankers.Web.Tests` runs the page in-process with a fake league and a fake Coach; its live test talks to the deployed Coach when `FOUNDRY_PROJECT_ENDPOINT` is set (`COACH_LIVE_MESSAGE="Drop X || Yes, do it"` rehearses a gated action while the page is open).
+The page is for the presenter only, because it chats as the server's Foundry identity and approves with the demo admin key: it asks for the presenter key at `/login` (Key Vault secret `Web--PresenterKey`, or `--Web:PresenterKey <key>` for a local session) and then keeps a cookie session; "sign out" in the header ends it. Point `Mcp:BaseUrl` at the deployed MCP server (`MCP_BASE_URL` in the azd environment) to see the same league the deployed Coach acts on. `tests/Swankers.Web.Tests` runs the page in-process with a fake league and a fake Coach; its live test talks to the deployed Coach when `FOUNDRY_PROJECT_ENDPOINT` is set (`COACH_LIVE_MESSAGE="Drop X || Yes, do it"` rehearses a gated action while the page is open).
 
 ## Deploy to Azure
 
@@ -68,7 +68,7 @@ pwsh tools/Swankers.AgentDeploy/deploy-coach.ps1           # Coach versions v1-o
 - The MCP server is public behind its credentials: `MCP_ENDPOINT` (streamable HTTP) and `MCP_BASE_URL/api` (demo REST, `X-Demo-Admin-Key`). Secrets still come from the shared vault; the container apps read them with managed identity.
 - Coach runs as a Foundry hosted agent (code bundle, no image) in the shared project. Each `create` is an immutable version; `dotnet run --project tools/Swankers.AgentDeploy -- route --version <n>` moves the endpoint (the Thursday rollback), `-- list` shows what is live. See [tools/Swankers.AgentDeploy/README.md](tools/Swankers.AgentDeploy/README.md).
 - Friday "before" (DEMO, intentionally vulnerable): `azd env set MCP_COMMISSIONER_GATE_ENABLED false` and `azd provision` turn the gate off for commissioner-credential calls; the hardened default is on. The web app's header shows the gate state and the routed version, so the audience sees which configuration is live.
-- The web app (`WEB_URL`) reaches the Coach through its agent endpoint and the MCP server through `Mcp__BaseUrl`, both set by Bicep; its identity holds Foundry User on the account and Key Vault Secrets User for the demo admin key.
+- The web app (`WEB_URL`) reaches the Coach through its agent endpoint and the MCP server through `Mcp__BaseUrl`, both set by Bicep; its identity holds Foundry User on the account and Key Vault Secrets User for the demo admin key and the presenter key (`Web--PresenterKey`, created once by the maintainer). Anyone else who finds the URL gets the sign-in page and nothing more.
 - Traces: `appi-swankers-dev` in Application Insights and the Foundry project's Tracing page (the project is connected to the same resource).
 - `azd down` removes only `rg-swankers-dev`; the vault, the Foundry account, and the model deployment stay.
 
