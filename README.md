@@ -45,6 +45,14 @@ dotnet run --project src/Swankers.Coach -- --KeyVault:Uri <vault-uri> --Coach:Pr
 
 Then talk to it over the Responses protocol: `POST http://localhost:8088/responses` with `{"input": "Should I start X or Y this week?"}`. Stage configurations: `--Coach:PromptVersion v2` (Thursday's regression) and `--Coach:McpCredentialKey Mcp:CommissionerCredential` (Friday's "before"). For a local trace view, run `aspire dashboard run` and set `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317` for both services.
 
+The web app is the stage: chat with the *deployed* Coach on the left (through its Foundry agent endpoint, so whatever version is routed answers), the league ticker on the right (polls the MCP server's `/api/state` every two seconds), an approval dialog whenever the confirmation gate holds an action, and a header with the routed version, its prompt and credential, and the gate state. It needs the MCP server's base URL and demo admin key, and the Foundry project:
+
+```
+dotnet run --project src/Swankers.Web -- --KeyVault:Uri <vault-uri> --Mcp:BaseUrl http://localhost:5210 --Coach:ProjectEndpoint <foundry-project-endpoint>
+```
+
+Point `Mcp:BaseUrl` at the deployed MCP server (`MCP_BASE_URL` in the azd environment) to see the same league the deployed Coach acts on. `tests/Swankers.Web.Tests` runs the page in-process with a fake league and a fake Coach; its live test talks to the deployed Coach when `FOUNDRY_PROJECT_ENDPOINT` is set (`COACH_LIVE_MESSAGE="Drop X || Yes, do it"` rehearses a gated action while the page is open).
+
 ## Deploy to Azure
 
 Two steps: `azd up` for the Container Apps services, then the Coach hosted agent. Needs the Azure Developer CLI (1.32+), Azure CLI (2.80+), a login to the subscription (`az login`, `azd auth login`), the shared resources in `rg-swankers-shared` (Key Vault `kv-swankers-vxzd` and the Foundry account/project from `infra/modules/foundry.bicep`, deployed once by the maintainer), and the Foundry User role on that account.
@@ -59,7 +67,8 @@ pwsh tools/Swankers.AgentDeploy/deploy-coach.ps1           # Coach versions v1-o
 - Images are built in the environment's Container Registry (`remoteBuild`), so no local Docker is needed.
 - The MCP server is public behind its credentials: `MCP_ENDPOINT` (streamable HTTP) and `MCP_BASE_URL/api` (demo REST, `X-Demo-Admin-Key`). Secrets still come from the shared vault; the container apps read them with managed identity.
 - Coach runs as a Foundry hosted agent (code bundle, no image) in the shared project. Each `create` is an immutable version; `dotnet run --project tools/Swankers.AgentDeploy -- route --version <n>` moves the endpoint (the Thursday rollback), `-- list` shows what is live. See [tools/Swankers.AgentDeploy/README.md](tools/Swankers.AgentDeploy/README.md).
-- Friday "before" (DEMO, intentionally vulnerable): `azd env set MCP_COMMISSIONER_GATE_ENABLED false` and `azd provision` turn the gate off for commissioner-credential calls; the hardened default is on.
+- Friday "before" (DEMO, intentionally vulnerable): `azd env set MCP_COMMISSIONER_GATE_ENABLED false` and `azd provision` turn the gate off for commissioner-credential calls; the hardened default is on. The web app's header shows the gate state and the routed version, so the audience sees which configuration is live.
+- The web app (`WEB_URL`) reaches the Coach through its agent endpoint and the MCP server through `Mcp__BaseUrl`, both set by Bicep; its identity holds Foundry User on the account and Key Vault Secrets User for the demo admin key.
 - Traces: `appi-swankers-dev` in Application Insights and the Foundry project's Tracing page (the project is connected to the same resource).
 - `azd down` removes only `rg-swankers-dev`; the vault, the Foundry account, and the model deployment stay.
 
