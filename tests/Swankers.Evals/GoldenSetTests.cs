@@ -153,7 +153,7 @@ public sealed class GoldenSetTests
     }
 
     [Fact]
-    public void Errored_cloud_items_never_pass_the_promotion_gate()
+    public void Ungraded_cloud_items_never_pass_the_promotion_gate()
     {
         // CI run 36514287848: both runs reported "completed" while most grader items errored on a
         // role-propagation delay; the surviving passes alone cleared the minimum pass rate.
@@ -169,12 +169,12 @@ public sealed class GoldenSetTests
 
         Assert.False(report.Passed);
         Assert.True(report.LocalPassed);
-        Assert.Contains("foundry task_adherence: only 12 of 17 items graded (5 errored)", report.GateFailures);
-        Assert.Contains("foundry intent_resolution: only 11 of 17 items graded (6 errored)", report.GateFailures);
-        Assert.Contains("task_adherence: 12 passed, 0 failed, 5 of 17 errored", report.ToMarkdown());
-        Assert.Contains("\"errored\": 5", report.ToJson());
-        Assert.Equal(5, incomplete.Errored("task_adherence"));
-        Assert.Equal(17, incomplete.Errored("unknown"));
+        Assert.Contains("foundry task_adherence: only 12 of 17 items graded", report.GateFailures);
+        Assert.Contains("foundry intent_resolution: only 11 of 17 items graded", report.GateFailures);
+        Assert.Contains("task_adherence: 12 passed, 0 failed, 5 of 17 not graded", report.ToMarkdown());
+        Assert.Contains("\"notGraded\": 5", report.ToJson());
+        Assert.Equal(5, incomplete.NotGraded("task_adherence"));
+        Assert.Equal(17, incomplete.NotGraded("unknown"));
     }
 
     private static List<CaseResult> AllPassing()
