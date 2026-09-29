@@ -81,25 +81,32 @@ $accountScope = (Invoke-Az @('cognitiveservices', 'account', 'show', '-n', $Foun
 $repoInfo = gh api "repos/$Repo" --jq '{id: .id, ownerId: .owner.id, owner: .owner.login, name: .name}' | ConvertFrom-Json
 $repoForms = @($Repo, "$($repoInfo.owner)@$($repoInfo.ownerId)/$($repoInfo.name)@$($repoInfo.id)")
 
-# Custom role for eval runs: model calls through the project's OpenAI-compatible Responses API
-# (authorized by the accounts/OpenAI data actions, as in the built-in Cognitive Services OpenAI
-# User role), cloud evaluations, and agent reads. Data actions verified with
-# `az provider operation show --namespace Microsoft.CognitiveServices`. No agent or version writes.
+# Custom role for eval runs: the Foundry data plane (model calls through the project, cloud
+# evaluations, agent reads) with hosted-agent mutation explicitly excluded. The project's
+# Responses gateway answers 403 without a body, so the grant is the AIServices and OpenAI data
+# planes minus the write actions that could create, route, or delete agents; evals.yml probes
+# that an agent create still returns 403 for this identity. Action names verified with
+# `az provider operation show --namespace Microsoft.CognitiveServices`.
 $roleFile = New-TemporaryFile
 @{
     Name = $EvalsRoleName
     IsCustom = $true
-    Description = 'Swankers Coach eval runs: Responses API, cloud evaluations, and agent reads on the Foundry account. No agent or version writes.'
-    Actions = @('Microsoft.CognitiveServices/accounts/read', 'Microsoft.CognitiveServices/accounts/projects/read')
+    Description = 'Swankers Coach eval runs: Foundry data plane for model calls, cloud evaluations, and agent reads. Agent, version, and deployment writes are excluded.'
+    Actions = @('Microsoft.CognitiveServices/*/read')
     NotActions = @()
     DataActions = @(
-        'Microsoft.CognitiveServices/accounts/OpenAI/responses/*',
-        'Microsoft.CognitiveServices/accounts/OpenAI/*/read',
-        'Microsoft.CognitiveServices/accounts/AIServices/responses/*',
-        'Microsoft.CognitiveServices/accounts/AIServices/evaluations/*',
-        'Microsoft.CognitiveServices/accounts/AIServices/agents/read'
+        'Microsoft.CognitiveServices/accounts/AIServices/*',
+        'Microsoft.CognitiveServices/accounts/OpenAI/*'
     )
-    NotDataActions = @()
+    NotDataActions = @(
+        'Microsoft.CognitiveServices/accounts/AIServices/agents/write',
+        'Microsoft.CognitiveServices/accounts/AIServices/agents/delete',
+        'Microsoft.CognitiveServices/accounts/AIServices/managed-deployments/action',
+        'Microsoft.CognitiveServices/accounts/AIServices/managedComputeDeployments/write',
+        'Microsoft.CognitiveServices/accounts/AIServices/managedComputeDeployments/delete',
+        'Microsoft.CognitiveServices/accounts/AIServices/fine_tuning_deployments/write',
+        'Microsoft.CognitiveServices/accounts/OpenAI/assistants/*'
+    )
     AssignableScopes = @("/subscriptions/$subscription/resourceGroups/$SharedResourceGroup")
 } | ConvertTo-Json -Depth 4 | Set-Content $roleFile
 $roleExists = (Invoke-Az @('role', 'definition', 'list', '--name', $EvalsRoleName, '--custom-role-only', 'true', '--query', '[0].id', '-o', 'tsv')).Trim()
