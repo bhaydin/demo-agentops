@@ -1,6 +1,7 @@
 @implements IDisposable
 @inject LeagueStateFeed Feed
 @inject LeagueStateClient League
+@inject ILogger<ApprovalDialog> Logger
 
 @if (Pending is { } pending)
 {
@@ -29,10 +30,15 @@
         </div>
     </div>
 }
+@if (_notice is not null)
+{
+    <div class="toast" role="status" @onclick="() => _notice = null">@_notice</div>
+}
 
 @code {
     private bool _busy;
     private string? _error;
+    private string? _notice;
 
     private PendingApproval? Pending => Feed.Current.PendingConfirmations.FirstOrDefault();
 
@@ -40,23 +46,34 @@
 
     private void OnFeedChanged() => _ = InvokeAsync(StateHasChanged);
 
+    // Nothing thrown here may escape: an unhandled event exception ends the circuit, and with it
+    // the chat and the ticker in the middle of the approval demo (Codex Phase 6).
     private async Task DecideAsync(string id, bool approve)
     {
         _busy = true;
         _error = null;
+        _notice = null;
         try
         {
-            var outcome = await League.ResolveAsync(id, approve, CancellationToken.None);
-            if (outcome is { Error: not null })
+            var result = await League.DecideAsync(id, approve, CancellationToken.None);
+            if (result.Outcome is { } outcome)
             {
-                _error = $"{outcome.Status}: {outcome.Error}";
+                var detail = outcome.Error is null ? "" : $": {outcome.Error}";
+                _notice = result.Reconciled
+                    ? $"The call did not confirm, but the league recorded the action as {outcome.Status}{detail}."
+                    : $"{(approve ? "Approved" : "Denied")}: {outcome.Status}{detail}";
+            }
+            else
+            {
+                _error = $"Could not confirm the decision ({result.Error}). The action is still pending; try again.";
             }
 
             await Feed.RefreshAsync(CancellationToken.None);
         }
-        catch (HttpRequestException ex)
+        catch (Exception ex)
         {
-            _error = ex.Message;
+            Logger.LogError(ex, "Deciding confirmation {ConfirmationId} failed.", id);
+            _error = $"Unexpected error: {ex.Message}. The action may still be pending; the ticker shows the league's record.";
         }
         finally
         {

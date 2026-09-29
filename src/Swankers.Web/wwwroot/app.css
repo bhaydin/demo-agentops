@@ -107,6 +107,8 @@ ul { list-style: none; margin: 0; padding: 0; }
 .chip.ok { border-color: var(--accent); color: var(--accent); }
 .chip.danger { border-color: var(--danger); color: var(--danger); font-weight: 700; }
 .chip.warn { border-color: var(--warn); color: var(--warn); }
+.signout { display: inline; margin: 0; }
+.signout .chip { cursor: pointer; padding: 0.2rem 0.65rem; font-size: 0.85rem; }
 
 /* Chat */
 
@@ -243,6 +245,24 @@ button.deny { background: var(--danger); color: #fff; border-color: var(--danger
 .facts dd { margin: 0; }
 .facts pre { margin: 0; white-space: pre-wrap; background: var(--bg); padding: 0.4rem 0.6rem; border-radius: 6px; max-height: 12rem; overflow: auto; }
 .actions { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1rem; }
+
+.toast {
+    position: fixed;
+    left: 50%;
+    bottom: 1.5rem;
+    transform: translateX(-50%);
+    background: var(--panel-2);
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    padding: 0.7rem 1.1rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    z-index: 90;
+}
+
+.msg.system { justify-content: center; }
+.msg.system .bubble { background: transparent; color: var(--muted); font-size: 0.9rem; border: 1px dashed var(--line); }
+.chat-head { padding: 0.5rem 1rem; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
 
 /* Blazor defaults kept */
 

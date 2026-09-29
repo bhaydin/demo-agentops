@@ -20,6 +20,9 @@ public sealed class FakeLeagueApi : HttpMessageHandler
     public Func<string, bool, ApprovalOutcome?> OnResolve { get; set; } =
         (_, approve) => new ApprovalOutcome(approve, approve ? "executed" : "denied", null, null);
 
+    /// <summary>When set, the raw response (or exception) for POST /api/confirmations/{id}: timeouts, 500s, garbage.</summary>
+    public Func<string, bool, HttpResponseMessage>? OnResolveResponse { get; set; }
+
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         var body = request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken);
@@ -36,6 +39,11 @@ public sealed class FakeLeagueApi : HttpMessageHandler
         {
             var id = path["/api/confirmations/".Length..];
             var approve = JsonDocument.Parse(body ?? "{}").RootElement.GetProperty("approve").GetBoolean();
+            if (OnResolveResponse is not null)
+            {
+                return OnResolveResponse(id, approve);
+            }
+
             var outcome = OnResolve(id, approve);
             return outcome is null ? new HttpResponseMessage(HttpStatusCode.NotFound) : Ok(outcome);
         }
