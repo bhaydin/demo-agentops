@@ -94,9 +94,11 @@ $roleFile = New-TemporaryFile
     Description = 'Swankers Coach eval runs: Foundry data plane for model calls, cloud evaluations, and agent reads. Agent, version, and deployment writes are excluded.'
     Actions = @('Microsoft.CognitiveServices/*/read')
     NotActions = @()
+    # The Foundry data plane as Foundry User grants it (Microsoft.CognitiveServices/*): the
+    # project's Responses gateway still answered 403 with only accounts/AIServices/* and
+    # accounts/OpenAI/*, and it names no action. The mutation exclusions below are what matter.
     DataActions = @(
-        'Microsoft.CognitiveServices/accounts/AIServices/*',
-        'Microsoft.CognitiveServices/accounts/OpenAI/*'
+        'Microsoft.CognitiveServices/*'
     )
     NotDataActions = @(
         'Microsoft.CognitiveServices/accounts/AIServices/agents/write',
