@@ -13,7 +13,13 @@ public sealed class FakeCoach : ICoachChat, IAgentVersionInfo
 
     public Func<string, IEnumerable<string>> Reply { get; set; } = _ => ["Start ", "Judkins."];
 
-    public Task<CoachSession> StartSessionAsync(CancellationToken ct) => Task.FromResult(new CoachSession(null));
+    public int SessionsStarted { get; private set; }
+
+    public Task<CoachSession> StartSessionAsync(CancellationToken ct)
+    {
+        SessionsStarted++;
+        return Task.FromResult(new CoachSession(null));
+    }
 
     public async IAsyncEnumerable<string> StreamAsync(CoachSession session, string message, [EnumeratorCancellation] CancellationToken ct)
     {

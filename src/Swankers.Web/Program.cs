@@ -47,6 +47,7 @@ builder.Services.AddHttpClient<LeagueStateClient>((sp, http) =>
     http.Timeout = TimeSpan.FromSeconds(10);
 });
 builder.Services.AddScoped<LeagueStateFeed>();
+builder.Services.AddScoped<CoachConversation>();
 
 // Foundry: the deployed Coach (chat) and its routed version (header). Managed identity in Azure,
 // az login locally; the web identity holds Foundry User on the account.

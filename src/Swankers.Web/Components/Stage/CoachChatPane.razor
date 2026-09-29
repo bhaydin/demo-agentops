@@ -1,104 +1,76 @@
-@using System.Text
 @using System.Text.RegularExpressions
 @implements IDisposable
-@inject ICoachChat Chat
-@inject ILogger<CoachChatPane> Logger
+@inject CoachConversation Conversation
+@inject LeagueStateFeed Feed
 
 <div class="chat">
+    <div class="chat-head">
+        @if (Conversation.BoundVersion is { } bound)
+        {
+            <span class="muted">Conversation with <strong>@CoachConversation.Describe(bound)</strong></span>
+        }
+        else
+        {
+            <span class="muted">Your next message starts a conversation with whichever Coach version is routed.</span>
+        }
+    </div>
     <div class="messages">
-        @if (_messages.Count == 0)
+        @if (Conversation.Entries.Count == 0)
         {
             <p class="muted intro">Ask Coach about your lineup, an injury, a trade offer, or a waiver move.</p>
         }
-        @foreach (var message in _messages)
+        @foreach (var entry in Conversation.Entries)
         {
-            <div class="msg @message.Role">
-                <div class="bubble">@Render(message.Text)</div>
+            <div class="msg @entry.Role">
+                <div class="bubble">@Render(entry.Text)</div>
             </div>
         }
-        @if (_thinking)
+        @if (Conversation.Thinking)
         {
             <div class="msg assistant">
                 <div class="bubble thinking">Coach is thinking…</div>
             </div>
         }
     </div>
-    @if (_error is not null)
+    @if (Conversation.Error is not null)
     {
-        <p class="error">@_error</p>
+        <p class="error">@Conversation.Error</p>
     }
     <form class="composer" @onsubmit="SendAsync">
-        <input @bind="_draft" @bind:event="oninput" placeholder="Message Coach" aria-label="Message Coach" disabled="@_busy" />
-        <button type="submit" disabled="@(_busy || string.IsNullOrWhiteSpace(_draft))">Send</button>
+        <input @bind="_draft" @bind:event="oninput" placeholder="Message Coach" aria-label="Message Coach" disabled="@Conversation.Busy" />
+        <button type="submit" disabled="@(Conversation.Busy || string.IsNullOrWhiteSpace(_draft))">Send</button>
     </form>
 </div>
 
 @code {
-    private sealed class Message(string role, string text)
-    {
-        public string Role { get; } = role;
-        public string Text { get; set; } = text;
-    }
-
     private static readonly Regex Bold = new(@"\*\*(.+?)\*\*", RegexOptions.Compiled);
 
-    private readonly List<Message> _messages = [];
     private readonly CancellationTokenSource _gone = new();
-    private CoachSession? _session;
     private string _draft = "";
-    private bool _busy;
-    private bool _thinking;
-    private string? _error;
+
+    protected override void OnInitialized()
+    {
+        Conversation.Changed += OnConversationChanged;
+        Feed.Changed += OnFeedChanged;
+    }
+
+    private void OnConversationChanged() => _ = InvokeAsync(StateHasChanged);
+
+    // Every poll: if the endpoint was re-routed, end the session so the next message goes to the
+    // version the header shows.
+    private void OnFeedChanged() => _ = InvokeAsync(async () =>
+    {
+        if (await Conversation.SyncVersionAsync(_gone.Token))
+        {
+            StateHasChanged();
+        }
+    });
 
     private async Task SendAsync()
     {
-        var text = _draft.Trim();
-        if (text.Length == 0 || _busy)
-        {
-            return;
-        }
-
+        var text = _draft;
         _draft = "";
-        _busy = true;
-        _thinking = true;
-        _error = null;
-        _messages.Add(new Message("user", text));
-        var reply = new Message("assistant", "");
-        try
-        {
-            _session ??= await Chat.StartSessionAsync(_gone.Token);
-            await foreach (var chunk in Chat.StreamAsync(_session, text, _gone.Token))
-            {
-                if (_thinking)
-                {
-                    _thinking = false;
-                    _messages.Add(reply);
-                }
-
-                reply.Text += chunk;
-                StateHasChanged();
-            }
-
-            if (_thinking)
-            {
-                reply.Text = "(no answer)";
-                _messages.Add(reply);
-            }
-        }
-        catch (OperationCanceledException) when (_gone.IsCancellationRequested)
-        {
-            // The circuit ended mid-reply.
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Coach chat failed.");
-            _error = $"Coach did not answer: {ex.Message}";
-        }
-        finally
-        {
-            _thinking = false;
-            _busy = false;
-        }
+        await Conversation.SendAsync(text, _gone.Token);
     }
 
     // The Coach answers in light markdown. Encode everything, then allow bold; line breaks are
@@ -111,6 +83,8 @@
 
     public void Dispose()
     {
+        Conversation.Changed -= OnConversationChanged;
+        Feed.Changed -= OnFeedChanged;
         _gone.Cancel();
         _gone.Dispose();
     }
