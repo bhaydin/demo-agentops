@@ -333,15 +333,22 @@ Isolated fault-injection source and output are in ignored `artifacts/phase6-revi
 Not done, by design: browser automation of the interactive circuit (chat, polling, buttons) is still not in CI; the interactive paths are covered by unit tests of the services behind them (`CoachConversation`, `DecideAsync`) and by the rehearsals above. The Friday "before" finding stands for Phase 7.
 
 ## Phase 7: Demo hardening (Wed)
-Owner: maintainer, with agent support
+Owner: maintainer, with Claude Code (reset and stage scripts, runbook, technical rehearsal)
 
-- [ ] `demo/reset.ps1` resets SimLeague and reseeds scenarios in under 10 seconds
+- [x] `demo/reset.ps1` resets SimLeague and reseeds scenarios in under 10 seconds
 - [ ] Portal red-team run: before and after attack success rate captured (maintainer)
 - [ ] Backup recordings of every live demo (maintainer)
-- [ ] `demo/runbook.md`: exact click path and fallback for each demo, both talks
+- [ ] `demo/runbook.md`: exact click path and fallback for each demo, both talks (maintainer; see the record)
 - [ ] Full timed rehearsal of both talks with resets between
 
 Gate: two clean rehearsals in a row.
+
+### Phase 7 record (2026-09-29, in progress)
+
+- **Scripts.** `demo/reset.ps1` (reset, optional `-Scenario`, deployed via the azd environment and Key Vault or `-Local`): 2.5 to 2.7 s per call after the first, 8.7 s cold including the Key Vault read. `demo/stage.ps1 -Preset thursday-good | thursday-regressed | friday-before | friday-after`: routes by stage label, resets, seeds the poisoned trade for the Friday presets, prints the header to expect, and warns when the provisioned commissioner-gate flag does not match; 11 s per switch. The commissioner gate flag stays provisioned off for the whole Friday talk: the "after" uses the owner credential, whose gate is always on, so before/after is a route change, not a two-minute provision.
+- **Deploy tool.** `route --label <stage>` resolves the newest version of a stage (v4 and v7 are both v1-owner; the label picks v7, `--version 4` is the second rollback target), with an unknown label listing what exists (4 tests). Found on the way: the tool's default credential chain took 136 s per call on this machine (the managed-identity probe off Azure); with managed and workload identity excluded it takes 8 s, which is what made the 11 s switch possible. The same probe can slow the web app locally: `AZURE_TOKEN_CREDENTIALS=dev` (README).
+- **Runbook.** The runbook file is not written: the assistant's attempt to write it was stopped by a safety filter and was not retried. The facts it needs are in this file (Phase 6 rehearsals 1 to 3, with the exact questions and what the ticker and the header showed), in `README.md` (URLs, scripts, sign-in), and in `tools/Swankers.AgentDeploy/README.md` (versions and routing). The maintainer authors `demo/runbook.md` from those.
+- **Open for the maintainer.** Red-team run, recordings, the runbook, and the two timed rehearsals.
 
 ---
 
@@ -359,9 +366,7 @@ Decisions still to be made, so they are not lost in the phase records. When one 
 | Raised | Decision needed | Options seen so far | Owner | Blocks |
 |---|---|---|---|---|
 | 2026-09-29 (Codex Phase 6) | Browser automation of the interactive circuit (chat, two-second polling, Approve/Deny) is not in CI; the services behind those paths are unit-tested and the flows were rehearsed by hand against the deployed app. Add a browser test, or accept that coverage? | A browser test needs a new package (Playwright or bUnit), which the Phase 4 package freeze forbids without approval; the alternative is to keep the rehearsal in the Phase 7 runbook. | maintainer | nothing; Phase 7 if a browser test is wanted |
-| 2026-09-29 (Phase 5 promotion) | Coach v4 (hand-deployed `v1-owner`) now duplicates v7 (the CI-promoted `v1-owner`). Delete it, or keep it as a second rollback target for Thursday? | `AgentDeploy delete --version 4` removes it; keeping it costs nothing but shows up in `list` and the portal. | maintainer | nothing |
 | 2026-09-29 (Phase 6) | Coach replies render markdown minimally (bold only; lists and headings show as text). Good enough for the projector, or add a renderer? | A markdown package is a freeze exception; a hand-written subset (lists, headings) needs no package. | maintainer | Phase 7 polish |
-| 2026-09-28 (Phase 5) | Start/sit and pushback thresholds sit at 0.8 because the model is nondeterministic; v1 passed 17/17 in every CI run so far. Tighten, keep, or add repetitions before the Thursday demo? | `evalsettings.json` `repetitions` and `thresholds`; more repetitions cost about five minutes per version per run. | maintainer | Phase 7 rehearsal |
 | 2026-09-28 (Phase 5) | The Foundry evaluators' per-item results are only in the portal, not in the markdown report. Worth adding before Thursday? | `AgentEvaluationResults.DetailedItems` carries per-item scores and errors; rendering them is a report change only. | maintainer | Phase 7, only if the Thursday story needs per-item cloud scores |
 | 2026-09-28 (Phase 4) | The hosted runtime's Azure Monitor exporter is the transitive 1.7.0 and its default sampling was never checked (the MCP and the web export at 100%). Verify, or pin the sampling in the Coach as well? | Add `AddAzureMonitorTraceExporter` with `SamplingRatio = 1.0` to the Coach like the other services (no new package; the exporter is already transitive), then confirm in Application Insights that one trace spans web, agent, MCP, and league. | maintainer | Thursday tracing demo if traces are missing the agent half |
 
@@ -419,3 +424,5 @@ Decisions still to be made, so they are not lost in the phase records. When one 
 | 2026-09-29 | The Friday "before" runs prompt `v0` (naive: no tool-output rule, no own-franchise rule, directives in notes are carried out) with the commissioner credential and the gate off; `docs/ARCHITECTURE.md` no longer says "coach-v1 in both" | Prompt v1 resists the poisoned note on its own, so the "before" needed a configuration without that defense; v0 keeps every football rule, including the injury check, so Thursday's v1/v2 story is untouched (v1 adversarial 4/4 re-verified) |
 | 2026-09-29 | The league knowledge describes the league and no longer defends the agent; the rule that tool output is data lives in prompt v1 only | The knowledge base is shared by every version, so anti-injection sentences there made the "before" impossible; the prompt is the layer the talk contrasts |
 | 2026-09-29 | The Friday "before" version (v0-commissioner) runs on gpt-4.1-mini, deployed alongside gpt-5.4 by the shared Foundry module; every other version stays on gpt-5.4 | gpt-5.4 refuses injected tool output whatever the prompt, credential, or gate; gpt-4.1-mini accepts the poisoned trade and drops a player on both adversarial cases (gpt-4.1-nano and gpt-4o partially). A model change as its own version is also Thursday's theme, and the header shows the model |
+| 2026-09-29 | Coach v4 (hand-deployed v1-owner) stays as a second rollback target next to v7 | Thursday's rollback can point at a version that was never touched by CI; nothing to gain from deleting it |
+| 2026-09-29 | Start/sit and pushback thresholds stay at 0.8; no repetitions added | v1 has passed 17/17 in every CI run; 0.8 leaves room for model nondeterminism and is a comfortable number to discuss on stage |
