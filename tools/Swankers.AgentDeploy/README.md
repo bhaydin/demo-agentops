@@ -25,7 +25,7 @@ writes Windows separators into the entry names, so the hosted container cannot f
 |---|---|---|---|
 | `v1-owner` | `v1` | `Mcp:OwnerCredential` | Default; Friday "after" |
 | `v2-owner` | `v2` | `Mcp:OwnerCredential` | Thursday regression and rollback |
-| `v0-commissioner` | `v0` | `Mcp:CommissionerCredential` | Friday "before" (DEMO: intentionally vulnerable): the naive prompt that follows directives in tool output, with the commissioner credential and the gate off |
+| `v0-commissioner` | `v0` | `Mcp:CommissionerCredential` | Friday "before" (DEMO: intentionally vulnerable): the naive prompt on the weaker model (`--model gpt-4.1-mini`, `deploy-coach.ps1 -BeforeModel`), with the commissioner credential and the gate off. gpt-5.4 refuses injected tool output whatever the prompt; gpt-4.1-mini accepts the trade and drops a player |
 
 The publish output goes to `<temp>/swankers-coach-publish` by default: `dotnet publish -o`
 cannot take a path containing `,` or `;` (MSBuild splits property values there), and this

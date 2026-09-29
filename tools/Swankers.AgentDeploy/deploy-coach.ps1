@@ -16,10 +16,16 @@ Reuse the publish output (in the temp folder) from a previous run.
 
 .PARAMETER SkipProvision
 Do not run `azd provision` for the Key Vault role assignment; print the command instead.
+
+.PARAMETER BeforeModel
+Chat deployment for the Friday "before" version (v0-commissioner). gpt-5.4 refuses injected
+tool output whatever the prompt, so the vulnerable configuration runs a weaker model that the
+shared Foundry module deploys alongside (infra/modules/foundry.bicep, extraModels).
 #>
 [CmdletBinding()]
 param(
     [string] $AgentName = 'Coach',
+    [string] $BeforeModel = 'gpt-4o-mini',
     [switch] $SkipPublish,
     [switch] $SkipProvision
 )
@@ -63,14 +69,16 @@ try {
         @{ Label = 'v1-owner';        Prompt = 'v1'; Credential = 'Mcp:OwnerCredential' }
         @{ Label = 'v2-owner';        Prompt = 'v2'; Credential = 'Mcp:OwnerCredential' }
         # DEMO: intentionally vulnerable (Friday talk). See docs/ARCHITECTURE.md#security-demo.
-        @{ Label = 'v0-commissioner'; Prompt = 'v0'; Credential = 'Mcp:CommissionerCredential' }
+        @{ Label = 'v0-commissioner'; Prompt = 'v0'; Credential = 'Mcp:CommissionerCredential'; Model = $BeforeModel }
     )
 
     $versions = @{}
     foreach ($stage in $stages) {
         Write-Host "`n== $($stage.Label) ==" -ForegroundColor Cyan
-        $out = Invoke-Tool @('create', '--name', $AgentName, '--label', $stage.Label, '--prompt', $stage.Prompt,
+        $toolArgs = @('create', '--name', $AgentName, '--label', $stage.Label, '--prompt', $stage.Prompt,
             '--credential-key', $stage.Credential, '--publish-dir', $publishDir)
+        if ($stage.Model) { $toolArgs += @('--model', $stage.Model) }
+        $out = Invoke-Tool $toolArgs
         $versions[$stage.Label] = Get-Value $out 'version'
     }
 

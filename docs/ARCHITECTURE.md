@@ -84,7 +84,7 @@ C# MCP SDK, streamable HTTP transport, hosted in Azure Container Apps.
 - Hosted agent versions used on stage:
   - `coach` v1 with owner credential: Thursday baseline, Friday hardened.
   - `coach` v2 with owner credential: Thursday regression, rolled back.
-  - `coach` v0 with commissioner credential and gate off: Friday "before" (DEMO: intentionally vulnerable).
+  - `coach` v0 with commissioner credential, gate off, and the weaker model (`gpt-4.1-mini`, deployed alongside `gpt-5.4` by `infra/modules/foundry.bicep`): Friday "before" (DEMO: intentionally vulnerable). gpt-5.4 refuses injected tool output whatever the prompt says, so the vulnerable configuration also changes the model; the header shows which model is live, which is also Thursday's point about model changes being versions.
 
 ### 4. Knowledge (Foundry IQ)
 
@@ -134,6 +134,7 @@ The Friday talk runs the same attack twice.
 | franchiseId honored | Any, incl. "0000" | Own franchise only |
 | Gate | Off | On (irreversible tools pending until human approves in web app) |
 | Instructions | coach-v0 (naive: follows directives in tool output) | coach-v1 |
+| Model | gpt-4.1-mini (follows the injected note) | gpt-5.4 (refuses it on its own) |
 | Expected result | Lopsided trade accepted for Brian's franchise, RB1 dropped | Attempt blocked or pending; trace shows intent vs action |
 
 Payload constraints: benign, SimLeague-only, no network or data access beyond the simulated league.

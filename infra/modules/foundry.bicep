@@ -81,13 +81,42 @@ resource chatModel 'Microsoft.CognitiveServices/accounts/deployments@2025-06-01'
   }
 }
 
-// Created after the model deployment for the same RequestConflict reason as above.
+@description('Further chat deployments. The Friday "before" runs the naive prompt v0 on a weaker model (DEMO: intentionally vulnerable, see docs/ARCHITECTURE.md#security-demo): gpt-5.4 refuses injected tool output whatever the prompt, so the vulnerable configuration needs a model that does not. Each item: { name, version, capacity } (capacity in thousands of tokens per minute).')
+param extraModels array = [
+  {
+    name: 'gpt-4.1-mini'
+    version: '2025-04-14'
+    capacity: 20
+  }
+]
+
+// One at a time: the provider rejects concurrent child operations (RequestConflict).
+@batchSize(1)
+resource extraDeployments 'Microsoft.CognitiveServices/accounts/deployments@2025-06-01' = [for m in extraModels: {
+  parent: account
+  name: m.name
+  tags: tags
+  dependsOn: [chatModel]
+  sku: {
+    name: deploymentSku
+    capacity: m.capacity
+  }
+  properties: {
+    model: {
+      format: modelFormat
+      name: m.name
+      version: m.version
+    }
+  }
+}]
+
+// Created after the model deployments for the same RequestConflict reason as above.
 resource evalsProject 'Microsoft.CognitiveServices/accounts/projects@2025-06-01' = {
   parent: account
   name: evalsProjectName
   location: location
   tags: tags
-  dependsOn: [chatModel]
+  dependsOn: [chatModel, extraDeployments]
   identity: {
     type: 'SystemAssigned'
   }

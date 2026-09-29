@@ -20,7 +20,7 @@ public sealed record CoachVersionSpec(
         ? "commissioner"
         : "owner";
 
-    public string Description => $"Coach {Label}: prompt {PromptVersion}, {CredentialName} credential";
+    public string Description => $"Coach {Label}: prompt {PromptVersion}, {CredentialName} credential, model {ModelDeployment}";
 
     /// <summary>Environment the hosted container starts with; see src/Swankers.Coach/Program.cs.</summary>
     public IReadOnlyDictionary<string, string> EnvironmentVariables => new Dictionary<string, string>
@@ -40,5 +40,6 @@ public sealed record CoachVersionSpec(
         ["stage"] = Label,
         ["prompt"] = PromptVersion,
         ["credential"] = CredentialName,
+        ["model"] = ModelDeployment,
     };
 }

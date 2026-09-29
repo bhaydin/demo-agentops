@@ -61,7 +61,7 @@ Two steps: `azd up` for the Container Apps services, then the Coach hosted agent
 azd env new swankers-dev --location northcentralus
 azd env set AZURE_TAG_PRIMARY_OWNER <you@example.com>     # policy tags; Client and ExpectedDeleteDate have defaults
 azd up                                                     # rg-swankers-dev: Log Analytics, App Insights, ACR, Container Apps (mcp, web)
-pwsh tools/Swankers.AgentDeploy/deploy-coach.ps1           # Coach versions v1-owner, v2-owner, v0-commissioner; routed to v1-owner
+pwsh tools/Swankers.AgentDeploy/deploy-coach.ps1           # Coach versions v1-owner, v2-owner, v0-commissioner (on gpt-4.1-mini); routed to v1-owner
 ```
 
 - Images are built in the environment's Container Registry (`remoteBuild`), so no local Docker is needed.
