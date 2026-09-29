@@ -231,9 +231,10 @@ public sealed class ToolSequenceEvaluatorTests
     [Fact]
     public void Lineup_rule_reads_the_lineup_inside_the_MCP_result_envelope()
     {
-        // An MCP tool result reaches the model as {"content":[{"type":"text","text":"<the tool's JSON as a string>"}]}:
-        // the JSON is serialized a second time, so its quotes are escaped and a text search for "\"17051\"" finds
-        // nothing even when the player starts (CI run 36511188834, ss-05).
+        // The MCP client hands the model the CallToolResult JSON ({"content":[{"type":"text","text":"<the tool's JSON as a
+        // string>"}]}) for results it does not convert to AIContent (errors, multi-block content): the JSON is serialized
+        // a second time, so its quotes are escaped and a text search for "\"17051\"" finds nothing (CI run 36511188834,
+        // ss-05). ToolResultShapeTests covers the shapes the real client produces.
         var golden = new GoldenCase { Id = "ss-x", Category = GoldenCase.Categories.StartSit, Query = "q", MustStart = ["17051", "14071"], MustNotStart = ["14823"] };
         var evaluator = new ToolSequenceEvaluator();
         const string Set = """{"franchiseId":"0001","franchiseName":"Sample","week":4,"starters":[{"id":"16580","name":"Maye, Drake","position":"QB","team":"NEP","rosterStatus":null},{"id":"14071","name":"Montgomery, David","position":"RB","team":"DET","rosterStatus":null},{"id":"17051","name":"Judkins, Quinshon","position":"RB","team":"CLE","rosterStatus":null}]}""";
@@ -262,7 +263,7 @@ public sealed class ToolSequenceEvaluatorTests
         Assert.True(check.Passed, check.Reason);
     }
 
-    /// <summary>The MCP client's result envelope: the tool's JSON serialized again as the text block's string.</summary>
+    /// <summary>The CallToolResult JSON as the MCP client hands it back unconverted: the tool's JSON serialized again as the text block's string.</summary>
     internal static string Envelope(string toolJson)
         => $$"""{"content":[{"type":"text","text":{{System.Text.Json.JsonSerializer.Serialize(toolJson)}}}],"isError":false}""";
 

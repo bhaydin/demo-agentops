@@ -6,8 +6,13 @@ namespace Swankers.Evals.Evaluators;
 
 /// <summary>
 /// What a tool call returned, paired to the call by id. A call only "happened" for the rules
-/// when its result exists, raised no exception, and is not an MCP error result
-/// (<c>isError: true</c>, which is how a thrown McpException reaches the model).
+/// when its result exists, raised no exception, and is not an MCP error result.
+/// The MCP client (ModelContextProtocol 2.2.0) hands the model a <see cref="TextContent"/>
+/// whose text is the tool's JSON for a plain successful result, and the CallToolResult JSON
+/// (<c>{"content":[{"type":"text","text":"…"}],"isError":true}</c>, quotes inside escaped) as a
+/// <see cref="JsonElement"/> when the tool threw an McpException; <see cref="ToolResultShapeTests"/>
+/// pins both against the real server. Serializing a <see cref="TextContent"/> with default
+/// options would give <c>{"$type":"text","Text":"…"}</c>, which no rule can read.
 /// </summary>
 public sealed record ToolResult(int Index, string RawText, bool Succeeded, string? Error)
 {
@@ -23,6 +28,10 @@ public sealed record ToolResult(int Index, string RawText, bool Succeeded, strin
             null => "",
             JsonElement element => element.GetRawText(),
             string text => text,
+            TextContent text => text.Text ?? "",
+            ErrorContent failure => JsonSerializer.Serialize(new { isError = true, content = new[] { new { type = "text", text = failure.Message } } }),
+            IEnumerable<AIContent> contents => string.Join("\n", contents.Select(c => c is TextContent t ? t.Text : JsonSerializer.Serialize(c, AIJsonUtilities.DefaultOptions))),
+            AIContent other => JsonSerializer.Serialize(other, AIJsonUtilities.DefaultOptions),
             var other => JsonSerializer.Serialize(other),
         };
 
