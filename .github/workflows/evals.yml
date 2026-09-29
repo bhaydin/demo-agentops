@@ -137,12 +137,12 @@ jobs:
 
       - name: Gate on the report
         env:
-          VERSION: ${{ inputs.promote_version }}
+          PROMOTE_VERSION: ${{ inputs.promote_version }}
         run: |
-          report="artifacts/evals/latest-$VERSION.json"
-          test -f "$report" || { echo "no report for $VERSION"; exit 1; }
-          jq -e '.passed == true' "$report" > /dev/null || { echo "evals for $VERSION did not pass:"; jq '.gateFailures' "$report"; exit 1; }
-          echo "evals for $VERSION passed"
+          report="artifacts/evals/latest-$PROMOTE_VERSION.json"
+          test -f "$report" || { echo "no report for $PROMOTE_VERSION"; exit 1; }
+          jq -e '.passed == true' "$report" > /dev/null || { echo "evals for $PROMOTE_VERSION did not pass:"; jq '.gateFailures' "$report"; exit 1; }
+          echo "evals for $PROMOTE_VERSION passed"
 
       - name: Set up .NET (SDK from global.json)
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
@@ -162,16 +162,17 @@ jobs:
       - name: Restore (locked)
         run: dotnet restore SwankersCoach.slnx --locked-mode
 
-      # --no-restore: the locked restore above is the only restore this job may do. The implicit
-      # restore inside `dotnet run` failed on the runner with MSB4181 ("RestoreTask returned false
-      # but did not log an error", run 36515480007) and would not be locked anyway.
+      # PROMOTE_VERSION, not VERSION: an environment variable named VERSION becomes the MSBuild
+      # Version property, so "v1" broke the build (run 36515480007: restore failed silently with
+      # MSB4181; run 36519166910: NETSDK1018 "Invalid NuGet version string: 'v1'").
+      # --no-restore: the locked restore above is the only restore this job may do.
       - name: Deploy and route the hosted agent version
         env:
-          VERSION: ${{ inputs.promote_version }}
+          PROMOTE_VERSION: ${{ inputs.promote_version }}
           FOUNDRY_PROJECT_ENDPOINT: ${{ vars.FOUNDRY_PROJECT_ENDPOINT }}
           MCP_ENDPOINT: ${{ vars.MCP_ENDPOINT }}
           KEYVAULT_URI: ${{ vars.KEYVAULT_URI }}
           AZURE_AI_MODEL_DEPLOYMENT_NAME: ${{ vars.AZURE_AI_MODEL_DEPLOYMENT_NAME || 'gpt-5.4' }}
         run: >
           dotnet run --no-restore --project tools/Swankers.AgentDeploy -c Release --
-          create --label "$VERSION-owner" --prompt "$VERSION" --credential-key Mcp:OwnerCredential --route
+          create --label "$PROMOTE_VERSION-owner" --prompt "$PROMOTE_VERSION" --credential-key Mcp:OwnerCredential --route
