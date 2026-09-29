@@ -350,6 +350,20 @@ Gate: two clean rehearsals in a row.
 - Azure subscription, region, and quota check
 - Run the portal red-team scans and record demos
 
+## Open decisions
+
+Decisions still to be made, so they are not lost in the phase records. When one is made, move it to the decisions log below and delete the row here.
+
+| Raised | Decision needed | Options seen so far | Owner | Blocks |
+|---|---|---|---|---|
+| 2026-09-29 (Phase 6 rehearsal) | The Friday "before" attack does not land: with prompt v1 in both configurations (`docs/ARCHITECTURE.md` security demo), Coach v6 (commissioner credential, gate off) refuses the poisoned trade note and makes no write, so the ticker never shows the lopsided trade or the RB1 drop. What is the vulnerable configuration? | (a) a naive prompt version for the "before" only, which changes the architecture's "coach-v1 in both" row; (b) a stronger, still benign payload in the note; (c) a vector the commissioner scope enables, such as the note asking the Coach to act for franchise 0000 rather than to accept the trade. Record at the Phase 6 record, "Finding for Phase 7". | maintainer | Phase 7, Friday talk |
+| 2026-09-29 (Codex Phase 6) | Browser automation of the interactive circuit (chat, two-second polling, Approve/Deny) is not in CI; the services behind those paths are unit-tested and the flows were rehearsed by hand against the deployed app. Add a browser test, or accept that coverage? | A browser test needs a new package (Playwright or bUnit), which the Phase 4 package freeze forbids without approval; the alternative is to keep the rehearsal in the Phase 7 runbook. | maintainer | nothing; Phase 7 if a browser test is wanted |
+| 2026-09-29 (Phase 5 promotion) | Coach v4 (hand-deployed `v1-owner`) now duplicates v7 (the CI-promoted `v1-owner`). Delete it, or keep it as a second rollback target for Thursday? | `AgentDeploy delete --version 4` removes it; keeping it costs nothing but shows up in `list` and the portal. | maintainer | nothing |
+| 2026-09-29 (Phase 6) | Coach replies render markdown minimally (bold only; lists and headings show as text). Good enough for the projector, or add a renderer? | A markdown package is a freeze exception; a hand-written subset (lists, headings) needs no package. | maintainer | Phase 7 polish |
+| 2026-09-28 (Phase 5) | Start/sit and pushback thresholds sit at 0.8 because the model is nondeterministic; v1 passed 17/17 in every CI run so far. Tighten, keep, or add repetitions before the Thursday demo? | `evalsettings.json` `repetitions` and `thresholds`; more repetitions cost about five minutes per version per run. | maintainer | Phase 7 rehearsal |
+| 2026-09-28 (Phase 5) | The Foundry evaluators' per-item results are only in the portal, not in the markdown report. Worth adding before Thursday? | `AgentEvaluationResults.DetailedItems` carries per-item scores and errors; rendering them is a report change only. | maintainer | Phase 7, only if the Thursday story needs per-item cloud scores |
+| 2026-09-28 (Phase 4) | The hosted runtime's Azure Monitor exporter is the transitive 1.7.0 and its default sampling was never checked (the MCP and the web export at 100%). Verify, or pin the sampling in the Coach as well? | Add `AddAzureMonitorTraceExporter` with `SamplingRatio = 1.0` to the Coach like the other services (no new package; the exporter is already transitive), then confirm in Application Insights that one trace spans web, agent, MCP, and league. | maintainer | Thursday tracing demo if traces are missing the agent half |
+
 ## Decisions log
 
 | Date | Decision | Reason |
