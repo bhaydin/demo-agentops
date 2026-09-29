@@ -12,6 +12,19 @@ public sealed class McpApiOptions
     public string DemoAdminKey { get; set; } = "";
 }
 
+/// <summary>
+/// Binds the "Web" section. The page acts with the server's Foundry identity and the demo admin
+/// key, so it is for the presenter only: one key (Key Vault: Web--PresenterKey), entered once at
+/// /login, then a cookie session.
+/// </summary>
+public sealed class PresenterOptions
+{
+    public const string SectionName = "Web";
+
+    /// <summary>Secret. Required; an empty key never matches.</summary>
+    public string PresenterKey { get; set; } = "";
+}
+
 /// <summary>Binds the "Coach" section: which hosted agent the chat talks to and where the header reads its version from.</summary>
 public sealed class CoachEndpointOptions
 {

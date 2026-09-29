@@ -12,6 +12,7 @@ using Swankers.Web;
 using Swankers.Web.Coach;
 using Swankers.Web.Components;
 using Swankers.Web.League;
+using Swankers.Web.Presenter;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +36,27 @@ builder.Services
     .Validate(o => Uri.IsWellFormedUriString(o.ProjectEndpoint, UriKind.Absolute), "Coach:ProjectEndpoint must be the Foundry project endpoint.")
     .Validate(o => o.AgentName.Length > 0, "Coach:AgentName is required.")
     .ValidateOnStart();
+
+builder.Services
+    .AddOptions<PresenterOptions>()
+    .Bind(builder.Configuration.GetSection(PresenterOptions.SectionName))
+    .Validate(o => o.PresenterKey.Length > 0, "Web:PresenterKey is required (Key Vault: Web--PresenterKey).")
+    .ValidateOnStart();
+
+// Presenter-only: the page holds privileged credentials on the visitor's behalf, so nothing but
+// /login and /healthz answers without the presenter cookie.
+builder.Services.AddAuthentication(PresenterLogin.Scheme).AddCookie(o =>
+{
+    o.Cookie.Name = PresenterLogin.CookieName;
+    o.Cookie.HttpOnly = true;
+    o.Cookie.SameSite = SameSiteMode.Lax;
+    o.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    o.LoginPath = "/login";
+    o.ExpireTimeSpan = TimeSpan.FromHours(12);
+    o.SlidingExpiration = true;
+});
+builder.Services.AddAuthorization();
+builder.Services.AddCascadingAuthenticationState();
 
 builder.Services.AddSingleton(TimeProvider.System);
 
@@ -97,6 +119,8 @@ if (!app.Environment.IsDevelopment())
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseAntiforgery();
 
 // Fingerprinted static assets need the build/publish manifest; under WebApplicationFactory
@@ -111,9 +135,11 @@ else
     app.UseStaticFiles();
 }
 
+app.MapPresenterLogin();
 app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
-app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
+    .AddInteractiveServerRenderMode()
+    .RequireAuthorization();
+app.MapGet("/healthz", () => Results.Ok(new { status = "ok" })).AllowAnonymous();
 
 app.Run();
 

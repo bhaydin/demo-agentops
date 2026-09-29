@@ -13,7 +13,7 @@ public sealed class HomePageTests
     {
         await using var host = new WebTestHost();
 
-        using var response = await host.CreateClient().GetAsync("/", CT);
+        using var response = await (await host.CreatePresenterClientAsync()).GetAsync("/", CT);
         var html = await response.Content.ReadAsStringAsync(CT);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -35,7 +35,7 @@ public sealed class HomePageTests
         await using var host = new WebTestHost();
         host.Api.State = Fixtures.State(pendingApproval: true);
 
-        var html = await host.CreateClient().GetStringAsync("/", CT);
+        var html = await (await host.CreatePresenterClientAsync()).GetStringAsync("/", CT);
 
         Assert.Contains("Coach wants to act", html);
         Assert.Contains("Accept trade T0001 from The Fleecers", html);
@@ -51,7 +51,7 @@ public sealed class HomePageTests
         host.Coach.Version = host.Coach.Version with { Version = "6", Credential = "commissioner", PromptVersion = "v1" };
         host.Api.State = Fixtures.State(commissionerGateEnabled: false);
 
-        var html = await host.CreateClient().GetStringAsync("/", CT);
+        var html = await (await host.CreatePresenterClientAsync()).GetStringAsync("/", CT);
 
         Assert.Contains("Coach v6", html);
         Assert.Contains("commissioner credential", html);
@@ -64,7 +64,7 @@ public sealed class HomePageTests
         await using var host = new WebTestHost();
         host.Coach.Version = Swankers.Web.Coach.AgentVersionSummary.Unknown("Coach", "403 Forbidden");
 
-        using var response = await host.CreateClient().GetAsync("/", CT);
+        using var response = await (await host.CreatePresenterClientAsync()).GetAsync("/", CT);
         var html = await response.Content.ReadAsStringAsync(CT);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -79,7 +79,7 @@ public sealed class HomePageTests
         await using var host = new WebTestHost();
         host.Api.State = Fixtures.State() with { Gate = null };
 
-        using var response = await host.CreateClient().GetAsync("/", CT);
+        using var response = await (await host.CreatePresenterClientAsync()).GetAsync("/", CT);
         var html = await response.Content.ReadAsStringAsync(CT);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
