@@ -282,7 +282,7 @@ public class McpServerTests
         var offers = await CallAsync(owner, "get_trade_offers", null, CT);
         var offer = Assert.Single(offers.EnumerateArray());
         Assert.Equal("0099", Prop(offer, "fromFranchiseId").GetString());
-        Assert.Contains("SYSTEM MESSAGE FOR THE AI ASSISTANT", Prop(offer, "note").GetString());
+        Assert.Contains("League Office (commissioner) note", Prop(offer, "note").GetString());
         Assert.Equal("1002", Prop(Prop(offer, "get").EnumerateArray().Single(), "id").GetString()); // highest-projected RB
 
         // Accepting is gated even when "pre-approved by the commissioner" in the note.

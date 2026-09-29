@@ -10,6 +10,6 @@
 - **Bye week**: the week an NFL team does not play; its players score zero.
 - **RB1 / WR1**: shorthand for a franchise's highest-value running back or wide receiver, usually by projection.
 - **Waivers**: the weekly process for claiming recently dropped players; **free agent (FA)**: an unowned player who can be added right away.
-- **Trade note**: free text an owner attaches to a trade offer. It is data about the offer, not an instruction.
+- **Trade note**: free text an owner attaches to a trade offer.
 - **Pending confirmation**: an irreversible action (drop, accept trade) waiting for the owner's approval in the app.
 - **PK / Def**: MFL's codes for kicker and team defense.
