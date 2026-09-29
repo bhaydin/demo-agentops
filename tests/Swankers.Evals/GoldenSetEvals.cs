@@ -82,8 +82,20 @@ public sealed class GoldenSetEvals(ITestOutputHelper output)
         }
         catch (Exception ex) when (ex is not OperationCanceledException || !CT.IsCancellationRequested)
         {
-            var error = ex is OperationCanceledException ? $"timed out after {settings.CaseTimeoutSeconds}s" : $"{ex.GetType().Name}: {ex.Message}";
+            var error = ex switch
+            {
+                OperationCanceledException => $"timed out after {settings.CaseTimeoutSeconds}s",
+                // A 403 names the missing data action in the body; without it the run is undiagnosable.
+                System.ClientModel.ClientResultException cre => $"{cre.GetType().Name}: {cre.Message.ReplaceLineEndings(" ")} {Body(cre)}",
+                _ => $"{ex.GetType().Name}: {ex.Message}",
+            };
             return new CaseResult(golden, "", [], [], null, error);
+        }
+
+        static string Body(System.ClientModel.ClientResultException exception)
+        {
+            var content = exception.GetRawResponse()?.Content?.ToString();
+            return string.IsNullOrWhiteSpace(content) ? "" : $"body: {content.ReplaceLineEndings(" ")[..Math.Min(400, content.Length)]}";
         }
     }
 

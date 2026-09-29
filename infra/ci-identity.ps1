@@ -75,8 +75,10 @@ $accountScope = (Invoke-Az @('cognitiveservices', 'account', 'show', '-n', $Foun
 $repoInfo = gh api "repos/$Repo" --jq '{id: .id, ownerId: .owner.id, owner: .owner.login, name: .name}' | ConvertFrom-Json
 $repoForms = @($Repo, "$($repoInfo.owner)@$($repoInfo.ownerId)/$($repoInfo.name)@$($repoInfo.id)")
 
-# Custom role for eval runs: model calls through the project, cloud evaluations, reading agents.
-# Data actions verified with `az provider operation show --namespace Microsoft.CognitiveServices`.
+# Custom role for eval runs: model calls through the project's OpenAI-compatible Responses API
+# (authorized by the accounts/OpenAI data actions, as in the built-in Cognitive Services OpenAI
+# User role), cloud evaluations, and agent reads. Data actions verified with
+# `az provider operation show --namespace Microsoft.CognitiveServices`. No agent or version writes.
 $roleFile = New-TemporaryFile
 @{
     Name = $EvalsRoleName
@@ -85,6 +87,8 @@ $roleFile = New-TemporaryFile
     Actions = @('Microsoft.CognitiveServices/accounts/read', 'Microsoft.CognitiveServices/accounts/projects/read')
     NotActions = @()
     DataActions = @(
+        'Microsoft.CognitiveServices/accounts/OpenAI/responses/*',
+        'Microsoft.CognitiveServices/accounts/OpenAI/*/read',
         'Microsoft.CognitiveServices/accounts/AIServices/responses/*',
         'Microsoft.CognitiveServices/accounts/AIServices/evaluations/*',
         'Microsoft.CognitiveServices/accounts/AIServices/agents/read'
