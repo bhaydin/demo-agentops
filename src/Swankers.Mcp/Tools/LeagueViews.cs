@@ -51,6 +51,9 @@ public sealed record FranchiseStateView(string Id, string Name, bool IsSimOnly, 
 public sealed record TransactionView(
     long Sequence, DateTimeOffset TimestampUtc, string Type, string FranchiseId, string FranchiseName, string Description, IReadOnlyList<string> PlayerNames);
 
+/// <summary>Which callers the confirmation gate holds, so the web header can show the stage configuration.</summary>
+public sealed record GateView(bool OwnerGateEnabled, bool CommissionerGateEnabled);
+
 public sealed record LeagueStateView(
     int Week,
     string OwnerFranchiseId,
@@ -58,7 +61,8 @@ public sealed record LeagueStateView(
     IReadOnlyList<TransactionView> Transactions,
     IReadOnlyList<TradeView> PendingTrades,
     IReadOnlyList<PendingConfirmation> PendingConfirmations,
-    IReadOnlyList<ResolvedConfirmation> RecentConfirmations);
+    IReadOnlyList<ResolvedConfirmation> RecentConfirmations,
+    GateView Gate);
 
 /// <summary>Builds tool and ticker views over SimLeague state with names resolved.</summary>
 public sealed class LeagueViews(SimLeague sim)
@@ -113,7 +117,7 @@ public sealed class LeagueViews(SimLeague sim)
             t.Status.ToString(),
             t.OfferedOn);
 
-    public async Task<LeagueStateView> StateAsync(string ownerFranchiseId, ConfirmationGate gate, CancellationToken ct)
+    public async Task<LeagueStateView> StateAsync(string ownerFranchiseId, GateView gateView, ConfirmationGate gate, CancellationToken ct)
     {
         var names = await NamesAsync(ct);
         var players = await PlayersAsync(ct);
@@ -141,6 +145,7 @@ public sealed class LeagueViews(SimLeague sim)
                 t.Description, [.. t.PlayerIds.Select(id => View(players, id).Name)]))],
             pendingTrades,
             gate.Pending,
-            gate.Recent);
+            gate.Recent,
+            gateView);
     }
 }

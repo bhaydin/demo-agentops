@@ -24,7 +24,10 @@ public static class DemoEndpoints
 
         api.MapGet("/state", async (
             SimLeague sim, LeagueViews views, ConfirmationGate gate, IOptions<McpOptions> options, CancellationToken ct)
-            => Results.Ok(await views.StateAsync(options.Value.OwnerFranchiseId, gate, ct)));
+            => Results.Ok(await views.StateAsync(
+                options.Value.OwnerFranchiseId,
+                new GateView(options.Value.OwnerGateEnabled, options.Value.CommissionerGateEnabled),
+                gate, ct)));
 
         api.MapGet("/confirmations", (ConfirmationGate gate)
             => Results.Ok(new { pending = gate.Pending, recent = gate.Recent }));

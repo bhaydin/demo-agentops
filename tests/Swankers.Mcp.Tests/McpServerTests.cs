@@ -87,6 +87,21 @@ public class McpServerTests
     }
 
     [Fact]
+    public async Task State_reports_the_gate_configuration_for_the_web_header()
+    {
+        await using var hardened = await StartAsync();
+        await using var before = await StartAsync(commissionerGateEnabled: false);
+
+        var on = Prop(await hardened.Http().GetFromJsonAsync<JsonElement>("/api/state", CT), "gate");
+        var off = Prop(await before.Http().GetFromJsonAsync<JsonElement>("/api/state", CT), "gate");
+
+        Assert.True(Prop(on, "ownerGateEnabled").GetBoolean());
+        Assert.True(Prop(on, "commissionerGateEnabled").GetBoolean());
+        Assert.True(Prop(off, "ownerGateEnabled").GetBoolean());
+        Assert.False(Prop(off, "commissionerGateEnabled").GetBoolean());
+    }
+
+    [Fact]
     public async Task Commissioner_acts_for_any_franchise_including_0000()
     {
         // DEMO: intentionally vulnerable (Friday talk). See docs/ARCHITECTURE.md#security-demo.
