@@ -1,0 +1,170 @@
+@implements IDisposable
+@inject LeagueStateFeed Feed
+
+<div class="ticker">
+    <div class="ticker-head">
+        <h2>League</h2>
+        <span class="week">Week @State.Week</span>
+        @if (Feed.UpdatedAt is { } at)
+        {
+            <span class="muted updated">updated @at.ToLocalTime().ToString("HH:mm:ss")</span>
+        }
+    </div>
+
+    <section class="feed">
+        <h3>Transactions</h3>
+        @if (State.Transactions.Count == 0)
+        {
+            <p class="muted">Nothing has happened yet.</p>
+        }
+        <ul class="transactions">
+            @foreach (var t in State.Transactions.OrderByDescending(t => t.Sequence).Take(15))
+            {
+                <li class="tx @(t.FranchiseId == State.OwnerFranchiseId ? "mine" : "") @(IsFresh(t) ? "fresh" : "")">
+                    <span class="time">@t.TimestampUtc.ToLocalTime().ToString("HH:mm:ss")</span>
+                    <span class="type">@t.Type</span>
+                    <span class="who">@t.FranchiseName</span>
+                    <span class="what">
+                        @t.Description
+                        @if (t.PlayerNames.Count > 0 && !t.PlayerNames.All(t.Description.Contains))
+                        {
+                            <span class="players">(@string.Join(", ", t.PlayerNames))</span>
+                        }
+                    </span>
+                </li>
+            }
+        </ul>
+    </section>
+
+    @if (State.PendingTrades.Count > 0)
+    {
+        <section class="trades">
+            <h3>Pending trades</h3>
+            <ul>
+                @foreach (var trade in State.PendingTrades)
+                {
+                    <li class="trade @(trade.ToFranchiseId == State.OwnerFranchiseId ? "mine" : "")">
+                        <div class="parties"><strong>@trade.FromFranchiseName</strong> offers <strong>@trade.ToFranchiseName</strong></div>
+                        <div class="terms">gives @Names(trade.Give) for @Names(trade.Get)</div>
+                        @if (!string.IsNullOrWhiteSpace(trade.Note))
+                        {
+                            <blockquote class="note">@trade.Note</blockquote>
+                        }
+                    </li>
+                }
+            </ul>
+        </section>
+    }
+
+    @if (State.RecentConfirmations.Count > 0)
+    {
+        <section class="approvals">
+            <h3>Gate decisions</h3>
+            <ul>
+                @foreach (var r in State.RecentConfirmations.OrderByDescending(r => r.ResolvedAtUtc).Take(5))
+                {
+                    <li class="decision @r.Status">
+                        <span class="status">@r.Status</span>
+                        <code>@r.Confirmation.Tool</code>
+                        <span class="what">@r.Confirmation.Summary</span>
+                        @if (r.Error is not null)
+                        {
+                            <span class="error">@r.Error</span>
+                        }
+                    </li>
+                }
+            </ul>
+        </section>
+    }
+
+    <section class="rosters">
+        <h3>Rosters</h3>
+        @foreach (var franchise in State.Franchises.OrderBy(f => f.Id != State.OwnerFranchiseId).ThenBy(f => f.Name))
+        {
+            var mine = franchise.Id == State.OwnerFranchiseId;
+            <details class="franchise @(mine ? "mine" : "") @(franchise.IsSimOnly ? "sim" : "")" open="@mine">
+                <summary>
+                    <span class="name">@franchise.Name</span>
+                    @if (mine)
+                    {
+                        <span class="chip ok">you</span>
+                    }
+                    @if (franchise.IsSimOnly)
+                    {
+                        <span class="chip warn">sim only</span>
+                    }
+                    <span class="muted">@franchise.Roster.Count players</span>
+                </summary>
+                <ul class="roster">
+                    @foreach (var player in franchise.Roster)
+                    {
+                        <li>
+                            <span class="pos">@player.Position</span>
+                            <span class="player">@player.Name</span>
+                            <span class="muted">@player.Team</span>
+                            @if (!string.IsNullOrEmpty(player.RosterStatus))
+                            {
+                                <span class="status">@player.RosterStatus</span>
+                            }
+                        </li>
+                    }
+                </ul>
+            </details>
+        }
+    </section>
+</div>
+
+@code {
+    private static readonly TimeSpan HighlightFor = TimeSpan.FromSeconds(8);
+
+    private long _previousMax;
+    private long _currentMax;
+    private DateTimeOffset _freshUntil;
+
+    private LeagueState State => Feed.Current;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Feed.Changed += OnFeedChanged;
+        if (Feed.UpdatedAt is null)
+        {
+            await Feed.RefreshAsync(CancellationToken.None);
+        }
+
+        Track();
+    }
+
+    // Static prerendering never calls this, so polling starts only for a live circuit.
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Feed.EnsurePolling();
+        }
+    }
+
+    private void OnFeedChanged() => _ = InvokeAsync(() =>
+    {
+        Track();
+        StateHasChanged();
+    });
+
+    // Transactions newer than the previous poll's newest glow for a few seconds.
+    private void Track()
+    {
+        var max = State.Transactions.Count == 0 ? 0 : State.Transactions.Max(t => t.Sequence);
+        if (max > _currentMax)
+        {
+            _previousMax = _currentMax;
+            _currentMax = max;
+            _freshUntil = DateTimeOffset.UtcNow + HighlightFor;
+        }
+    }
+
+    private bool IsFresh(TransactionEntry t) => t.Sequence > _previousMax && _previousMax > 0 && DateTimeOffset.UtcNow < _freshUntil;
+
+    private static string Names(IReadOnlyList<PlayerInfo> players)
+        => players.Count == 0 ? "nothing" : string.Join(", ", players.Select(p => p.Name));
+
+    public void Dispose() => Feed.Changed -= OnFeedChanged;
+}

@@ -1,0 +1,117 @@
+@using System.Text
+@using System.Text.RegularExpressions
+@implements IDisposable
+@inject ICoachChat Chat
+@inject ILogger<CoachChatPane> Logger
+
+<div class="chat">
+    <div class="messages">
+        @if (_messages.Count == 0)
+        {
+            <p class="muted intro">Ask Coach about your lineup, an injury, a trade offer, or a waiver move.</p>
+        }
+        @foreach (var message in _messages)
+        {
+            <div class="msg @message.Role">
+                <div class="bubble">@Render(message.Text)</div>
+            </div>
+        }
+        @if (_thinking)
+        {
+            <div class="msg assistant">
+                <div class="bubble thinking">Coach is thinking…</div>
+            </div>
+        }
+    </div>
+    @if (_error is not null)
+    {
+        <p class="error">@_error</p>
+    }
+    <form class="composer" @onsubmit="SendAsync">
+        <input @bind="_draft" @bind:event="oninput" placeholder="Message Coach" aria-label="Message Coach" disabled="@_busy" />
+        <button type="submit" disabled="@(_busy || string.IsNullOrWhiteSpace(_draft))">Send</button>
+    </form>
+</div>
+
+@code {
+    private sealed class Message(string role, string text)
+    {
+        public string Role { get; } = role;
+        public string Text { get; set; } = text;
+    }
+
+    private static readonly Regex Bold = new(@"\*\*(.+?)\*\*", RegexOptions.Compiled);
+
+    private readonly List<Message> _messages = [];
+    private readonly CancellationTokenSource _gone = new();
+    private CoachSession? _session;
+    private string _draft = "";
+    private bool _busy;
+    private bool _thinking;
+    private string? _error;
+
+    private async Task SendAsync()
+    {
+        var text = _draft.Trim();
+        if (text.Length == 0 || _busy)
+        {
+            return;
+        }
+
+        _draft = "";
+        _busy = true;
+        _thinking = true;
+        _error = null;
+        _messages.Add(new Message("user", text));
+        var reply = new Message("assistant", "");
+        try
+        {
+            _session ??= await Chat.StartSessionAsync(_gone.Token);
+            await foreach (var chunk in Chat.StreamAsync(_session, text, _gone.Token))
+            {
+                if (_thinking)
+                {
+                    _thinking = false;
+                    _messages.Add(reply);
+                }
+
+                reply.Text += chunk;
+                StateHasChanged();
+            }
+
+            if (_thinking)
+            {
+                reply.Text = "(no answer)";
+                _messages.Add(reply);
+            }
+        }
+        catch (OperationCanceledException) when (_gone.IsCancellationRequested)
+        {
+            // The circuit ended mid-reply.
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Coach chat failed.");
+            _error = $"Coach did not answer: {ex.Message}";
+        }
+        finally
+        {
+            _thinking = false;
+            _busy = false;
+        }
+    }
+
+    // The Coach answers in light markdown. Encode everything, then allow bold; line breaks are
+    // preserved by the bubble's white-space rule.
+    private static MarkupString Render(string text)
+    {
+        var encoded = System.Net.WebUtility.HtmlEncode(text);
+        return new MarkupString(Bold.Replace(encoded, "<strong>$1</strong>"));
+    }
+
+    public void Dispose()
+    {
+        _gone.Cancel();
+        _gone.Dispose();
+    }
+}

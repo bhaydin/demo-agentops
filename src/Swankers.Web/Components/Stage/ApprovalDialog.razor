@@ -1,0 +1,71 @@
+@implements IDisposable
+@inject LeagueStateFeed Feed
+@inject LeagueStateClient League
+
+@if (Pending is { } pending)
+{
+    <div class="overlay">
+        <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="approval-title">
+            <h2 id="approval-title">Coach wants to act</h2>
+            <p class="summary">@pending.Summary</p>
+            <dl class="facts">
+                <dt>Tool</dt>
+                <dd><code>@pending.Tool</code></dd>
+                <dt>Acting as</dt>
+                <dd>@pending.CallerScope, franchise @pending.EffectiveFranchiseId</dd>
+                <dt>Arguments</dt>
+                <dd><pre>@Pretty(pending.Arguments)</pre></dd>
+                <dt>Requested</dt>
+                <dd>@pending.CreatedAtUtc.ToLocalTime().ToString("HH:mm:ss")</dd>
+            </dl>
+            @if (_error is not null)
+            {
+                <p class="error">@_error</p>
+            }
+            <div class="actions">
+                <button class="deny" type="button" disabled="@_busy" @onclick="() => DecideAsync(pending.Id, false)">Deny</button>
+                <button class="approve" type="button" disabled="@_busy" @onclick="() => DecideAsync(pending.Id, true)">Approve</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _busy;
+    private string? _error;
+
+    private PendingApproval? Pending => Feed.Current.PendingConfirmations.FirstOrDefault();
+
+    protected override void OnInitialized() => Feed.Changed += OnFeedChanged;
+
+    private void OnFeedChanged() => _ = InvokeAsync(StateHasChanged);
+
+    private async Task DecideAsync(string id, bool approve)
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var outcome = await League.ResolveAsync(id, approve, CancellationToken.None);
+            if (outcome is { Error: not null })
+            {
+                _error = $"{outcome.Status}: {outcome.Error}";
+            }
+
+            await Feed.RefreshAsync(CancellationToken.None);
+        }
+        catch (HttpRequestException ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private static string Pretty(System.Text.Json.JsonElement arguments)
+        => System.Text.Json.JsonSerializer.Serialize(arguments, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+
+    public void Dispose() => Feed.Changed -= OnFeedChanged;
+}

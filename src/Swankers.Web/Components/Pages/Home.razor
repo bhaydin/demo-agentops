@@ -1,7 +1,18 @@
-﻿@page "/"
+@page "/"
+@rendermode InteractiveServer
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Swankers Coach</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="stage">
+    <HeaderBar />
+    <main class="panes">
+        <section class="pane chat-pane" aria-label="Chat with Coach">
+            <CoachChatPane />
+        </section>
+        <section class="pane ticker-pane" aria-label="League ticker">
+            <LeagueTicker />
+        </section>
+    </main>
+</div>
 
-Welcome to your new app.
+<ApprovalDialog />

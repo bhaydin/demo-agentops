@@ -1,0 +1,55 @@
+@implements IDisposable
+@inject IAgentVersionInfo Versions
+@inject LeagueStateFeed Feed
+
+<header class="stage-header">
+    <div class="brand">
+        <span class="logo" aria-hidden="true">🏈</span>
+        <span class="title">Swankers Coach</span>
+    </div>
+    <div class="config" title="@_version.Description">
+        <span class="chip agent">@_version.AgentName @(_version.Version is null ? "(version unknown)" : "v" + _version.Version)</span>
+        @if (_version.PromptVersion is not null)
+        {
+            <span class="chip">prompt @_version.PromptVersion</span>
+        }
+        @if (_version.Credential is not null)
+        {
+            <span class="chip @(_version.IsCommissioner ? "danger" : "ok")">@_version.Credential credential</span>
+        }
+        <span class="chip @(GateOn switch { true => "ok", false => "danger", null => "warn" })">gate @(GateOn switch { true => "on", false => "OFF", null => "unknown" })</span>
+        @if (_version.Error is not null)
+        {
+            <span class="chip warn" title="@_version.Error">version lookup failed</span>
+        }
+        @if (Feed.Error is not null)
+        {
+            <span class="chip warn" title="@Feed.Error">league offline</span>
+        }
+    </div>
+</header>
+
+@code {
+    private AgentVersionSummary _version = AgentVersionSummary.Unknown("Coach");
+
+    // The gate that applies to the running configuration: the commissioner's when the agent
+    // holds the commissioner credential (Friday "before"), the owner's otherwise. Null until the
+    // first poll, or when the server does not report it.
+    private bool? GateOn => Feed.Current.Gate is { } gate
+        ? _version.IsCommissioner ? gate.CommissionerGateEnabled : gate.OwnerGateEnabled
+        : null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Feed.Changed += OnFeedChanged;
+        _version = await Versions.GetAsync(CancellationToken.None);
+    }
+
+    private void OnFeedChanged() => _ = InvokeAsync(async () =>
+    {
+        _version = await Versions.GetAsync(CancellationToken.None);
+        StateHasChanged();
+    });
+
+    public void Dispose() => Feed.Changed -= OnFeedChanged;
+}
