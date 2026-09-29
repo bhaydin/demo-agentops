@@ -162,6 +162,6 @@ public sealed class GoldenSetEvals(ITestOutputHelper output)
             }
         }
 
-        return new FoundrySummary(string.Join("+", statuses), urls, perEvaluator, errors.Count == 0 ? null : string.Join(" | ", errors));
+        return new FoundrySummary(string.Join("+", statuses), urls, perEvaluator, errors.Count == 0 ? null : string.Join(" | ", errors), items.Count);
     }
 }

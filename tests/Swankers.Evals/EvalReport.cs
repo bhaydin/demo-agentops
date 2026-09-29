@@ -22,7 +22,16 @@ public sealed record CaseResult(
             .Concat(Error is null ? [] : [$"error: {Error}"]);
 }
 
-public sealed record FoundrySummary(string? Status, IReadOnlyList<Uri> ReportUrls, IReadOnlyDictionary<string, (int Passed, int Failed)> PerEvaluator, string? Error);
+/// <summary>
+/// Cloud evaluator outcome. <paramref name="Items"/> is how many items each run was given; an
+/// evaluator whose passed + failed falls short of it had grader errors (CI run 36514287848: the
+/// service reported "completed" while most items errored on a role-propagation delay).
+/// </summary>
+public sealed record FoundrySummary(string? Status, IReadOnlyList<Uri> ReportUrls, IReadOnlyDictionary<string, (int Passed, int Failed)> PerEvaluator, string? Error, int Items = 0)
+{
+    public int Errored(string evaluator)
+        => PerEvaluator.TryGetValue(evaluator, out var counts) ? Math.Max(0, Items - counts.Passed - counts.Failed) : Items;
+}
 
 /// <summary>Markdown for humans (test output, CI log, artifact) and JSON for the promotion job.</summary>
 public sealed class EvalReport(string promptVersion, EvalSettings settings, IReadOnlyList<CaseResult> results, FoundrySummary? foundry)
@@ -78,7 +87,8 @@ public sealed class EvalReport(string promptVersion, EvalSettings settings, IRea
 
             foreach (var (name, (passed, failed)) in foundry.PerEvaluator.OrderBy(kv => kv.Key))
             {
-                sb.AppendLine($"- {name}: {passed} passed, {failed} failed{(settings.Foundry.IsGated(name) ? "" : " (report only)")}");
+                var errored = foundry.Errored(name) is > 0 and var e ? $", {e} of {foundry.Items} errored" : "";
+                sb.AppendLine($"- {name}: {passed} passed, {failed} failed{errored}{(settings.Foundry.IsGated(name) ? "" : " (report only)")}");
             }
         }
 
@@ -113,7 +123,7 @@ public sealed class EvalReport(string promptVersion, EvalSettings settings, IRea
         localPassed = LocalPassed,
         gateFailures = GateFailures,
         categories = Categories.ToDictionary(kv => kv.Key, kv => new { kv.Value.Passed, kv.Value.Total, kv.Value.Rate }),
-        foundry = foundry is null ? null : new { foundry.Status, reportUrls = foundry.ReportUrls.Select(u => u.ToString()), foundry.Error, perEvaluator = foundry.PerEvaluator.ToDictionary(kv => kv.Key, kv => new { kv.Value.Passed, kv.Value.Failed }) },
+        foundry = foundry is null ? null : new { foundry.Status, reportUrls = foundry.ReportUrls.Select(u => u.ToString()), foundry.Error, foundry.Items, perEvaluator = foundry.PerEvaluator.ToDictionary(kv => kv.Key, kv => new { kv.Value.Passed, kv.Value.Failed, Errored = foundry.Errored(kv.Key) }) },
         cases = results.Select(r => new { r.Case.Id, r.Case.Category, r.Passed, failures = r.Failures, tools = r.Calls.Select(c => c.Name) }),
     }, new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true });
 
@@ -152,7 +162,11 @@ public sealed class EvalReport(string promptVersion, EvalSettings settings, IRea
         return failures;
     }
 
-    /// <summary>Every gated evaluator must have a nonempty result at or above the minimum; absence is a failure.</summary>
+    /// <summary>
+    /// Every gated evaluator must have graded every item, at or above the minimum pass rate;
+    /// a missing result or errored items is a failure (a "completed" run can still have graded
+    /// only a few items).
+    /// </summary>
     private static List<string> FoundryGateFailuresFor(EvalSettings settings, FoundrySummary? foundry)
     {
         var failures = new List<string>();
@@ -172,6 +186,12 @@ public sealed class EvalReport(string promptVersion, EvalSettings settings, IRea
             {
                 var why = foundry is null ? "no Foundry run" : $"status {foundry.Status ?? "unknown"}{(foundry.Error is null ? "" : $"; {foundry.Error}")}";
                 failures.Add($"foundry {name}: no result ({why})");
+                continue;
+            }
+
+            if (foundry!.Items > total)
+            {
+                failures.Add($"foundry {name}: only {total} of {foundry.Items} items graded ({foundry.Items - total} errored)");
                 continue;
             }
 

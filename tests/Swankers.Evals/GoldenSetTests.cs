@@ -100,7 +100,7 @@ public sealed class GoldenSetTests
         });
 
         Assert.True(report.Passed, string.Join("; ", report.GateFailures));
-        Assert.Contains("tool_call_accuracy: 7 passed, 8 failed (report only)", report.ToMarkdown());
+        Assert.Contains("tool_call_accuracy: 9 passed, 8 failed (report only)", report.ToMarkdown());
         Assert.False(adherenceRegressed.Passed);
         Assert.Contains("foundry task_adherence: 10/17", Assert.Single(adherenceRegressed.GateFailures));
     }
@@ -152,6 +152,31 @@ public sealed class GoldenSetTests
         Assert.True(new EvalReport("v1", settings, allPass, CompleteFoundry()).Passed);
     }
 
+    [Fact]
+    public void Errored_cloud_items_never_pass_the_promotion_gate()
+    {
+        // CI run 36514287848: both runs reported "completed" while most grader items errored on a
+        // role-propagation delay; the surviving passes alone cleared the minimum pass rate.
+        var settings = EvalSettings.Load();
+        var incomplete = new FoundrySummary("completed+completed", [], new Dictionary<string, (int, int)>
+        {
+            ["task_adherence"] = (12, 0),
+            ["intent_resolution"] = (9, 2),
+            ["tool_call_accuracy"] = (7, 8),
+        }, null, Items: 17);
+
+        var report = new EvalReport("v1", settings, AllPassing(), incomplete);
+
+        Assert.False(report.Passed);
+        Assert.True(report.LocalPassed);
+        Assert.Contains("foundry task_adherence: only 12 of 17 items graded (5 errored)", report.GateFailures);
+        Assert.Contains("foundry intent_resolution: only 11 of 17 items graded (6 errored)", report.GateFailures);
+        Assert.Contains("task_adherence: 12 passed, 0 failed, 5 of 17 errored", report.ToMarkdown());
+        Assert.Contains("\"errored\": 5", report.ToJson());
+        Assert.Equal(5, incomplete.Errored("task_adherence"));
+        Assert.Equal(17, incomplete.Errored("unknown"));
+    }
+
     private static List<CaseResult> AllPassing()
         => GoldenSet.Load().Select(c => new CaseResult(c, "answer", [], [], c.Category == GoldenCase.Categories.Pushback ? new PushbackEvaluator.Verdict(true, 2, true, "ok") : null, null)).ToList();
 
@@ -159,6 +184,6 @@ public sealed class GoldenSetTests
     {
         ["task_adherence"] = (17, 0),
         ["intent_resolution"] = (16, 1),
-        ["tool_call_accuracy"] = (7, 8),
-    }, null);
+        ["tool_call_accuracy"] = (9, 8),
+    }, null, Items: 17);
 }
