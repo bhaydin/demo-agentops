@@ -24,7 +24,8 @@ public sealed record AgentVersionSummary(
     string? Description,
     string? PromptVersion,
     string? Credential,
-    string? Error)
+    string? Error,
+    string? Model = null)
 {
     public static AgentVersionSummary Unknown(string agentName, string? error = null) => new(agentName, null, null, null, null, error);
 

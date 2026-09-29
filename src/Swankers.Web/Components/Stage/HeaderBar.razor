@@ -17,6 +17,10 @@
         {
             <span class="chip @(_version.IsCommissioner ? "danger" : "ok")">@_version.Credential credential</span>
         }
+        @if (_version.Model is not null)
+        {
+            <span class="chip">model @_version.Model</span>
+        }
         <span class="chip @(GateOn switch { true => "ok", false => "danger", null => "warn" })">gate @(GateOn switch { true => "on", false => "OFF", null => "unknown" })</span>
         @if (_version.Error is not null)
         {

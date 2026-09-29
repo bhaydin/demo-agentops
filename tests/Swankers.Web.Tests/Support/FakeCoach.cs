@@ -7,7 +7,7 @@ namespace Swankers.Web.Tests.Support;
 public sealed class FakeCoach : ICoachChat, IAgentVersionInfo
 {
     public AgentVersionSummary Version { get; set; } =
-        new("Coach", "7", "Coach v1-owner: prompt v1, owner credential", "v1", "owner", null);
+        new("Coach", "7", "Coach v1-owner: prompt v1, owner credential, model gpt-5.4", "v1", "owner", null, "gpt-5.4");
 
     public List<string> Received { get; } = [];
 

@@ -64,7 +64,7 @@ public sealed class AgentVersionInfo(
             }
 
             ProjectsAgentVersion version = await admin.GetAgentVersionAsync(name, routed, ct);
-            return new AgentVersionSummary(name, routed, version.Description, Metadata(version, "prompt"), Metadata(version, "credential"), null);
+            return new AgentVersionSummary(name, routed, version.Description, Metadata(version, "prompt"), Metadata(version, "credential"), null, Metadata(version, "model"));
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {

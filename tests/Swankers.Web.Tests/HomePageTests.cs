@@ -20,6 +20,7 @@ public sealed class HomePageTests
         Assert.Contains("Coach v7", html);
         Assert.Contains("prompt v1", html);
         Assert.Contains("owner credential", html);
+        Assert.Contains("model gpt-5.4", html);
         Assert.Contains("gate on", html);
         Assert.Contains("Anchorage Falling", html);
         Assert.Contains("Set week 4 starters", html);
