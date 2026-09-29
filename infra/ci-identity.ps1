@@ -40,9 +40,15 @@ $foundryUserRole = '53ca6127-db72-4b80-b1b0-d745d6d5456d' # Foundry User (former
 # Always returns a string (empty when az printed nothing), so callers can .Trim() safely.
 function Invoke-Az { param([string[]] $AzArgs) $out = & az @AzArgs 2>&1; if ($LASTEXITCODE -ne 0) { throw "az $($AzArgs[0..1] -join ' ') failed: $out" }; return (@($out) | ForEach-Object { "$_" }) -join "`n" }
 
+# `az ad app list --display-name` matches by prefix, so every lookup filters on the exact name.
+function Get-AppExact {
+    param([string] $Name)
+    return (Invoke-Az @('ad', 'app', 'list', '--display-name', $Name, '--query', "[?displayName=='$Name'] | [0]", '-o', 'json')) | ConvertFrom-Json
+}
+
 function Ensure-App {
     param([string] $Name)
-    $app = (Invoke-Az @('ad', 'app', 'list', '--display-name', $Name, '--query', '[0]', '-o', 'json')) | ConvertFrom-Json
+    $app = Get-AppExact $Name
     if (-not $app) {
         Write-Host "Creating application $Name"
         $app = (Invoke-Az @('ad', 'app', 'create', '--display-name', $Name, '-o', 'json')) | ConvertFrom-Json
@@ -124,9 +130,10 @@ Ensure-FederatedCredentials $deploy.App $deploySubjects
 Write-Host "Assigning Foundry User to $DeployAppName on $FoundryAccount"
 Invoke-Az @('role', 'assignment', 'create', '--assignee-object-id', $deploy.Sp.id, '--assignee-principal-type', 'ServicePrincipal', '--role', $foundryUserRole, '--scope', $accountScope, '-o', 'none') | Out-Null
 
-# Retire the single identity that carried both permissions.
-$retired = (Invoke-Az @('ad', 'app', 'list', '--display-name', $RetiredAppName, '--query', '[0]', '-o', 'json')) | ConvertFrom-Json
-if ($retired) {
+# Retire the single identity that carried both permissions (exact name: a prefix match would
+# catch swankers-ci-evals and swankers-ci-deploy).
+$retired = Get-AppExact $RetiredAppName
+if ($retired -and $retired.displayName -eq $RetiredAppName) {
     Write-Host "Removing retired application $RetiredAppName ($($retired.appId)) and its role assignments"
     $retiredSp = (Invoke-Az @('ad', 'sp', 'list', '--filter', "appId eq '$($retired.appId)'", '--query', '[0].id', '-o', 'tsv')).Trim()
     if ($retiredSp) { & az role assignment delete --assignee $retiredSp --scope $accountScope -o none 2>$null }
