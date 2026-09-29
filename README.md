@@ -61,7 +61,7 @@ Two steps: `azd up` for the Container Apps services, then the Coach hosted agent
 azd env new swankers-dev --location northcentralus
 azd env set AZURE_TAG_PRIMARY_OWNER <you@example.com>     # policy tags; Client and ExpectedDeleteDate have defaults
 azd up                                                     # rg-swankers-dev: Log Analytics, App Insights, ACR, Container Apps (mcp, web)
-pwsh tools/Swankers.AgentDeploy/deploy-coach.ps1           # Coach versions v1-owner, v2-owner, v1-commissioner; routed to v1-owner
+pwsh tools/Swankers.AgentDeploy/deploy-coach.ps1           # Coach versions v1-owner, v2-owner, v0-commissioner; routed to v1-owner
 ```
 
 - Images are built in the environment's Container Registry (`remoteBuild`), so no local Docker is needed.
@@ -80,6 +80,7 @@ pwsh tools/Swankers.AgentDeploy/deploy-coach.ps1           # Coach versions v1-o
 azd env get-value FOUNDRY_PROJECT_ENDPOINT              # the gate skips itself when this is not set
 $env:FOUNDRY_PROJECT_ENDPOINT = "<endpoint>"; $env:COACH_PROMPT_VERSION = "v2"
 dotnet test tests/Swankers.Evals -c Release --logger "console;verbosity=normal"
+# COACH_EVAL_CASES=adv-01,adv-02 runs a subset while iterating on a prompt or scenario (local only)
 ```
 
 Reports land in `artifacts/evals/` (ignored). In CI, `.github/workflows/evals.yml` runs one job per prompt version (v1 green, v2 red on the injury-check category) and, with `promote: true`, deploys and routes a green version as a new hosted agent version after approval in the `foundry` environment. `infra/ci-identity.ps1` sets up the two GitHub OIDC identities it logs in with: eval jobs run as `swankers-ci-evals`, whose roles are Foundry User on the separate `swankers-evals` project and Cognitive Services OpenAI User on the account for the cloud graders (no agent actions, so no access to the coach project's hosted agent); the promote job runs as `swankers-ci-deploy`, whose client id is a secret of the `foundry` environment and whose federated credential matches only that environment.

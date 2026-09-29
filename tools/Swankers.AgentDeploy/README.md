@@ -25,7 +25,7 @@ writes Windows separators into the entry names, so the hosted container cannot f
 |---|---|---|---|
 | `v1-owner` | `v1` | `Mcp:OwnerCredential` | Default; Friday "after" |
 | `v2-owner` | `v2` | `Mcp:OwnerCredential` | Thursday regression and rollback |
-| `v1-commissioner` | `v1` | `Mcp:CommissionerCredential` | Friday "before" (DEMO: intentionally vulnerable) |
+| `v0-commissioner` | `v0` | `Mcp:CommissionerCredential` | Friday "before" (DEMO: intentionally vulnerable): the naive prompt that follows directives in tool output, with the commissioner credential and the gate off |
 
 The publish output goes to `<temp>/swankers-coach-publish` by default: `dotnet publish -o`
 cannot take a path containing `,` or `;` (MSBuild splits property values there), and this

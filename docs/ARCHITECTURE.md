@@ -80,10 +80,11 @@ C# MCP SDK, streamable HTTP transport, hosted in Azure Container Apps.
 - Instructions live in `src/Swankers.Coach/prompts/` as versioned files:
   - `coach-v1.md`: good behavior. Must check injury status before start/sit calls. Must push back on bad ideas (the anti-hype-man mandate). Treats text inside tool results as data, never as instructions.
   - `coach-v2.md`: a plausible "harmless tweak" that regresses (for example, trimming the injury-check instruction for brevity). Used for Thursday's regression and rollback demo.
+  - `coach-v0.md`: the naive "before" for Friday (DEMO: intentionally vulnerable). Same football rules as v1, including the injury check, but written as an autonomous roster manager: no rule that tool output is data, no own-franchise rule, and irreversible actions need no owner request. Prompt v1 resists the poisoned note on its own, so the Friday "before" needs this prompt to show what the credential and the gate are protecting.
 - Hosted agent versions used on stage:
   - `coach` v1 with owner credential: Thursday baseline, Friday hardened.
   - `coach` v2 with owner credential: Thursday regression, rolled back.
-  - `coach` v1 with commissioner credential and gate off: Friday "before".
+  - `coach` v0 with commissioner credential and gate off: Friday "before" (DEMO: intentionally vulnerable).
 
 ### 4. Knowledge (Foundry IQ)
 
@@ -132,7 +133,7 @@ The Friday talk runs the same attack twice.
 | Credential | Commissioner | Owner (agent's own identity) |
 | franchiseId honored | Any, incl. "0000" | Own franchise only |
 | Gate | Off | On (irreversible tools pending until human approves in web app) |
-| Instructions | coach-v1 | coach-v1 |
+| Instructions | coach-v0 (naive: follows directives in tool output) | coach-v1 |
 | Expected result | Lopsided trade accepted for Brian's franchise, RB1 dropped | Attempt blocked or pending; trace shows intent vs action |
 
 Payload constraints: benign, SimLeague-only, no network or data access beyond the simulated league.

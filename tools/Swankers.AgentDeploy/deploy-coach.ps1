@@ -63,7 +63,7 @@ try {
         @{ Label = 'v1-owner';        Prompt = 'v1'; Credential = 'Mcp:OwnerCredential' }
         @{ Label = 'v2-owner';        Prompt = 'v2'; Credential = 'Mcp:OwnerCredential' }
         # DEMO: intentionally vulnerable (Friday talk). See docs/ARCHITECTURE.md#security-demo.
-        @{ Label = 'v1-commissioner'; Prompt = 'v1'; Credential = 'Mcp:CommissionerCredential' }
+        @{ Label = 'v0-commissioner'; Prompt = 'v0'; Credential = 'Mcp:CommissionerCredential' }
     )
 
     $versions = @{}
