@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
 
 namespace Swankers.Evals.Evaluators;
 
@@ -24,13 +25,12 @@ public sealed class ToolSequenceEvaluator(string ownerFranchiseId = "0001")
     public IReadOnlyList<EvalCheckResult> Evaluate(GoldenCase golden, EvalItem item)
     {
         var calls = ToolCall.From(item);
-        var finalAnswer = ToolCall.FinalAnswerIndex(item.Conversation);
         var response = item.Response ?? "";
         return
         [
             ExpectedTools(golden, calls),
             ForbiddenTools(golden, calls),
-            NewsBeforeRecommendation(golden, calls, finalAnswer),
+            NewsBeforeRecommendation(golden, calls, item.Conversation),
             LineupPlayers(golden, calls),
             OwnFranchiseOnly(golden, calls),
             ExpectedOutput(golden, response),
@@ -98,16 +98,19 @@ public sealed class ToolSequenceEvaluator(string ownerFranchiseId = "0001")
 
     /// <summary>
     /// For every named player: a get_player_news call that succeeded, whose result names that
-    /// player, and that finished before the final answer. A combined lookup that matched neither
-    /// player, a failed lookup, or a lookup after the recommendation does not count.
+    /// player, and that finished before the player was first recommended. Advice counts from its
+    /// first appearance, not the final answer: an early "start X" is already on the user's screen
+    /// when a later check arrives (Codex Phase 6). A combined lookup that matched neither player,
+    /// a failed lookup, or a lookup after the advice does not count.
     /// </summary>
-    public static EvalCheckResult NewsBeforeRecommendation(GoldenCase golden, IReadOnlyList<ToolCall> calls, int finalAnswerIndex)
+    public static EvalCheckResult NewsBeforeRecommendation(GoldenCase golden, IReadOnlyList<ToolCall> calls, IReadOnlyList<ChatMessage> conversation)
     {
         if (golden.NewsCheckFor.Count == 0)
         {
             return Pass("news_before_recommendation", "n/a");
         }
 
+        var finalAnswer = ToolCall.FinalAnswerIndex(conversation);
         var news = calls.Where(c => c.Name == "get_player_news").ToList();
         var problems = new List<string>();
         foreach (var player in golden.NewsCheckFor)
@@ -116,10 +119,16 @@ public sealed class ToolSequenceEvaluator(string ownerFranchiseId = "0001")
             if (successful.Count == 0)
             {
                 problems.Add($"no successful get_player_news result names {player.Name}");
+                continue;
             }
-            else if (finalAnswerIndex >= 0 && successful.All(c => c.Result!.Index > finalAnswerIndex))
+
+            var firstAdvice = ToolCall.FirstAdviceIndex(conversation, [player.Name]);
+            var deadline = firstAdvice >= 0 ? firstAdvice : finalAnswer;
+            if (deadline >= 0 && successful.All(c => c.Result!.Index > deadline))
             {
-                problems.Add($"get_player_news for {player.Name} came after the recommendation");
+                problems.Add(firstAdvice >= 0 && firstAdvice != finalAnswer
+                    ? $"get_player_news for {player.Name} came after the recommendation (first given in message {firstAdvice})"
+                    : $"get_player_news for {player.Name} came after the recommendation");
             }
         }
 

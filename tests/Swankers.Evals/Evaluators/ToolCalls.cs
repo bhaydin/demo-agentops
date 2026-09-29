@@ -209,6 +209,33 @@ public sealed record ToolCall(string CallId, string Name, JsonElement Arguments,
         return calls;
     }
 
+    /// <summary>
+    /// Index of the first assistant message that gives advice about any of the named players: a
+    /// text-only message (no function call in it) that mentions a name. Narration that rides
+    /// along with a tool call in the same message ("checking Montgomery's report") is not advice.
+    /// -1 when there is none.
+    /// </summary>
+    public static int FirstAdviceIndex(IReadOnlyList<ChatMessage> conversation, IEnumerable<string> names)
+    {
+        var lookFor = names.Where(n => !string.IsNullOrWhiteSpace(n)).ToList();
+        for (var i = 0; i < conversation.Count; i++)
+        {
+            var message = conversation[i];
+            if (message.Role != ChatRole.Assistant || message.Contents.OfType<FunctionCallContent>().Any())
+            {
+                continue;
+            }
+
+            var text = string.Concat(message.Contents.OfType<TextContent>().Select(t => t.Text));
+            if (!string.IsNullOrWhiteSpace(text) && lookFor.Any(n => text.Contains(n, StringComparison.OrdinalIgnoreCase)))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
     /// <summary>Index of the final assistant text (the recommendation); -1 when there is none.</summary>
     public static int FinalAnswerIndex(IReadOnlyList<ChatMessage> conversation)
     {

@@ -97,6 +97,42 @@ public sealed class ToolSequenceEvaluatorTests
     }
 
     [Fact]
+    public void An_early_recommendation_fails_even_when_the_check_and_a_repeat_follow()
+    {
+        // Codex Phase 6: "recommend -> get_player_news -> repeat" passed while only the final answer
+        // counted; the first recommendation is already on the user's screen when the check arrives.
+        var conversation = new List<ChatMessage>
+        {
+            new(ChatRole.User, InjuryCase.Query),
+            new(ChatRole.Assistant, "Start Judkins."),
+        };
+        conversation.AddRange(CallOk("get_player_news", JudkinsNews, ("player", "17051")));
+        conversation.Add(new ChatMessage(ChatRole.Assistant, "Start Judkins; he is not on the injury report."));
+        var item = new EvalItem(InjuryCase.Query, "Start Judkins; he is not on the injury report.", conversation);
+
+        var news = Assert.Single(new ToolSequenceEvaluator().Evaluate(InjuryCase, item), c => c.CheckName == "news_before_recommendation");
+
+        Assert.False(news.Passed);
+        Assert.Contains("after the recommendation (first given in message 1)", news.Reason);
+    }
+
+    [Fact]
+    public void Narration_alongside_the_tool_call_is_not_a_recommendation()
+    {
+        var turn = CallOk("get_player_news", JudkinsNews, ("player", "17051")).ToList();
+        turn[0].Contents.Insert(0, new TextContent("Let me check Judkins on the injury report first."));
+        var conversation = new List<ChatMessage> { new(ChatRole.User, InjuryCase.Query) };
+        conversation.AddRange(turn);
+        conversation.Add(new ChatMessage(ChatRole.Assistant, "Start Judkins."));
+        var item = new EvalItem(InjuryCase.Query, "Start Judkins.", conversation);
+
+        var news = Assert.Single(new ToolSequenceEvaluator().Evaluate(InjuryCase, item), c => c.CheckName == "news_before_recommendation");
+
+        Assert.True(news.Passed, news.Reason);
+        Assert.Equal(3, ToolCall.FirstAdviceIndex(conversation, ["Judkins"]));
+    }
+
+    [Fact]
     public void A_call_without_a_result_does_not_count()
     {
         var conversation = new List<ChatMessage>
