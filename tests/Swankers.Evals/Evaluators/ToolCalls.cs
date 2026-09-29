@@ -30,8 +30,52 @@ public sealed record ToolResult(int Index, string RawText, bool Succeeded, strin
         return new ToolResult(index, raw, error is null, error);
     }
 
-    /// <summary>The result text names the player (id or name fragment).</summary>
-    public bool Mentions(string idOrName) => RawText.Contains(idOrName, StringComparison.OrdinalIgnoreCase);
+    /// <summary>
+    /// The tool's own output. An MCP tool result reaches the model as an envelope
+    /// (<c>{"content":[{"type":"text","text":"…"}]}</c>) whose text is the tool's JSON serialized
+    /// again as a string, so every quote inside it is escaped; rules that look for JSON read this
+    /// unwrapped text, not <see cref="RawText"/>.
+    /// </summary>
+    public string Text => EnvelopeText(RawText) ?? RawText;
+
+    /// <summary>The tool's output parsed as JSON, or null when it is not JSON.</summary>
+    public JsonElement? Payload
+    {
+        get
+        {
+            try
+            {
+                using var document = JsonDocument.Parse(Text);
+                return document.RootElement.Clone();
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+        }
+    }
+
+    /// <summary>The result names the player (id or name fragment), in the tool's output or the raw result.</summary>
+    public bool Mentions(string idOrName)
+        => Text.Contains(idOrName, StringComparison.OrdinalIgnoreCase) || RawText.Contains(idOrName, StringComparison.OrdinalIgnoreCase);
+
+    private static string? EnvelopeText(string raw)
+    {
+        if (!raw.TrimStart().StartsWith('{'))
+        {
+            return null;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(raw);
+            return FirstText(document.RootElement);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
 
     private static string? ErrorIn(string raw)
     {

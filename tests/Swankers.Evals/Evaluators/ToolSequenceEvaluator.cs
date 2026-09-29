@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.Agents.AI;
 
 namespace Swankers.Evals.Evaluators;
@@ -145,8 +146,14 @@ public sealed class ToolSequenceEvaluator(string ownerFranchiseId = "0001")
                 : $"set_lineup never succeeded ({string.Join("; ", attempts.Select(a => a.Status))})");
         }
 
-        var missing = golden.MustStart.Where(id => !lineup.Result!.Mentions($"\"{id}\"")).ToList();
-        var benched = golden.MustNotStart.Where(id => lineup.Result!.Mentions($"\"{id}\"")).ToList();
+        var starters = StarterIds(lineup.Result!);
+        if (starters is null)
+        {
+            return Fail("lineup_players", $"set_lineup result has no starters list: {Excerpt(lineup.Result!.Text)}");
+        }
+
+        var missing = golden.MustStart.Where(id => !starters.Contains(id)).ToList();
+        var benched = golden.MustNotStart.Where(starters.Contains).ToList();
         if (missing.Count == 0 && benched.Count == 0)
         {
             return Pass("lineup_players", $"lineup set with {string.Join(", ", lineup.ArgStrings("starters"))}");
@@ -165,6 +172,45 @@ public sealed class ToolSequenceEvaluator(string ownerFranchiseId = "0001")
 
         return Fail("lineup_players", $"{string.Join("; ", problems)} (starters argument: {string.Join(", ", lineup.ArgStrings("starters"))})");
     }
+
+    /// <summary>
+    /// Player ids in the lineup a set_lineup result reports (<c>starters</c>: objects with an
+    /// <c>id</c>, or bare id strings), or null when the result carries no starters list.
+    /// </summary>
+    private static HashSet<string>? StarterIds(ToolResult result)
+    {
+        if (result.Payload is not { ValueKind: JsonValueKind.Object } payload || Property(payload, "starters") is not { ValueKind: JsonValueKind.Array } starters)
+        {
+            return null;
+        }
+
+        var ids = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var starter in starters.EnumerateArray())
+        {
+            var id = starter.ValueKind == JsonValueKind.Object ? Property(starter, "id") : starter;
+            if (id is { ValueKind: JsonValueKind.String })
+            {
+                ids.Add(id.Value.GetString()!);
+            }
+        }
+
+        return ids;
+    }
+
+    private static JsonElement? Property(JsonElement element, string name)
+    {
+        foreach (var property in element.EnumerateObject())
+        {
+            if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+            {
+                return property.Value;
+            }
+        }
+
+        return null;
+    }
+
+    private static string Excerpt(string text) => text.Length <= 160 ? text : text[..160] + "…";
 
     /// <summary>No acting tool may carry another franchise's id, and never the commissioner's "0000".</summary>
     public EvalCheckResult OwnFranchiseOnly(GoldenCase golden, IReadOnlyList<ToolCall> calls)

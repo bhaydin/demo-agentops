@@ -228,6 +228,44 @@ public sealed class ToolSequenceEvaluatorTests
         return new EvalItem(query, answer, conversation);
     }
 
+    [Fact]
+    public void Lineup_rule_reads_the_lineup_inside_the_MCP_result_envelope()
+    {
+        // An MCP tool result reaches the model as {"content":[{"type":"text","text":"<the tool's JSON as a string>"}]}:
+        // the JSON is serialized a second time, so its quotes are escaped and a text search for "\"17051\"" finds
+        // nothing even when the player starts (CI run 36511188834, ss-05).
+        var golden = new GoldenCase { Id = "ss-x", Category = GoldenCase.Categories.StartSit, Query = "q", MustStart = ["17051", "14071"], MustNotStart = ["14823"] };
+        var evaluator = new ToolSequenceEvaluator();
+        const string Set = """{"franchiseId":"0001","franchiseName":"Sample","week":4,"starters":[{"id":"16580","name":"Maye, Drake","position":"QB","team":"NEP","rosterStatus":null},{"id":"14071","name":"Montgomery, David","position":"RB","team":"DET","rosterStatus":null},{"id":"17051","name":"Judkins, Quinshon","position":"RB","team":"CLE","rosterStatus":null}]}""";
+        const string Benched = """{"franchiseId":"0001","week":4,"starters":[{"id":"16580"},{"id":"14823"},{"id":"14071"}]}""";
+        string[] starters = ["16580", "14071", "17051"];
+
+        var good = Assert.Single(evaluator.Evaluate(golden, Item("q", "set", CallOk("set_lineup", Envelope(Set), ("starters", starters)))), c => c.CheckName == "lineup_players");
+        var bad = Assert.Single(evaluator.Evaluate(golden, Item("q", "set", CallOk("set_lineup", Envelope(Benched), ("starters", new[] { "16580", "14823", "14071" })))), c => c.CheckName == "lineup_players");
+        var shapeless = Assert.Single(evaluator.Evaluate(golden, Item("q", "set", CallOk("set_lineup", Envelope("""{"ok":true}"""), ("starters", starters)))), c => c.CheckName == "lineup_players");
+
+        Assert.True(good.Passed, good.Reason);
+        Assert.False(bad.Passed);
+        Assert.Contains("lacks 17051", bad.Reason);
+        Assert.Contains("includes 14823", bad.Reason);
+        Assert.False(shapeless.Passed);
+        Assert.Contains("no starters list", shapeless.Reason);
+    }
+
+    [Fact]
+    public void News_rule_reads_the_MCP_result_envelope()
+    {
+        var item = Item(InjuryCase.Query, "Start Judkins.", CallOk("get_player_news", Envelope(JudkinsNews), ("player", "17051")));
+
+        var check = Assert.Single(new ToolSequenceEvaluator().Evaluate(InjuryCase, item), c => c.CheckName == "news_before_recommendation");
+
+        Assert.True(check.Passed, check.Reason);
+    }
+
+    /// <summary>The MCP client's result envelope: the tool's JSON serialized again as the text block's string.</summary>
+    internal static string Envelope(string toolJson)
+        => $$"""{"content":[{"type":"text","text":{{System.Text.Json.JsonSerializer.Serialize(toolJson)}}}],"isError":false}""";
+
     /// <summary>A call and its successful result (the JSON the tool returned).</summary>
     internal static IEnumerable<ChatMessage> CallOk(string tool, string resultJson, params (string Name, object Value)[] args)
         => Call(tool, args, new FunctionResultContent(Id(tool), resultJson));
