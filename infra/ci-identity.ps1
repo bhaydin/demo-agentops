@@ -8,12 +8,16 @@ account, and the repository secrets, variables, and protected environment the wo
 .DESCRIPTION
 Two identities, because eval jobs run pull-request code (Codex Phase 5 P1):
 
-  swankers-ci-evals   main + pull requests   custom role "Swankers Evals Runner": responses,
-                                             evaluations, agents read. Cannot create or route
-                                             hosted agent versions.
-  swankers-ci-deploy  environment:foundry    Foundry User: creates and routes agent versions.
-                                             Only a job that passed the environment's required
-                                             review can obtain this token or its client id.
+  swankers-ci-evals   main + pull requests   Foundry User scoped to the evals project only
+                                             (swankers-evals): model calls and cloud
+                                             evaluations there; no access to the coach project
+                                             or its hosted agent. Scope, not data actions,
+                                             does the separation: the project Responses
+                                             gateway refuses model calls without agents/write.
+  swankers-ci-deploy  environment:foundry    Foundry User on the account: creates and routes
+                                             agent versions. Only a job that passed the
+                                             environment's required review can obtain this
+                                             token or its client id.
 
 GitHub's OIDC subject can carry the owner and repository ids ("repo:owner@123/name@456:..."),
 so both the classic and the id-qualified subject are registered for every credential.
@@ -30,8 +34,9 @@ param(
     [string] $RetiredAppName = 'swankers-ci',
     [string] $SharedResourceGroup = 'rg-swankers-shared',
     [string] $FoundryAccount = 'foundry-swankers-vxzd',
+    [string] $EvalsProject = 'swankers-evals',
     [string] $Environment = 'foundry',
-    [string] $EvalsRoleName = 'Swankers Evals Runner'
+    [string] $RetiredRoleName = 'Swankers Evals Runner'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -81,40 +86,9 @@ $accountScope = (Invoke-Az @('cognitiveservices', 'account', 'show', '-n', $Foun
 $repoInfo = gh api "repos/$Repo" --jq '{id: .id, ownerId: .owner.id, owner: .owner.login, name: .name}' | ConvertFrom-Json
 $repoForms = @($Repo, "$($repoInfo.owner)@$($repoInfo.ownerId)/$($repoInfo.name)@$($repoInfo.id)")
 
-# Custom role for eval runs: the Foundry data plane (model calls through the project, cloud
-# evaluations, agent reads) with hosted-agent mutation explicitly excluded. The project's
-# Responses gateway answers 403 without a body, so the grant is the AIServices and OpenAI data
-# planes minus the write actions that could create, route, or delete agents; evals.yml probes
-# that an agent create still returns 403 for this identity. Action names verified with
-# `az provider operation show --namespace Microsoft.CognitiveServices`.
-$roleFile = New-TemporaryFile
-@{
-    Name = $EvalsRoleName
-    IsCustom = $true
-    Description = 'Swankers Coach eval runs: Foundry data plane for model calls, cloud evaluations, and agent reads. Agent, version, and deployment writes are excluded.'
-    Actions = @('Microsoft.CognitiveServices/*/read')
-    NotActions = @()
-    # The Foundry data plane as Foundry User grants it (Microsoft.CognitiveServices/*): the
-    # project's Responses gateway still answered 403 with only accounts/AIServices/* and
-    # accounts/OpenAI/*, and it names no action. The mutation exclusions below are what matter.
-    DataActions = @(
-        'Microsoft.CognitiveServices/*'
-    )
-    NotDataActions = @(
-        'Microsoft.CognitiveServices/accounts/AIServices/agents/write',
-        'Microsoft.CognitiveServices/accounts/AIServices/agents/delete',
-        'Microsoft.CognitiveServices/accounts/AIServices/managed-deployments/action',
-        'Microsoft.CognitiveServices/accounts/AIServices/managedComputeDeployments/write',
-        'Microsoft.CognitiveServices/accounts/AIServices/managedComputeDeployments/delete',
-        'Microsoft.CognitiveServices/accounts/AIServices/fine_tuning_deployments/write',
-        'Microsoft.CognitiveServices/accounts/OpenAI/assistants/*'
-    )
-    AssignableScopes = @("/subscriptions/$subscription/resourceGroups/$SharedResourceGroup")
-} | ConvertTo-Json -Depth 4 | Set-Content $roleFile
-$roleExists = (Invoke-Az @('role', 'definition', 'list', '--name', $EvalsRoleName, '--custom-role-only', 'true', '--query', '[0].id', '-o', 'tsv')).Trim()
-if ($roleExists) { Write-Host "Updating role definition '$EvalsRoleName'"; Invoke-Az @('role', 'definition', 'update', '--role-definition', "@$roleFile") | Out-Null }
-else { Write-Host "Creating role definition '$EvalsRoleName'"; Invoke-Az @('role', 'definition', 'create', '--role-definition', "@$roleFile") | Out-Null }
-Remove-Item $roleFile -Force
+# The evals project (infra/modules/foundry.bicep) is the only scope the evals identity gets.
+$evalsProjectScope = "$accountScope/projects/$EvalsProject"
+Invoke-Az @('resource', 'show', '--ids', $evalsProjectScope, '--query', 'name', '-o', 'tsv') | Out-Null
 
 # Evals identity: main branch and pull requests; never the deployment environment.
 $evals = Ensure-App $EvalsAppName
@@ -125,8 +99,17 @@ for ($i = 0; $i -lt $repoForms.Count; $i++) {
     $evalsSubjects["github-pull-request$suffix"] = "repo:$($repoForms[$i]):pull_request"
 }
 Ensure-FederatedCredentials $evals.App $evalsSubjects
-Write-Host "Assigning '$EvalsRoleName' to $EvalsAppName on $FoundryAccount"
-Invoke-Az @('role', 'assignment', 'create', '--assignee-object-id', $evals.Sp.id, '--assignee-principal-type', 'ServicePrincipal', '--role', $EvalsRoleName, '--scope', $accountScope, '-o', 'none') | Out-Null
+Write-Host "Assigning Foundry User to $EvalsAppName on project $EvalsProject only"
+Invoke-Az @('role', 'assignment', 'create', '--assignee-object-id', $evals.Sp.id, '--assignee-principal-type', 'ServicePrincipal', '--role', $foundryUserRole, '--scope', $evalsProjectScope, '-o', 'none') | Out-Null
+
+# Retire the account-scoped custom role from the first attempt (data-action exclusions cannot
+# separate model calls from agent writes on the project Responses gateway).
+$retiredRole = (Invoke-Az @('role', 'definition', 'list', '--name', $RetiredRoleName, '--custom-role-only', 'true', '--query', '[0].name', '-o', 'tsv')).Trim()
+if ($retiredRole) {
+    Write-Host "Removing retired role '$RetiredRoleName' and its assignments"
+    & az role assignment delete --role $retiredRole --scope $accountScope -o none 2>$null
+    Invoke-Az @('role', 'definition', 'delete', '--name', $retiredRole) | Out-Null
+}
 
 # Deploy identity: only the protected environment can mint its token.
 $deploy = Ensure-App $DeployAppName
@@ -166,5 +149,6 @@ foreach ($key in 'FOUNDRY_PROJECT_ENDPOINT', 'AZURE_AI_MODEL_DEPLOYMENT_NAME', '
     if (-not $values[$key]) { throw "azd environment has no $key; run azd up first." }
     gh variable set $key --repo $Repo --body $values[$key]
 }
+gh variable set FOUNDRY_EVALS_PROJECT_ENDPOINT --repo $Repo --body "https://$FoundryAccount.services.ai.azure.com/api/projects/$EvalsProject"
 
-Write-Host "Done. Eval jobs log in as $EvalsAppName (no agent writes); the promote job logs in as $DeployAppName after approval in the '$Environment' environment."
+Write-Host "Done. Eval jobs log in as $EvalsAppName (project $EvalsProject only); the promote job logs in as $DeployAppName after approval in the '$Environment' environment."

@@ -10,6 +10,9 @@ param accountName string
 @description('Project under the account.')
 param projectName string = 'swankers-coach'
 
+@description('Second project for CI evaluation runs. The evals identity holds Foundry User at this project scope only, so it can call models and run cloud evaluations without any access to the coach project and its hosted agent (Codex Phase 5 P1).')
+param evalsProjectName string = 'swankers-evals'
+
 param location string = resourceGroup().location
 
 @description('One chat deployment serves both the agent and the eval judge.')
@@ -78,9 +81,41 @@ resource chatModel 'Microsoft.CognitiveServices/accounts/deployments@2025-06-01'
   }
 }
 
+// Created after the model deployment for the same RequestConflict reason as above.
+resource evalsProject 'Microsoft.CognitiveServices/accounts/projects@2025-06-01' = {
+  parent: account
+  name: evalsProjectName
+  location: location
+  tags: tags
+  dependsOn: [chatModel]
+  identity: {
+    type: 'SystemAssigned'
+  }
+  properties: {
+    displayName: 'Swankers Evals'
+    description: 'CI evaluation runs for the Coach: model calls and cloud evaluations only; no hosted agents live here.'
+  }
+}
+
+// The project identity proxies model inference through the project endpoint (Foundry User on
+// the account, as the portal grants automatically for portal-created projects).
+var foundryUserRole = '53ca6127-db72-4b80-b1b0-d745d6d5456d'
+
+resource evalsProjectInference 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: account
+  name: guid(account.id, evalsProject.id, foundryUserRole)
+  properties: {
+    principalId: evalsProject.identity.principalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', foundryUserRole)
+    principalType: 'ServicePrincipal'
+  }
+}
+
 output accountName string = account.name
 output accountId string = account.id
 output projectName string = project.name
 output projectEndpoint string = 'https://${account.name}.services.ai.azure.com/api/projects/${project.name}'
 output modelDeploymentName string = chatModel.name
 output projectPrincipalId string = project.identity.principalId
+output evalsProjectId string = evalsProject.id
+output evalsProjectEndpoint string = 'https://${account.name}.services.ai.azure.com/api/projects/${evalsProject.name}'

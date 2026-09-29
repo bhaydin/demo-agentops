@@ -2,9 +2,10 @@
 # prompt version with the real model, one job per version, so a run shows v1 green and v2 red
 # side by side. With `promote: true` a green version is deployed as a new hosted agent version
 # and routed to, after approval in the `foundry` environment. Auth is GitHub OIDC (no stored
-# secrets, infra/ci-identity.ps1): eval jobs run pull-request code as swankers-ci-evals, which
-# can call models and evaluations but cannot write agents; only the promote job, behind the
-# environment's required review, logs in as swankers-ci-deploy.
+# secrets, infra/ci-identity.ps1): eval jobs run pull-request code as swankers-ci-evals, whose
+# only role is Foundry User on the separate `swankers-evals` project, so it can call models and
+# run cloud evaluations there but cannot touch the coach project's hosted agent; only the
+# promote job, behind the environment's required review, logs in as swankers-ci-deploy.
 name: evals
 
 on:
@@ -78,9 +79,9 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       # The identity that runs (pull-request) code here must not be able to create or route
-      # hosted agent versions. A create with an empty body answers 403 without write access and
-      # 400 (validation) with it; anything but 403 fails the job.
-      - name: Verify the evals identity cannot write agents
+      # hosted agent versions in the coach project. A create with an empty body answers 403
+      # without access and 400 (validation) with it; anything but 403 fails the job.
+      - name: Verify the evals identity cannot write agents in the coach project
         env:
           FOUNDRY_PROJECT_ENDPOINT: ${{ vars.FOUNDRY_PROJECT_ENDPOINT }}
         run: |
@@ -96,10 +97,12 @@ jobs:
       - name: Build
         run: dotnet build SwankersCoach.slnx --no-restore -c Release
 
+      # The harness runs the Coach in-process against the evals project (model calls and cloud
+      # evaluations); the hosted agent in the coach project is not involved.
       - name: Golden set (Coach ${{ matrix.version }})
         env:
           COACH_PROMPT_VERSION: ${{ matrix.version }}
-          FOUNDRY_PROJECT_ENDPOINT: ${{ vars.FOUNDRY_PROJECT_ENDPOINT }}
+          FOUNDRY_PROJECT_ENDPOINT: ${{ vars.FOUNDRY_EVALS_PROJECT_ENDPOINT }}
           AZURE_AI_MODEL_DEPLOYMENT_NAME: ${{ vars.AZURE_AI_MODEL_DEPLOYMENT_NAME || 'gpt-5.4' }}
         run: dotnet test tests/Swankers.Evals --no-build -c Release --logger "console;verbosity=normal"
 
