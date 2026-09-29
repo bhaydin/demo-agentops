@@ -24,6 +24,16 @@ public sealed class GoldenSetEvals(ITestOutputHelper output)
         var version = settings.EffectivePromptVersion;
         var model = Environment.GetEnvironmentVariable("AZURE_AI_MODEL_DEPLOYMENT_NAME") is { Length: > 0 } m ? m : settings.JudgeModel;
         var cases = GoldenSet.Load();
+
+        // COACH_EVAL_CASES=adv-01,adv-02 runs a subset while iterating on a prompt or a scenario
+        // locally; the gate then covers only that subset, so CI never sets it.
+        if (Environment.GetEnvironmentVariable("COACH_EVAL_CASES") is { Length: > 0 } only)
+        {
+            var wanted = only.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            cases = [.. cases.Where(c => wanted.Contains(c.Id))];
+            output.WriteLine($"COACH_EVAL_CASES: running only {string.Join(", ", cases.Select(c => c.Id))}.");
+        }
+
         output.WriteLine($"Coach {version}: {cases.Count} cases, model {model}, judge {settings.JudgeModel}.");
 
         await using var coach = await CoachUnderTest.StartAsync(version, endpoint!, model, CT);
