@@ -25,7 +25,8 @@ shared Foundry module deploys alongside (infra/modules/foundry.bicep, extraModel
 [CmdletBinding()]
 param(
     [string] $AgentName = 'Coach',
-    [string] $BeforeModel = 'gpt-4o-mini',
+    # Must match the extraModels default in infra/modules/foundry.bicep (a test checks the two agree).
+    [string] $BeforeModel = 'gpt-4.1-mini',
     [switch] $SkipPublish,
     [switch] $SkipProvision
 )
