@@ -174,32 +174,43 @@ public sealed class AgentDeployer
             .OrderByDescending(rule => rule.TrafficPercentage)
             .FirstOrDefault()?.AgentVersion;
 
-    /// <summary>A version and the stage label its metadata carries (v1-owner, v2-owner, v0-commissioner).</summary>
-    public sealed record StageVersion(string Version, string? Stage);
+    /// <summary>A version, the stage label its metadata carries (v1-owner, v2-owner, v0-commissioner), and its provisioning status.</summary>
+    public sealed record StageVersion(string Version, string? Stage, string? Status)
+    {
+        public bool IsActive => string.Equals(Status, "Active", StringComparison.OrdinalIgnoreCase);
+    }
 
     public static StageVersion ToStageVersion(ProjectsAgentVersion version)
-        => new(version.Version, version.Metadata.TryGetValue("stage", out var stage) ? stage : null);
+        => new(version.Version, version.Metadata.TryGetValue("stage", out var stage) ? stage : null, version.Status.ToString());
 
     /// <summary>
-    /// The version to route for a stage label, so the runbook and demo/stage.ps1 never carry
-    /// version numbers: the newest version with that stage (v4 and v7 are both v1-owner; the
-    /// newer is the one CI promoted). Unknown labels list what exists.
+    /// The version to route for a stage label, so demo/stage.ps1 never carries version numbers:
+    /// the newest <b>active</b> version with that stage (v4 and v7 are both v1-owner; the newer
+    /// is the one CI promoted). A failed or still-creating version is never chosen (Codex
+    /// Phase 7); unknown labels list what exists.
     /// </summary>
     public static string ResolveLabel(IEnumerable<StageVersion> versions, string label)
     {
         var all = versions.ToList();
-        var matches = all
-            .Where(v => string.Equals(v.Stage, label, StringComparison.OrdinalIgnoreCase))
-            .OrderByDescending(v => int.TryParse(v.Version, out var n) ? n : -1)
-            .ThenByDescending(v => v.Version, StringComparer.Ordinal)
-            .ToList();
-        if (matches.Count == 0)
+        var labelled = all.Where(v => string.Equals(v.Stage, label, StringComparison.OrdinalIgnoreCase)).ToList();
+        if (labelled.Count == 0)
         {
             var stages = all.Where(v => v.Stage is not null).Select(v => $"{v.Stage} (v{v.Version})").Distinct().Order(StringComparer.Ordinal);
             throw new InvalidOperationException($"No version has stage '{label}'. Available: {string.Join(", ", stages)}.");
         }
 
-        return matches[0].Version;
+        var active = labelled
+            .Where(v => v.IsActive)
+            .OrderByDescending(v => int.TryParse(v.Version, out var n) ? n : -1)
+            .ThenByDescending(v => v.Version, StringComparer.Ordinal)
+            .ToList();
+        if (active.Count == 0)
+        {
+            var states = string.Join(", ", labelled.Select(v => $"v{v.Version} {v.Status ?? "unknown"}"));
+            throw new InvalidOperationException($"No active version has stage '{label}' ({states}). Route with --version once one is active.");
+        }
+
+        return active[0].Version;
     }
 
     private async Task<bool> AgentExistsAsync(CancellationToken ct)
