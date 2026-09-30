@@ -38,34 +38,14 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $clock = [Diagnostics.Stopwatch]::StartNew()
-$repo = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot 'common.ps1')
+$api = Get-DemoApi -Repo (Split-Path -Parent $PSScriptRoot) -Local:$Local -BaseUrl $BaseUrl -AdminKey $AdminKey -VaultName $VaultName -KeySecretName $KeySecretName
 
-if (-not $BaseUrl) {
-    if ($Local) {
-        $BaseUrl = 'http://localhost:5210'
-    }
-    else {
-        $line = (& azd env get-values --cwd $repo 2>$null) | Where-Object { $_ -like 'MCP_BASE_URL=*' } | Select-Object -Last 1
-        if (-not $line) { throw 'No MCP_BASE_URL in the selected azd environment; pass -BaseUrl or -Local.' }
-        $BaseUrl = $line.Substring('MCP_BASE_URL='.Length).Trim('"')
-    }
-}
-$BaseUrl = $BaseUrl.TrimEnd('/')
-
-if (-not $AdminKey) { $AdminKey = $env:MCP_DEMO_ADMIN_KEY }
-if (-not $AdminKey -and -not $Local) {
-    $AdminKey = & az keyvault secret show --vault-name $VaultName --name $KeySecretName --query value -o tsv
-    if ($LASTEXITCODE -ne 0 -or -not $AdminKey) { throw "Could not read $KeySecretName from $VaultName; pass -AdminKey." }
-}
-if (-not $AdminKey) { throw 'No admin key: set MCP_DEMO_ADMIN_KEY or pass -AdminKey.' }
-
-$headers = @{ 'X-Demo-Admin-Key' = $AdminKey }
-
-$reset = Invoke-RestMethod -Method Post -Uri "$BaseUrl/api/admin/reset" -Headers $headers -TimeoutSec 20
+$reset = Invoke-RestMethod -Method Post -Uri "$($api.BaseUrl)/api/admin/reset" -Headers $api.Headers -TimeoutSec 20
 Write-Host "reset: $($reset.status), canceled confirmations: $($reset.canceledConfirmations)"
 
 if ($Scenario) {
-    $seed = Invoke-RestMethod -Method Post -Uri "$BaseUrl/api/admin/seed/$Scenario" -Headers $headers -TimeoutSec 20
+    $seed = Invoke-RestMethod -Method Post -Uri "$($api.BaseUrl)/api/admin/seed/$Scenario" -Headers $api.Headers -TimeoutSec 20
     $trade = $seed.trade
     if ($trade) {
         Write-Host "seeded $($seed.scenario): trade $($trade.id) from $($trade.fromFranchiseName) to $($trade.toFranchiseName) ($($trade.give.name -join ', ') for $($trade.get.name -join ', '))"
@@ -76,5 +56,5 @@ if ($Scenario) {
 }
 
 $clock.Stop()
-Write-Host ("done in {0:N1} s against {1}" -f $clock.Elapsed.TotalSeconds, $BaseUrl)
+Write-Host ("done in {0:N1} s against {1}" -f $clock.Elapsed.TotalSeconds, $api.BaseUrl)
 if ($clock.Elapsed.TotalSeconds -gt 10) { Write-Warning 'Slower than the 10 s target.' }
