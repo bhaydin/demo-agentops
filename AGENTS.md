@@ -59,7 +59,8 @@ data/
   franchise-names.json          display-name map (maintainer controlled)
 demo/
   reset.ps1                     restore SimLeague to snapshot
-  runbook.md                    stage runbook for both talks
+  AgentOpsRunbook.md             self-directed AgentOps attendee lab
+  runbook.md                    MCP presenter runbook
 infra/                          azd + Bicep
 docs/                           ARCHITECTURE.md, BUILD-PLAN.md
 .github/workflows/              build, test, eval gate

@@ -34,6 +34,38 @@ skipped. actionlint 1.7.12 validates both workflows; both PowerShell scripts par
 `git diff --check` passes. The next cloud run still needs maintainer approval after merge.
 See [repository authorization](REPOSITORY-SECURITY.md) for operation and trust boundaries.
 
+## MCP technical preparation (2026-10-01)
+Owner: Codex (maintainer-approved execution; browser rehearsal and recordings remain a handoff)
+
+- [ ] Save deployed v9/v10 prompt provenance and the connected morning trace.
+- [ ] Verify commissioner-off/owner-on configuration and rehearse deployed Contained via APIs.
+- [ ] Verify cross-franchise denial and all pending-confirmation outcomes.
+- [ ] Restore v1-owner, both gates on, reset league, and no pending confirmations.
+- [ ] Publish evidence and the runbook/attendee-guide documentation PR.
+
+## Runbook split after AgentOps (2026-10-01)
+Owner: Codex (maintainer-requested documentation task)
+
+- [x] Publish `demo/AgentOpsRunbook.md` as a self-directed attendee lab using attendees' own resources.
+- [x] Restrict `demo/runbook.md` to the presenter's October 2 MCP session, including the contained configuration.
+- [x] Update navigation and verify commands, links, and the separation of local and hosted prerequisites.
+
+**Documentation gate complete; ready for maintainer review.** The AgentOps session is
+complete per the maintainer. [AgentOpsRunbook.md](../demo/AgentOpsRunbook.md) now teaches
+model-free tests, the attendee's own Foundry setup, v1/v2 evals, local traces, recovery,
+and optional hosted routing. It needs no presenter credentials or MFL key, and explicitly
+distinguishes the local Responses server from the hosted agent used by the web app.
+[The presenter runbook](../demo/runbook.md) now covers only October 2 MCP preparation,
+before/contained/hardened runs, approval, scope, red-team evidence, fallback, and closeout.
+The contained beat is documented; its live deployment/rehearsal is not certified by this edit.
+
+Validation: all 17 PowerShell blocks parse; all 28 relative links in the runbooks and
+README resolve; stage presets and the MCP test filter names match source; no Thursday
+sequence remains in the presenter runbook; `git diff --check` passes. Current Foundry
+setup/RBAC, Aspire dashboard, and red-team support documentation were checked. No cloud
+resources, credentials, routes, or application code were changed or exercised. The
+remaining live MCP rehearsal and evidence gates stay open.
+
 ---
 
 ## Phase 0: Repository scaffold (Sun Sep 27)
@@ -371,7 +403,7 @@ Commit and PR owner: Codex (2026-10-01; package the existing changes and run loc
 - [x] `demo/reset.ps1` resets SimLeague and reseeds scenarios in under 10 seconds
 - [ ] Portal red-team run: before and after attack success rate captured (maintainer)
 - [ ] Backup recordings of every live demo (maintainer)
-- [x] `demo/runbook.md`: exact click path and fallback for each demo, both talks (Codex, 2026-09-30; portal red-team compatibility explicitly unverified)
+- [x] Runbooks: `demo/runbook.md` for the MCP presenter; `demo/AgentOpsRunbook.md` for self-directed AgentOps attendees (split by Codex, 2026-10-01; portal red-team compatibility explicitly unverified)
 - [ ] Full timed rehearsal of both talks with resets between
 
 Gate: two clean rehearsals in a row.

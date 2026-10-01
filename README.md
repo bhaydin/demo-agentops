@@ -14,7 +14,8 @@ Reads use real league data from MFL export requests. Writes only ever go to a si
 - [AGENTS.md](AGENTS.md): rules for anyone (human or AI agent) changing this repo
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): the locked architecture
 - [docs/BUILD-PLAN.md](docs/BUILD-PLAN.md): phases, status, and verified package versions
-- [demo/runbook.md](demo/runbook.md): both talks' stage steps, exact questions, recovery paths, and rehearsal checklist
+- [demo/AgentOpsRunbook.md](demo/AgentOpsRunbook.md): attendee lab for running locally, comparing evals, inspecting traces, and practicing recovery with your own resources
+- [demo/runbook.md](demo/runbook.md): presenter's October 2 MCP session, before/contained/hardened demos, approval steps, recovery, and rehearsal checklist
 
 ## Build and test
 
