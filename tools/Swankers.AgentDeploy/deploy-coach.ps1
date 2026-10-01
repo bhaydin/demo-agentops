@@ -1,13 +1,13 @@
 #!/usr/bin/env pwsh
 <#
 .SYNOPSIS
-Deploys the three stage versions of the Coach hosted agent to the shared Foundry project and
+Deploys the four stage versions of the Coach hosted agent to the shared Foundry project and
 routes the endpoint at v1-owner (the hardened default).
 
 .DESCRIPTION
 Run after `azd up` from the repo root. Reads the azd environment (FOUNDRY_PROJECT_ENDPOINT,
 KEYVAULT_URI, MCP_ENDPOINT, AZURE_AI_MODEL_DEPLOYMENT_NAME), publishes Swankers.Coach once,
-uploads it three times with different non-secret settings (prompt version, credential key),
+uploads it four times with different non-secret settings (prompt version, credential key, model),
 then records the agent identity in the azd environment (COACH_AGENT_PRINCIPAL_ID) and
 re-provisions so that identity can read the MCP credential from Key Vault.
 
@@ -18,9 +18,10 @@ Reuse the publish output (in the temp folder) from a previous run.
 Do not run `azd provision` for the Key Vault role assignment; print the command instead.
 
 .PARAMETER BeforeModel
-Chat deployment for the Friday "before" version (v0-commissioner). gpt-5.4 refuses injected
-tool output whatever the prompt, so the vulnerable configuration runs a weaker model that the
-shared Foundry module deploys alongside (infra/modules/foundry.bicep, extraModels).
+Chat deployment for the Friday "before" and "contained" versions (v0-commissioner, v0-owner).
+gpt-5.4 refuses injected tool output whatever the prompt, so the vulnerable configuration runs a
+weaker model that the shared Foundry module deploys alongside (infra/modules/foundry.bicep,
+extraModels). The contained run keeps that model and prompt and changes only the credential.
 #>
 [CmdletBinding()]
 param(
@@ -71,6 +72,9 @@ try {
         @{ Label = 'v2-owner';        Prompt = 'v2'; Credential = 'Mcp:OwnerCredential' }
         # DEMO: intentionally vulnerable (Friday talk). See docs/ARCHITECTURE.md#security-demo.
         @{ Label = 'v0-commissioner'; Prompt = 'v0'; Credential = 'Mcp:CommissionerCredential'; Model = $BeforeModel }
+        # DEMO: intentionally vulnerable (Friday talk). See docs/ARCHITECTURE.md#security-demo.
+        # The "contained" run: the same naive prompt and model, held by the owner credential and its gate.
+        @{ Label = 'v0-owner';        Prompt = 'v0'; Credential = 'Mcp:OwnerCredential';        Model = $BeforeModel }
     )
 
     $versions = @{}

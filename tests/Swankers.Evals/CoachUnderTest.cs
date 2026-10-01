@@ -32,6 +32,9 @@ public sealed class CoachUnderTest : IAsyncDisposable
 
     public AIProjectClient Project { get; }
 
+    /// <summary>The in-process league behind the tools, for reading state through the demo REST API.</summary>
+    public McpServerUnderTest League => _league;
+
     public static string RepoRoot => McpServerUnderTest.RepoRoot;
 
     public static async Task<CoachUnderTest> StartAsync(string promptVersion, string projectEndpoint, string modelDeployment, CancellationToken ct)

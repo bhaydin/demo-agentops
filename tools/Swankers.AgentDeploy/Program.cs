@@ -88,7 +88,7 @@ try
             var version = line.Optional("version")
                 ?? (label is not null
                     ? AgentDeployer.ResolveLabel((await deployer.ListVersionsAsync(ct)).Select(AgentDeployer.ToStageVersion), label)
-                    : throw new InvalidOperationException("route needs --version <n> or --label <stage> (v1-owner, v2-owner, v0-commissioner)."));
+                    : throw new InvalidOperationException("route needs --version <n> or --label <stage> (v1-owner, v2-owner, v0-commissioner, v0-owner)."));
             await deployer.RouteAsync(version, ct);
             Console.WriteLine($"Endpoint now routes 100% to {agentName} v{version}{(label is null ? "" : $" ({label})")}.");
             Console.WriteLine($"version={version}");
