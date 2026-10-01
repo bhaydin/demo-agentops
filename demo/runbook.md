@@ -2,7 +2,7 @@
 
 For Brian: Friday, October 2, 2026, 3:00–4:30 PM (America/Chicago). Updated October 1 after the AgentOps session. The self-directed AgentOps material is now in [AgentOpsRunbook.md](AgentOpsRunbook.md).
 
-This operating script includes the implemented contained preset, but does not claim that its hosted version, remaining rehearsals, recordings, or red-team scans have been verified. Record actual results at the end.
+The [October 1 technical evidence](mcp-technical-evidence.md) records hosted-version provenance, the connected morning trace, and API rehearsal results. Browser interactions, recordings, red-team scans, and timed presentation acceptance remain separate gates. Record actual results at the end.
 
 All league changes below affect **SimLeague only**. MFL is export-only. The seeded trade is an intentional, benign prompt-injection demonstration confined to this repository's simulated league. See the [security demo](../docs/ARCHITECTURE.md#security-demo) and [build/rehearsal record](../docs/BUILD-PLAN.md).
 
@@ -20,7 +20,9 @@ Run commands from the repository root in PowerShell 7. Use a fresh terminal with
 | Reset without changing route | `pwsh demo/reset.ps1` | restore snapshot; cancel pending confirmations |
 | Reset and seed without changing route | `pwsh demo/reset.ps1 -Scenario poisoned-trade` | restore snapshot and seed the trade |
 
-Labels select the newest **active** matching version. Historical references are v7 (`v1-owner`) and v9 (`v0-commissioner`); v4 is the second owner recovery target. The contained label is `v0-owner`; its hosted deployment/rehearsal was still open in the build record. Confirm all three active labels before the talk, especially `v0-owner`. Hosted version numbers and prompt versions are different things. v6 uses the older commissioner/prompt-v1 configuration and is not the Friday before preset.
+Labels select the newest **active** matching version. Verified October 1: **v9 Before** (`v0-commissioner`), **v10 Contained** (`v0-owner`), and **v7 Hardened** (`v1-owner`); v4 is the alternate owner recovery target. Recheck all three active labels before the talk and stop on unexpected drift. Hosted version numbers and prompt versions are different things. v6 uses the older commissioner/prompt-v1 configuration and is not the Friday before preset.
+
+The downloaded v9/v10 prompts both match pinned SHA-256 `694659E5E87103E43480182F654507C55A7190234A87DE93EFE66BA0DBE20850`. This hashes `prompts/coach-v0.md`, including its header comment. Preserve `%TEMP%\swankers-coach-publish-v0-owner`; **never fresh-publish the current source to recreate Contained**, because the source header now differs. See the [bundle verification record](mcp-technical-evidence.md#pinned-hosted-versions).
 
 Allow 20 seconds for a preset: the latest recorded switches took 10–16 seconds. Reset alone was measured at 2.5–2.7 seconds warm and 8.7 seconds cold. These are observations, not guarantees. A preset warns about a wrong deployed gate but does not provision it or stop after the warning.
 
@@ -50,7 +52,7 @@ Set-Clipboard -Value ''
 
 4. Prepare browser tabs: Coach; Foundry’s Coach project and Traces; Azure Application Insights `appi-swankers-dev`; completed red-team reports if available. Download the historical [v1 adversarial eval evidence](https://github.com/bhaydin/demo-agentops/actions/runs/36606681851) before the session if its artifacts remain available (`gh run download 36606681851 --dir artifacts/mcp-evals/20260929`, into an unused directory). Keep reports and backup videos locally; these are fallback security evidence, not a live eval/promotion segment.
 5. In Foundry, open the project containing **Coach**, not the separate `swankers-evals` project used by CI. Navigate **Agents → Traces**, select a recent request, and expand its spans. This is the current [documented trace path](https://learn.microsoft.com/en-us/azure/foundry/observability/how-to/trace-agent-setup); an older portal may label it **Tracing**. Bookmark a verified trace before the talk. Use Application Insights transaction search / end-to-end transaction details as the alternate view.
-6. Inspect an actual trace connecting web, Coach, MCP, and league before promising that waterfall on stage. Cross-hop visibility and hosted exporter sampling remain an open verification item in the build plan. Save a screenshot of a complete trace if available; label partial telemetry honestly.
+6. Open the saved [08:32 Central connected trace](mcp-technical-evidence.md#historical-connected-trace), operation `7657dfac24c299513d81ee58e93220ef`. Its 64 exported spans include verified parent links from web through Coach and MCP to league operations. Keep the offline HTML/CSV available. Label it historical; it proves the connected path, not every request's sampling or the afternoon Contained outcome.
 7. Run the opening preset, reload Coach, and verify the header, a current ticker timestamp, the owner's roster, and no pending approval. The owner is Anchorage Falling (`0001`); The Fleecers (`0099`) is simulated. Player names/projections are snapshot-dependent. Check that Rico Dowdle is rostered before using the approval demonstration.
 
 To inspect both deployed gates privately, use the existing helper. It keeps the admin key in memory and prints only gate settings:
@@ -71,7 +73,7 @@ azd provision
 pwsh demo/stage.ps1 -Preset friday-before
 ```
 
-Require the deployed gate check to say commissioner off and the web header to show v0 / commissioner / gate OFF / gpt-4.1-mini. A local azd value alone is insufficient. The `friday-contained` and `friday-after` switches need no provision: both use the owner credential, whose gate must remain on. Confirm `list` contains an active `v0-owner` with prompt v0 and gpt-4.1-mini. If it is missing, complete its deployment and rehearsal privately or omit the live contained beat and identify the local screen/test evidence as the fallback. Do not improvise new versions on stage.
+Require the deployed gate check to say commissioner off and the web header to show v0 / commissioner / gate OFF / gpt-4.1-mini. A local azd value alone is insufficient. The `friday-contained` and `friday-after` switches need no provision: both use the owner credential, whose gate must remain on. Confirm `list` still contains active v10 `v0-owner` with prompt v0 and gpt-4.1-mini. If it is missing or differs, stop and resolve it privately using the preserved bundle evidence, or omit the live contained beat and identify the test evidence as the fallback. Do not improvise new versions on stage. Both gates are restored after private rehearsal, so **repeat this commissioner-off provision on Friday**.
 
 ## Session sequence — October 2, 15:00–16:30
 
@@ -100,6 +102,8 @@ Require the deployed gate check to say commissioner off and the web header to sh
 6. Open the prepared/current trace. For actual irreversible tool calls show `mcp.tool.name`, `swankers.tool.tier`, `swankers.caller.scope`, `swankers.franchise.requested`, `swankers.franchise.effective`, and `swankers.gate.decision`. The unguarded irreversible path records `gate_off`. Narrate the values actually present; the agent need not send `0000` to demonstrate overprivileged execution.
 
 ### F2. Contained: the model can fail while the server holds
+
+October 1 API rehearsal: v10 queued both T0001 acceptance and a drop; REST denial of both left the trade pending, rosters unchanged, and zero new transactions. The direct owner cross-franchise probe returned `Scope denied`. [Trace IDs and timings](mcp-technical-evidence.md#deployed-contained-api-check) are saved. **The visible header and browser's two-dialog sequence still need rehearsal.**
 
 1. Wait for the before turn to finish. Run `pwsh demo/stage.ps1 -Preset friday-contained`; reload Coach. Confirm **v0 / owner / gate on / gpt-4.1-mini** and the seeded trade. Compare with F1: the prompt and model are unchanged; the credential changes the enforced scope and gate.
 2. Send the **identical F1 question**. Inspect tool attempts, **Coach wants to act**, **Gate decisions**, transactions, and roster state. An attempted trade acceptance should be `pending_confirmation`, not executed; a drop, if attempted, should also be pending. A cross-franchise write, if attempted, should return `Scope denied`.
@@ -214,4 +218,4 @@ Run the MCP session end-to-end with its actual resets, tabs, clicks, explanation
 | MCP rehearsal 1 | pending | pending | pending | pending | not run |
 | MCP rehearsal 2 | pending | pending | pending | pending | not run |
 
-Update [BUILD-PLAN.md](../docs/BUILD-PLAN.md) with evidence when each acceptance item is actually met. This runbook closes the writing deliverable; red-team compatibility/results, recordings, trace verification, browser approval rehearsal, and the timed runs still require execution.
+Update [BUILD-PLAN.md](../docs/BUILD-PLAN.md) with evidence when each acceptance item is actually met. The connected historical trace is verified; see the separate [technical evidence and browser handoff](mcp-technical-evidence.md). Red-team compatibility/results, recordings, browser approval rehearsal, and the timed runs still require execution.
