@@ -41,7 +41,7 @@ Owner: Codex (maintainer-approved execution; browser rehearsal and recordings re
 - [x] Verify commissioner-off/owner-on configuration and rehearse deployed Contained via APIs.
 - [x] Verify cross-franchise denial and all pending-confirmation outcomes.
 - [x] Restore v1-owner, both gates on, reset league, and no pending confirmations.
-- [ ] Publish evidence and the runbook/attendee-guide documentation PR.
+- [x] Publish evidence and the runbook/attendee-guide documentation PR: [PR #3](https://github.com/bhaydin/demo-agentops/pull/3).
 
 Evidence: [October 1 MCP technical preparation](../demo/mcp-technical-evidence.md).
 The deployed v9/v10 ZIP download verifies identical pinned v0 prompt bytes; v10's
