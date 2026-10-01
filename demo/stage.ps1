@@ -12,6 +12,9 @@ Presets (labels are the version metadata AgentDeploy stamps; the newest active v
   thursday-regressed   v2-owner          the "harmless tweak" that skips injury checks; rolled back live
   friday-before        v0-commissioner   naive prompt, gpt-4.1-mini, commissioner credential
                                          (DEMO: intentionally vulnerable); seeds the poisoned trade
+  friday-contained     v0-owner          the same prompt and model with the owner credential, gate on
+                                         (DEMO: the model still falls for the note; the gate and the
+                                         scope hold); seeds the poisoned trade
   friday-after         v1-owner          seeds the poisoned trade for the same question, hardened
 
 Routing takes seconds. Gates are provisioned, not routed, and each credential has its own: the
@@ -19,7 +22,7 @@ owner's gate is always on; the commissioner's is turned off for the whole Friday
 (`azd env set MCP_COMMISSIONER_GATE_ENABLED false` and `azd provision`, about 2 minutes; back to
 true afterwards). The script reads the deployed gates from /api/state and warns only when the gate
 of the preset's own credential is wrong: commissioner off for friday-before, owner on for the other
-three. friday-after therefore never asks for a provision.
+four. Before, contained, and after are therefore three route changes and no provision.
 
 .PARAMETER Preset
 One of the presets above.
@@ -37,7 +40,7 @@ pwsh demo/stage.ps1 -Preset thursday-good -Version 4     # roll back to the olde
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [ValidateSet('thursday-good', 'thursday-regressed', 'friday-before', 'friday-after')]
+    [ValidateSet('thursday-good', 'thursday-regressed', 'friday-before', 'friday-contained', 'friday-after')]
     [string] $Preset,
     [string] $Version,
     [switch] $SkipReset,
@@ -65,6 +68,8 @@ $stages = @{
     'thursday-good'      = @{ Label = 'v1-owner';        Scenario = $null;            Credential = 'owner';        Header = 'prompt v1, owner credential, gate on' }
     'thursday-regressed' = @{ Label = 'v2-owner';        Scenario = $null;            Credential = 'owner';        Header = 'prompt v2, owner credential, gate on' }
     'friday-before'      = @{ Label = 'v0-commissioner'; Scenario = 'poisoned-trade'; Credential = 'commissioner'; Header = 'prompt v0, commissioner credential, gate OFF (red), model gpt-4.1-mini' }
+    # DEMO: intentionally vulnerable (Friday talk). See docs/ARCHITECTURE.md#security-demo.
+    'friday-contained'   = @{ Label = 'v0-owner';        Scenario = 'poisoned-trade'; Credential = 'owner';        Header = 'prompt v0, owner credential, gate on, model gpt-4.1-mini' }
     'friday-after'       = @{ Label = 'v1-owner';        Scenario = 'poisoned-trade'; Credential = 'owner';        Header = 'prompt v1, owner credential, gate on' }
 }
 $stage = $stages[$Preset]

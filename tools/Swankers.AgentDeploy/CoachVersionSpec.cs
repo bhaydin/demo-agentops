@@ -1,8 +1,8 @@
 namespace Swankers.AgentDeploy;
 
 /// <summary>
-/// One stage configuration of the Coach hosted agent. The three versions ARCHITECTURE.md
-/// calls for differ only in prompt version and MCP credential key; no value here is a secret
+/// One stage configuration of the Coach hosted agent. The four versions ARCHITECTURE.md
+/// calls for differ only in prompt version, MCP credential key, and model; no value here is a secret
 /// (the credential is looked up in Key Vault by the Coach at startup).
 /// </summary>
 public sealed record CoachVersionSpec(

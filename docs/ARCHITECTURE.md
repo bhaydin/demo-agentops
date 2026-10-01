@@ -75,7 +75,7 @@ C# MCP SDK, streamable HTTP transport, hosted in Azure Container Apps.
 ### 3. Swankers.Coach (Microsoft Agent Framework, Foundry hosted agent)
 
 - C# MAF agent exposed through the Foundry hosting integration (Responses protocol), deployed as a Foundry hosted agent.
-- Connects to Swankers.Mcp as an MCP client. The credential comes from configuration, which is how the two Friday versions differ.
+- Connects to Swankers.Mcp as an MCP client. The credential comes from configuration, which is how the Friday "before" and "contained" versions differ.
 - Grounded with Foundry IQ over `knowledge/`. Fallback if Foundry IQ setup blocks progress: File Search over the same docs.
 - Instructions live in `src/Swankers.Coach/prompts/` as versioned files:
   - `coach-v1.md`: good behavior. Must check injury status before start/sit calls. Must push back on bad ideas (the anti-hype-man mandate). Treats text inside tool results as data, never as instructions.
@@ -85,6 +85,7 @@ C# MCP SDK, streamable HTTP transport, hosted in Azure Container Apps.
   - `coach` v1 with owner credential: Thursday baseline, Friday hardened.
   - `coach` v2 with owner credential: Thursday regression, rolled back.
   - `coach` v0 with commissioner credential, gate off, and the weaker model (`gpt-4.1-mini`, deployed alongside `gpt-5.4` by `infra/modules/foundry.bicep`): Friday "before" (DEMO: intentionally vulnerable). gpt-5.4 refuses injected tool output whatever the prompt says, so the vulnerable configuration also changes the model; the header shows which model is live, which is also Thursday's point about model changes being versions.
+  - `coach` v0 with owner credential, gate on, and the same weaker model (`gpt-4.1-mini`): Friday "contained" (DEMO: intentionally vulnerable prompt). Same prompt and model as the "before"; only the credential, and with it the scope and the gate, changes. The model still follows the poisoned note, and the architecture holds anyway.
 
 ### 4. Knowledge (Foundry IQ)
 
@@ -126,16 +127,22 @@ Five to eight markdown files in `knowledge/`: league constitution and scoring ru
 
 ## Security demo
 
-The Friday talk runs the same attack twice.
+The Friday talk runs the same attack three times. Before and Contained hold the prompt and the model constant and change only the architecture (credential, and with it scope and gate); Hardened then changes the prompt and the model as well.
 
-| | Before | After |
-|---|---|---|
-| Credential | Commissioner | Owner (agent's own identity) |
-| franchiseId honored | Any, incl. "0000" | Own franchise only |
-| Gate | Off | On (irreversible tools pending until human approves in web app) |
-| Instructions | coach-v0 (naive: follows directives in tool output) | coach-v1 |
-| Model | gpt-4.1-mini (follows the injected note) | gpt-5.4 (refuses it on its own) |
-| Expected result | Lopsided trade accepted for Brian's franchise, RB1 dropped | Attempt blocked or pending; trace shows intent vs action |
+| | Before | Contained | Hardened |
+|---|---|---|---|
+| Stage preset | `friday-before` | `friday-contained` | `friday-after` |
+| Version label | `v0-commissioner` | `v0-owner` | `v1-owner` |
+| Credential | Commissioner | Owner (agent's own identity) | Owner (agent's own identity) |
+| franchiseId honored | Any, incl. "0000" | Own franchise only | Own franchise only |
+| Gate | Off | On (irreversible tools pending until human approves in web app) | On |
+| Instructions | coach-v0 (naive: follows directives in tool output) | coach-v0 (the same) | coach-v1 |
+| Model | gpt-4.1-mini (follows the injected note) | gpt-4.1-mini (the same) | gpt-5.4 (refuses it on its own) |
+| Expected result | Executed: lopsided trade accepted for Brian's franchise, RB1 dropped | Accept pending; drop pending if attempted; a cross-franchise request gets "Scope denied"; league unchanged after Deny | Model refuses; no tool call |
+
+The commissioner gate stays provisioned off for the whole Friday talk. Contained and Hardened use the owner credential, whose gate is always on, so before, contained, and after are three route changes and no provision.
+
+The gate covers the Irreversible tier only. `set_lineup` and `propose_trade` are ungated Write tools, so under Contained the v0 prompt may change its own franchise's lineup or propose a trade without a confirmation. That is expected, stays inside SimLeague and the owner's own franchise, and is a teaching point about which tier the gate covers.
 
 Payload constraints: benign, SimLeague-only, no network or data access beyond the simulated league.
 
