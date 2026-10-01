@@ -6,6 +6,34 @@ Claim a phase by writing your agent name after "Owner:".
 
 Priority if time runs short: evals and the reset script are never cut. The web app degrades to the Foundry playground plus the ticker endpoint.
 
+## Public repository authorization gates (2026-10-01)
+Owner: Codex (maintainer-requested security task; independent of the open rehearsal gate)
+
+- [x] Enforce pull requests, maintainer review, and passing build checks on `main`.
+- [x] Restrict Azure CI identities to approved, main-only GitHub environments.
+- [x] Harden workflows and record verification and maintainer operating instructions.
+
+**Gate: implementation complete; source changes await maintainer PR review.** Live GitHub
+rulesets [required checks/history](https://github.com/bhaydin/demo-agentops/rules/24317586)
+and [maintainer review](https://github.com/bhaydin/demo-agentops/rules/24317587) are active.
+The first has no bypass; the second permits the sole administrator to bypass review only
+through a PR (GitHub forbids author self-approval). `evals` and `foundry` both require
+@bhaydin's approval, allow only branch `main`, and disable environment admin bypass.
+All external fork workflows need approval; Actions defaults are read-only, cannot approve
+PRs, and require full action SHAs. Settings were reapplied and read back successfully.
+
+Azure readback confirms that both CI applications trust only their respective environment
+subjects (classic and ID-qualified forms), with no passwords/certificates. Removed all four
+old eval main/PR federations; moved the eval client ID into the protected `evals` environment.
+No application deployment, agent routing change, or model call was performed. Older eval
+workflow revisions now fail authentication until the main-only workflow is merged.
+
+**Validation:** locked restore; Release build with 0 warnings/errors; all 201 model-free
+tests pass (61 League, 37 Mcp, 18 Coach, 23 Web, 26 AgentDeploy, 36 Evals), with two live tests
+skipped. actionlint 1.7.12 validates both workflows; both PowerShell scripts parse and
+`git diff --check` passes. The next cloud run still needs maintainer approval after merge.
+See [repository authorization](REPOSITORY-SECURITY.md) for operation and trust boundaries.
+
 ---
 
 ## Phase 0: Repository scaffold (Sun Sep 27)

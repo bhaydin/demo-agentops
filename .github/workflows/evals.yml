@@ -2,7 +2,7 @@
 # prompt version with the real model, one job per version, so a run shows v1 green and v2 red
 # side by side. With `promote: true` a green version is deployed as a new hosted agent version
 # and routed to, after approval in the `foundry` environment. Auth is GitHub OIDC (no stored
-# secrets, infra/ci-identity.ps1): eval jobs run pull-request code as swankers-ci-evals, whose
+# secrets, infra/ci-identity.ps1): approved main-only eval jobs run as swankers-ci-evals, whose
 # roles are Foundry User on the separate `swankers-evals` project and Cognitive Services OpenAI
 # User on the account (the cloud graders' model calls; no agent actions), so it can call models
 # and run cloud evaluations but cannot touch the coach project's hosted agent; only the promote
@@ -22,14 +22,8 @@ on:
       promote_version:
         description: "Version to promote when promote is true"
         default: "v1"
-  pull_request:
-    paths:
-      - "src/Swankers.Coach/prompts/**"
-      - "knowledge/**"
-      - "tests/Swankers.Evals/**"
 
 permissions:
-  id-token: write
   contents: read
 
 concurrency:
@@ -42,6 +36,8 @@ env:
 
 jobs:
   versions:
+    # Cloud credentials are never made available to a PR, tag, or feature branch.
+    if: github.repository == 'bhaydin/demo-agentops' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set.outputs.matrix }}
@@ -56,6 +52,10 @@ jobs:
     name: evals (${{ matrix.version }})
     runs-on: ubuntu-latest
     timeout-minutes: 40
+    environment: evals
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -79,7 +79,7 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      # The identity that runs (pull-request) code here must not be able to create or route
+      # The identity that runs evaluated code here must not be able to create or route
       # hosted agent versions in the coach project. A create with an empty body answers 403
       # without access and 400 (validation) with it; anything but 403 fails the job.
       - name: Verify the evals identity cannot write agents in the coach project
@@ -117,12 +117,15 @@ jobs:
 
   promote:
     needs: evals
-    if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.promote }}
+    if: ${{ !cancelled() && github.repository == 'bhaydin/demo-agentops' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && inputs.promote && (needs.evals.result == 'success' || needs.evals.result == 'failure') }}
     # `inputs` is not available when rendering job names, so the version is logged in the steps.
     name: promote
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: foundry
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

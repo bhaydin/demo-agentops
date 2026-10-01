@@ -6,9 +6,9 @@ GitHub OIDC federated credentials (no secrets), least-privilege roles on the sha
 account, and the repository secrets, variables, and protected environment the workflow reads.
 
 .DESCRIPTION
-Two identities, because eval jobs run pull-request code (Codex Phase 5 P1):
+Two identities with separate protected, main-only environments:
 
-  swankers-ci-evals   main + pull requests   Foundry User scoped to the evals project only
+  swankers-ci-evals   environment:evals      Foundry User scoped to the evals project only
                                              (swankers-evals): model calls and cloud
                                              evaluations there; no access to the coach project
                                              or its hosted agent. Scope, not data actions,
@@ -39,6 +39,7 @@ param(
     [string] $FoundryAccount = 'foundry-swankers-vxzd',
     [string] $EvalsProject = 'swankers-evals',
     [string] $Environment = 'foundry',
+    [string] $EvalsEnvironment = 'evals',
     [string] $RetiredRoleName = 'Swankers Evals Runner'
 )
 
@@ -74,13 +75,28 @@ function Ensure-App {
 function Ensure-FederatedCredentials {
     param($App, [hashtable] $Subjects)
     $existing = (Invoke-Az @('ad', 'app', 'federated-credential', 'list', '--id', $App.id, '-o', 'json')) | ConvertFrom-Json
+    # These dedicated CI applications must not retain older main/pull_request trust.
+    # Client IDs are public identifiers; hiding them in secrets is not an access boundary.
+    foreach ($credential in $existing) {
+        if ($credential.subject -notin $Subjects.Values -or
+            $credential.issuer -ne 'https://token.actions.githubusercontent.com' -or
+            @($credential.audiences).Count -ne 1 -or
+            $credential.audiences[0] -ne 'api://AzureADTokenExchange') {
+            Write-Host "  removing obsolete credential $($credential.name)"
+            Invoke-Az @('ad', 'app', 'federated-credential', 'delete', '--id', $App.id,
+                '--federated-credential-id', $credential.id) | Out-Null
+        }
+    }
+    $existing = (Invoke-Az @('ad', 'app', 'federated-credential', 'list', '--id', $App.id, '-o', 'json')) | ConvertFrom-Json
     foreach ($name in $Subjects.Keys) {
         if ($existing | Where-Object { $_.subject -eq $Subjects[$name] }) { Write-Host "  credential exists: $($Subjects[$name])"; continue }
         $file = New-TemporaryFile
-        @{ name = $name; issuer = 'https://token.actions.githubusercontent.com'; subject = $Subjects[$name]; audiences = @('api://AzureADTokenExchange') } | ConvertTo-Json | Set-Content $file
-        Write-Host "  adding credential $($Subjects[$name])"
-        Invoke-Az @('ad', 'app', 'federated-credential', 'create', '--id', $App.id, '--parameters', "@$file") | Out-Null
-        Remove-Item $file -Force
+        try {
+            @{ name = $name; issuer = 'https://token.actions.githubusercontent.com'; subject = $Subjects[$name]; audiences = @('api://AzureADTokenExchange') } | ConvertTo-Json | Set-Content $file
+            Write-Host "  adding credential $($Subjects[$name])"
+            Invoke-Az @('ad', 'app', 'federated-credential', 'create', '--id', $App.id, '--parameters', "@$file") | Out-Null
+        }
+        finally { Remove-Item -LiteralPath $file -Force }
     }
 }
 
@@ -94,13 +110,15 @@ $repoForms = @($Repo, "$($repoInfo.owner)@$($repoInfo.ownerId)/$($repoInfo.name)
 $evalsProjectScope = "$accountScope/projects/$EvalsProject"
 Invoke-Az @('resource', 'show', '--ids', $evalsProjectScope, '--query', 'name', '-o', 'tsv') | Out-Null
 
-# Evals identity: main branch and pull requests; never the deployment environment.
+# Secure GitHub before enabling either environment's Azure trust.
+& "$PSScriptRoot/github-security.ps1" -Repo $Repo -Environment $Environment -EvalsEnvironment $EvalsEnvironment
+
+# Evals identity: only approved main jobs in its own environment; never PR subjects.
 $evals = Ensure-App $EvalsAppName
 $evalsSubjects = @{}
 for ($i = 0; $i -lt $repoForms.Count; $i++) {
     $suffix = if ($i -eq 0) { '' } else { '-ids' }
-    $evalsSubjects["github-main$suffix"] = "repo:$($repoForms[$i]):ref:refs/heads/main"
-    $evalsSubjects["github-pull-request$suffix"] = "repo:$($repoForms[$i]):pull_request"
+    $evalsSubjects["github-env-$EvalsEnvironment$suffix"] = "repo:$($repoForms[$i]):environment:$EvalsEnvironment"
 }
 Ensure-FederatedCredentials $evals.App $evalsSubjects
 Write-Host "Assigning Foundry User to $EvalsAppName on project $EvalsProject only"
@@ -143,14 +161,15 @@ if ($retired -and $retired.displayName -eq $RetiredAppName) {
     Invoke-Az @('ad', 'app', 'delete', '--id', $retired.id) | Out-Null
 }
 
-# Protected environment first (the deploy client id lives there), then secrets and variables.
-$me = gh api user --jq .id
-$body = New-TemporaryFile
-@{ reviewers = @(@{ type = 'User'; id = [int]$me }) } | ConvertTo-Json -Depth 3 | Set-Content $body
-gh api -X PUT "repos/$Repo/environments/$Environment" --input $body | Out-Null
-Remove-Item $body -Force
-
-gh secret set AZURE_CLIENT_ID --repo $Repo --body $evals.App.appId
+# Environments were protected above; never overwrite those rules with review-only settings.
+gh secret set AZURE_CLIENT_ID --repo $Repo --env $EvalsEnvironment --body $evals.App.appId
+if ($LASTEXITCODE -ne 0) { throw 'Could not set the eval environment client ID.' }
+$repoSecrets = gh secret list --repo $Repo --json name | ConvertFrom-Json
+if ($LASTEXITCODE -ne 0) { throw 'Could not list repository secret names.' }
+if ($repoSecrets.name -contains 'AZURE_CLIENT_ID') {
+    gh secret delete AZURE_CLIENT_ID --repo $Repo
+    if ($LASTEXITCODE -ne 0) { throw 'Could not remove the obsolete repository client ID.' }
+}
 gh secret set AZURE_TENANT_ID --repo $Repo --body $tenant
 gh secret set AZURE_SUBSCRIPTION_ID --repo $Repo --body $subscription
 gh secret set AZURE_DEPLOY_CLIENT_ID --repo $Repo --env $Environment --body $deploy.App.appId
