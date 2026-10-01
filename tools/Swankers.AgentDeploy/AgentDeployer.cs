@@ -174,7 +174,7 @@ public sealed class AgentDeployer
             .OrderByDescending(rule => rule.TrafficPercentage)
             .FirstOrDefault()?.AgentVersion;
 
-    /// <summary>A version, the stage label its metadata carries (v1-owner, v2-owner, v0-commissioner), and its provisioning status.</summary>
+    /// <summary>A version, the stage label its metadata carries (v1-owner, v2-owner, v0-commissioner, v0-owner), and its provisioning status.</summary>
     public sealed record StageVersion(string Version, string? Stage, string? Status)
     {
         public bool IsActive => string.Equals(Status, "Active", StringComparison.OrdinalIgnoreCase);

@@ -8,7 +8,7 @@ Every `create` makes a new immutable version. The agent endpoint routes 100% of 
 one version at a time; `route` moves it. That is the Thursday rollback.
 
 ```
-pwsh tools/Swankers.AgentDeploy/deploy-coach.ps1        # all three stage versions, routed to v1-owner
+pwsh tools/Swankers.AgentDeploy/deploy-coach.ps1        # all four stage versions, routed to v1-owner
 
 dotnet run --project tools/Swankers.AgentDeploy -- list
 dotnet run --project tools/Swankers.AgentDeploy -- route --version 2      # e.g. switch to v2-owner
@@ -26,6 +26,7 @@ writes Windows separators into the entry names, so the hosted container cannot f
 | `v1-owner` | `v1` | `Mcp:OwnerCredential` | Default; Friday "after" |
 | `v2-owner` | `v2` | `Mcp:OwnerCredential` | Thursday regression and rollback |
 | `v0-commissioner` | `v0` | `Mcp:CommissionerCredential` | Friday "before" (DEMO: intentionally vulnerable): the naive prompt on the weaker model (`--model gpt-4.1-mini`, `deploy-coach.ps1 -BeforeModel`), with the commissioner credential and the gate off. gpt-5.4 refuses injected tool output whatever the prompt; gpt-4.1-mini accepts the trade and drops a player |
+| `v0-owner` | `v0` | `Mcp:OwnerCredential` | Friday "contained" (DEMO: intentionally vulnerable prompt): the same naive prompt and model as the "before" (`--model gpt-4.1-mini`), with the owner credential, so own-franchise scope and the gate on. The model still follows the note; the accept and the drop come back `pending_confirmation` and a cross-franchise request is "Scope denied" |
 
 The publish output goes to `<temp>/swankers-coach-publish` by default: `dotnet publish -o`
 cannot take a path containing `,` or `;` (MSBuild splits property values there), and this

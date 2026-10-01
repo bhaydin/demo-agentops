@@ -14,6 +14,7 @@ Reads use real league data from MFL export requests. Writes only ever go to a si
 - [AGENTS.md](AGENTS.md): rules for anyone (human or AI agent) changing this repo
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): the locked architecture
 - [docs/BUILD-PLAN.md](docs/BUILD-PLAN.md): phases, status, and verified package versions
+- [demo/runbook.md](demo/runbook.md): both talks' stage steps, exact questions, recovery paths, and rehearsal checklist
 
 ## Build and test
 
@@ -61,7 +62,7 @@ Two steps: `azd up` for the Container Apps services, then the Coach hosted agent
 azd env new swankers-dev --location northcentralus
 azd env set AZURE_TAG_PRIMARY_OWNER <you@example.com>     # policy tags; Client and ExpectedDeleteDate have defaults
 azd up                                                     # rg-swankers-dev: Log Analytics, App Insights, ACR, Container Apps (mcp, web)
-pwsh tools/Swankers.AgentDeploy/deploy-coach.ps1           # Coach versions v1-owner, v2-owner, v0-commissioner (on gpt-4.1-mini); routed to v1-owner
+pwsh tools/Swankers.AgentDeploy/deploy-coach.ps1           # Coach versions v1-owner, v2-owner, v0-commissioner and v0-owner (both on gpt-4.1-mini); routed to v1-owner
 ```
 
 - Images are built in the environment's Container Registry (`remoteBuild`), so no local Docker is needed.
@@ -70,7 +71,7 @@ pwsh tools/Swankers.AgentDeploy/deploy-coach.ps1           # Coach versions v1-o
 - Friday "before" (DEMO, intentionally vulnerable): `azd env set MCP_COMMISSIONER_GATE_ENABLED false` and `azd provision` turn the gate off for commissioner-credential calls; the hardened default is on. The web app's header shows the gate state and the routed version, so the audience sees which configuration is live.
 - The web app (`WEB_URL`) reaches the Coach through its agent endpoint and the MCP server through `Mcp__BaseUrl`, both set by Bicep; its identity holds Foundry User on the account and Key Vault Secrets User for the demo admin key and the presenter key (`Web--PresenterKey`, created once by the maintainer). Anyone else who finds the URL gets the sign-in page and nothing more.
 - Traces: `appi-swankers-dev` in Application Insights and the Foundry project's Tracing page (the project is connected to the same resource).
-- Stage scripts: `pwsh demo/reset.ps1 [-Scenario poisoned-trade]` restores SimLeague (about a second, plus the Key Vault read); `pwsh demo/stage.ps1 -Preset thursday-good|thursday-regressed|friday-before|friday-after` routes the Coach by stage label (`AgentDeploy route --label`), resets, and seeds what the preset needs. The commissioner gate flag is provisioned, not routed; the script warns when it does not match the preset.
+- Stage scripts: `pwsh demo/reset.ps1 [-Scenario poisoned-trade]` restores SimLeague (about a second, plus the Key Vault read); `pwsh demo/stage.ps1 -Preset thursday-good|thursday-regressed|friday-before|friday-contained|friday-after` routes the Coach by stage label (`AgentDeploy route --label`), resets, and seeds what the preset needs. The commissioner gate flag is provisioned, not routed; the script warns when it does not match the preset.
 - `azd down` removes only `rg-swankers-dev`; the vault, the Foundry account, and the model deployment stay.
 
 ## Evals

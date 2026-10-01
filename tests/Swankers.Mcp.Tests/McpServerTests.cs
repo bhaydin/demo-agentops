@@ -289,6 +289,20 @@ public class McpServerTests
         var accept = await CallAsync(owner, "respond_to_trade",
             new Dictionary<string, object?> { ["tradeId"] = Prop(offer, "id").GetString(), ["accept"] = true }, CT);
         Assert.Equal("pending_confirmation", Prop(accept, "status").GetString());
+
+        // Friday "contained": the parked accept has changed nothing, and Deny keeps it that way.
+        await AssertTradeStillPendingAsync();
+        var denied = await host.ResolveAsync(Prop(accept, "confirmationId").GetString()!, approve: false, CT);
+        Assert.False(Prop(denied, "approved").GetBoolean());
+        await AssertTradeStillPendingAsync();
+        Assert.Contains("1002", PlayerIds(await CallAsync(owner, "get_my_roster", null, CT)));
+
+        async Task AssertTradeStillPendingAsync()
+        {
+            var state = await host.Http().GetFromJsonAsync<JsonElement>("/api/state", CT);
+            Assert.DoesNotContain(Prop(state, "transactions").EnumerateArray(), t => Prop(t, "type").GetString() == "TradeAccepted");
+            Assert.Equal("Pending", Prop(Assert.Single(Prop(state, "pendingTrades").EnumerateArray()), "status").GetString());
+        }
     }
 
     [Fact]
