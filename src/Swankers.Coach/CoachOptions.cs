@@ -8,13 +8,22 @@ public sealed class CoachOptions
 {
     public const string SectionName = "Coach";
 
+    /// <summary>
+    /// Which scenario this process hosts: football (default) or workplace; see <see cref="CoachScenarios"/>.
+    /// The workplace scenario reads its own "Workplace" section and ignores the MCP and knowledge settings below.
+    /// </summary>
+    public string Scenario { get; set; } = CoachScenarios.Football;
+
     /// <summary>Foundry project endpoint, e.g. https://{account}.services.ai.azure.com/api/projects/{project}. Also read from FOUNDRY_PROJECT_ENDPOINT.</summary>
     public string ProjectEndpoint { get; set; } = "";
 
     /// <summary>Chat model deployment name. Also read from AZURE_AI_MODEL_DEPLOYMENT_NAME.</summary>
     public string ModelDeployment { get; set; } = "gpt-5.4";
 
-    /// <summary>Which prompts/coach-{version}.md to load: v1 (good) or v2 (the regressed tweak).</summary>
+    /// <summary>
+    /// Which prompts/coach-{version}.md to load: v1 (good) or v2 (the regressed tweak). In the
+    /// workplace scenario the same setting selects prompts/meetingprep-{version}.md.
+    /// </summary>
     public string PromptVersion { get; set; } = "v1";
 
     /// <summary>Streamable HTTP endpoint of Swankers.Mcp.</summary>

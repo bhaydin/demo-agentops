@@ -6,6 +6,395 @@ Claim a phase by writing your agent name after "Owner:".
 
 Priority if time runs short: evals and the reset script are never cut. The web app degrades to the Foundry playground plus the ticker endpoint.
 
+Next deadline: WI.NET talk, Wed Oct 7, 2026. Its plan is the workstream directly below. The Summit phases, their evidence, and their open rehearsal items further down are unchanged and do not block it.
+
+## WI.NET / WorkplaceMeetingPrep workstream (planned 2026-10-04)
+Owner: Claude Code for the planning pass (maintainer-requested 2026-10-04) and for W1's C# spike. The maintainer approved the architecture delta on 2026-10-04. Phases W2–W6 are unclaimed; claim one by writing your agent name on its Owner line.
+
+Talk: "Build, Trace, Test: Production-Grade AI Agents with .NET Microsoft Agent Framework", WI.NET, Wednesday October 7, 2026 ([abstract](https://www.meetup.com/wisconsin-net-users-group/events/313016779/)). The principle: **AgentOps is the reusable engineering foundation; Work IQ supplies context for a new business scenario.** `WorkplaceMeetingPrep` is a second scenario beside the football one, in the same repository and solution. Work IQ is its context-provider implementation, not a new identity for the repository.
+
+**Status (2026-10-05): W0 approved; W1 gate passed; W2 acceptance met and waiting at its review gate; W3 not started.** Real Work IQ retrieval works through the application's C# path: nine tagged corpus items with their references ([evidence](../demo/winet-workiq-evidence.md)). The workplace scenario starts with `Coach:Scenario=workplace` in Live or Replay, with its own local state and no Application Insights export. One Replay request has been answered by the agent on `gpt-5.4` (W2 record). No Work IQ result has reached a model, and the maintainer's review of the evidence file and allow-list comes before that. Unticked boxes are proposals or open work.
+
+| The talk must show | Covered by |
+|---|---|
+| A real C# Microsoft Agent Framework agent | The existing `CoachAgentFactory` and Foundry Responses host, reused (W2) |
+| Microsoft 365 context obtained through Work IQ | W1 gate (real retrieval), then the live provider in W2 |
+| OpenTelemetry visibility into agent execution and tool calls | The existing `OpenTelemetryAgent` wrapper and Aspire dashboard, plus a provider span (W2) |
+| Deterministic and model-based evaluation | W3 |
+| An intentional change, a meaningful regression, diagnosis, recovery | W4 |
+| A focused code walkthrough | W5 |
+| A2A and Microsoft.Extensions.AI evaluation | Talk-track exploration only; nothing is built (see Deferred scope) |
+
+### Current state and reuse assessment
+
+Inspected at `92ab4bc` on `main`, clean tree, 2026-10-04. Current code is the source of truth. Where `ARCHITECTURE.md` differs from what shipped (for example Foundry IQ grounding, which shipped as the in-process `search_league_knowledge` tool), this plan builds on what shipped.
+
+| Bucket | What | Where |
+|---|---|---|
+| Reuse unchanged | Agent construction and OpenTelemetry wrapper: `CoachAgentFactory.Create` already takes instructions and `AITool` instances and returns an `OpenTelemetryAgent` on source `Swankers.Coach` | [CoachAgentFactory.cs:17-42](../src/Swankers.Coach/CoachAgentFactory.cs#L17-L42), [CoachDiagnostics.cs](../src/Swankers.Coach/CoachDiagnostics.cs) |
+| Reuse unchanged | Responses host and trace pipeline (`AgentHost.CreateBuilder`, `AddFoundryResponses`, `MapFoundryResponses`, `ConfigureTracing`); local endpoint `http://localhost:8088/responses` | [Program.cs:80-89](../src/Swankers.Coach/Program.cs#L80-L89) |
+| Reuse unchanged | Foundry model authentication (`DefaultAzureCredential` behind `CachedTokenCredential`) | [CachedTokenCredential.cs](../src/Swankers.Coach/CachedTokenCredential.cs) |
+| Reuse unchanged | In-process tool pattern (`AIFunctionFactory.Create` with a stable snake_case name) | [KnowledgeSearch.cs:78-79](../src/Swankers.Coach/Knowledge/KnowledgeSearch.cs#L78-L79) |
+| Reuse unchanged | Tool-call correlation: calls paired with results by id, message positions, MCP result shapes | [ToolCalls.cs](../tests/Swankers.Evals/Evaluators/ToolCalls.cs) |
+| Reuse unchanged | Judge-as-delegate pattern and strict JSON verdict parsing | `CreateJudge` in [CoachUnderTest.cs](../tests/Swankers.Evals/CoachUnderTest.cs), `ParseVerdict` in [PushbackEvaluator.cs](../tests/Swankers.Evals/Evaluators/PushbackEvaluator.cs) |
+| Reuse unchanged | Opt-in pattern for model-backed runs that CI must never start | [ContainedScreen.cs](../tests/Swankers.Evals/ContainedScreen.cs) |
+| Reuse unchanged | Model-free CI: tests added to the existing test projects run in the existing steps | [build.yml](../.github/workflows/build.yml) |
+| Extend minimally | `CoachOptions` gains `Scenario`; `Program.cs` branches once at the composition root and keeps the football branch as it is today | [CoachOptions.cs](../src/Swankers.Coach/CoachOptions.cs), [Program.cs](../src/Swankers.Coach/Program.cs) |
+| Extend minimally | `CoachAgentFactory.Create` gains an optional `description` argument that defaults to today's constant | [CoachAgentFactory.cs:15](../src/Swankers.Coach/CoachAgentFactory.cs#L15) |
+| Extend minimally | `PromptLibrary` takes a file prefix per scenario; `coach-` stays the default | [PromptLibrary.cs:9](../src/Swankers.Coach/prompts/PromptLibrary.cs#L9) |
+| Add new | Context boundary, Work IQ source, fixture source, evidence record | `src/Swankers.Coach/Workplace/` |
+| Add new | Workplace instructions | `src/Swankers.Coach/prompts/meetingprep-v1.md`, `meetingprep-v2.md` |
+| Add new | Evidence fixture and corpus seed text | `data/workplace/` |
+| Add new | Workplace cases, evaluators, harness, report, settings | `tests/Swankers.Evals/Workplace/`, `tests/Swankers.Evals/workplace-golden/`, `tests/Swankers.Evals/workplace-evalsettings.json` |
+| Add new | Wednesday presenter runbook and Work IQ evidence record | `demo/WinetRunbook.md`, `demo/winet-workiq-evidence.md` |
+| Preserve, outside the workplace path | `McpToolSource`, `KnowledgeSearch` and `knowledge/`, `Swankers.League`, `Swankers.Mcp`, `SimLeague`, prompts v0/v1/v2, the golden set, `ToolSequenceEvaluator`, `PushbackEvaluator`, `RecommendationExtractor`, `EvalReport`, `EvalSettings`, `evalsettings.json`, `CoachUnderTest`, `McpServerUnderTest`, `evals.yml`, `Swankers.AgentDeploy` and the hosted versions, `stage.ps1`, `reset.ps1`, `Swankers.Web`, both existing runbooks, and every intentionally vulnerable path with its marker | unchanged |
+| Defer until after Wednesday | See Deferred scope | |
+
+### Coupling the plan has to cut
+
+Each item was checked against the checkout. None needs a rewrite; each needs one seam.
+
+1. **Startup requires the football stack.** [Program.cs](../src/Swankers.Coach/Program.cs) throws without an MCP credential (lines 40–46), requires knowledge documents (55–63), and connects to the league MCP server (66–68) before the agent exists.
+2. **Football identity strings.** `CoachAgentFactory.Description` is a football constant; `CoachOptions.AgentName` defaults to `Coach`.
+3. **`McpToolSource` is HTTP plus a bearer secret** ([McpToolSource.cs:22-27](../src/Swankers.Coach/Mcp/McpToolSource.cs#L22-L27)). Work IQ authentication is a delegated user sign-in; that class and its credential are not reused.
+4. **Prompt naming.** `PromptLibrary` hard-codes the `coach-` prefix, and [PromptLibraryTests.cs](../tests/Swankers.Coach.Tests/PromptLibraryTests.cs) asserts the shipped versions are exactly v0, v1, v2. Workplace prompts get their own prefix so that test stays true.
+5. **Golden set is football-shaped.** `GoldenSet.Load` reads every `golden/*.jsonl`; [GoldenSetTests.cs](../tests/Swankers.Evals/GoldenSetTests.cs) asserts 15–20 cases in four categories; `GoldenCase.Categories` and `EvalSettings.Load` require the four football categories. Workplace cases and settings live outside `golden/` and `evalsettings.json`.
+6. **Report paths drive promotion.** [EvalReport.cs](../tests/Swankers.Evals/EvalReport.cs) writes `artifacts/evals/coach-{version}-*.md` and `latest-{version}.json`, and the promote job in [evals.yml](../.github/workflows/evals.yml) reads `artifacts/evals/latest-$PROMOTE_VERSION.json`. Workplace reports go to `artifacts/evals/workplace/` under `meetingprep-` names and never write `latest-v1.json` or `latest-v2.json`.
+7. **The football gate runs whenever `FOUNDRY_PROJECT_ENDPOINT` is set** ([GoldenSetEvals.cs](../tests/Swankers.Evals/GoldenSetEvals.cs)), and `evals.yml` sets it. Workplace model-backed tests need their own explicit opt-in so the football CI job never runs them.
+8. **`CoachUnderTest.StartAsync` always boots Swankers.Mcp and the knowledge tool.** The workplace harness is a separate small class.
+9. **`ToolSequenceEvaluator` rules and `ActingTools` are football rules.** They are not applied to workplace cases; the acting-tool names join the workplace deny list.
+10. **Hosted versions carry no scenario** ([CoachVersionSpec.cs](../tools/Swankers.AgentDeploy/CoachVersionSpec.cs)). The default must stay football so existing versions and CI promotion behave as before. Workplace prompt files will ride along in future football bundles (the csproj ships `prompts\*.md`): inert, but the bundle bytes change.
+11. **`Swankers.Web` talks only to the hosted agent**, and [CoachConversation.cs](../src/Swankers.Web/Coach/CoachConversation.cs) resets on a routed-version change, not on a scenario change. The web app and `stage.ps1` presets stay outside the Wednesday path.
+12. **`data/demo/` is copied into the MCP image and is the seed path** ([Dockerfile](../src/Swankers.Mcp/Dockerfile)). The workplace fixture goes in `data/workplace/` instead.
+13. **Case-insensitive file system.** A code folder and a data folder must not differ only by case (decisions log, 2026-09-28), hence `Workplace/` for code and `workplace-golden/` for cases.
+
+### Architecture delta (approved by the maintainer, 2026-10-04)
+
+`docs/ARCHITECTURE.md` is locked and this plan does not edit it, nor `AGENTS.md` or `CLAUDE.md`. Work IQ is a new integration under a locked architecture, so the items below are an exception to it. The maintainer approved D1–D8 in chat on 2026-10-04 ("I approve of the architecture change"). The tenant, data-flow, and model-run approvals in the last two rows of the table below are separate and still open.
+
+- **D1. Scenario selection at startup.** `Coach:Scenario` is `football` (default) or `workplace`. Any other value fails startup and names the valid values. With `football`, behavior is what it is today.
+- **D2. One agent-facing tool for the workplace scenario: `get_engagement_evidence`.** It is implemented behind a small boundary, `IWorkplaceContextProvider`, with two implementations: `WorkIqContextProvider` (Live) and `FixtureContextProvider` (Replay). The model sees the same single read-only tool in both modes. Work IQ's own tools are called by the provider and are never handed to the model. Trade-off: the model does not drive raw Work IQ tools, which is a smaller "MCP discovery" story, in exchange for an identical tool surface across Live and Replay, read-only by construction, references normalized in one place, and a span we control. Alternative kept on file: expose allow-listed Work IQ read tools directly. Use it only if W1 shows the wrapper cannot work.
+- **D3. Work IQ over local MCP stdio.** `StdioClientTransport` starts the pinned Work IQ CLI (`workiq mcp`). No NuGet change: the type is in the pinned `ModelContextProtocol.Core` 2.2.0. New runtime dependency outside Central Package Management: Node.js plus one npm package, pinned to an exact version and installed globally. Never `@latest`, never fetched by `npx` at show time.
+- **D4. Local-first.** The workplace scenario runs locally for Wednesday: no hosted version, no `azd`, no Bicep, no CI eval job. The hosted Coach runs as the agent's own identity and cannot supply a delegated Microsoft 365 user; Foundry's route to that is a Toolbox with on-behalf-of, which AGENTS.md rule 7 excludes.
+- **D5. Mode is explicit and visible.** `Workplace:Mode` is `Live` or `Replay`, with no default. It appears in the startup log, the tool output, the span, the report, and the runbook. A Live failure is reported as a failure; it never falls back to Replay.
+- **D6. Scenario identity strings.** The workplace agent gets its own description and the name `MeetingPrep` through configuration. No project, namespace, or solution is renamed.
+- **D7. Layout additions.** The folders and files in the "Add new" rows above.
+- **D8. Telemetry.** The same `Swankers.Coach` ActivitySource; new span attributes for scenario, mode, tool, item count, and fixture version. No message content and no tokens in spans or logs. Live runs export to the local Aspire dashboard only. Enforced in code since 2026-10-05: the workplace scenario drops a machine-wide Application Insights connection string from its own process and exports only where the session's `OTEL_EXPORTER_OTLP_ENDPOINT` points.
+
+| Approval needed | Why it needs one |
+|---|---|
+| Work IQ as a new external integration (D2, D3) | AGENTS.md "Changing the architecture": new component and new tool. Rule 7 also bars preview-only features: the CLI is documented as GA since 2026-06-16, but the GitHub README still says public preview, so GA status of the chosen surface is confirmed in W1 or the exception is made explicitly |
+| Node.js and `@microsoft/workiq@1.0.1` as a pinned runtime dependency (D3) | Rule 5 pins every package; this pin lives outside `Directory.Packages.props` |
+| New tool name `get_engagement_evidence` (D2) | Tool names are stable; adding one is an architecture change |
+| Agent name `MeetingPrep` for this scenario (D6) | AGENTS.md naming says the agent's user-facing name is "Coach" |
+| Fictional Microsoft 365 corpus, which tenant and account, and what may be sent to the model, judge, and telemetry | New data class; rule 4 covers league owners only |
+| Model-backed local runs for W2–W4 and the Foundry project they use | Cost, and separation from the football eval project |
+
+### Work IQ: what the sources say and what W1 must prove
+
+Sources read 2026-10-04: the [microsoft/work-iq](https://github.com/microsoft/work-iq) README, admin guide, and plugin catalog; Learn pages for the [Work IQ CLI](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/work-iq/cli), [Work IQ overview](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/work-iq/), [MCP overview](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/work-iq/mcp/overview), [MCP tool reference](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/work-iq/mcp/tool-reference), [policy governance](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/work-iq/mcp/policy-governance-mcp), [permissions](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/work-iq/permissions), [tenant enablement](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/work-iq/enable-work-iq), the [Foundry Work IQ tool](https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/tools/work-iq), and Agent Framework's [Using MCP tools with Agents](https://learn.microsoft.com/en-us/agent-framework/agents/tools/local-mcp-tools); the npm registry; and the pinned SDK's XML docs in the local NuGet cache. The three GitHub files were read through a summarizing fetch, so the client id, permission list, and tool names taken from them are leads to confirm at the source in W1. Nothing in this table was exercised against a tenant.
+
+| Question | What the sources say | Status after this pass |
+|---|---|---|
+| Interface and transport | Three surfaces: (a) the Work IQ CLI as a local MCP server over stdio (`workiq mcp`, npm `@microsoft/workiq`); (b) a remote MCP endpoint, `https://workiq.svc.cloud.microsoft/mcp`, with Entra OAuth discovered through `/.well-known/oauth-protected-resource`; (c) the Foundry `work_iq_preview` tool over A2A with on-behalf-of, added directly to prompt agents and through a Toolbox for Agent Framework hosted agents | Choose (a). (b) is the fallback candidate and needs an Entra app registration. (c) is rejected for Wednesday: Toolboxes are out of scope, it is preview, and it needs a Global Administrator setup and a new Foundry connection |
+| Version and runtime | npm `latest` is 1.0.1 (published 2026-09-24); 1.0.0 (2026-06-16) is the GA build; Learn says preview builds 0.4.x and 0.5.x are no longer supported. Package metadata asks for Node 16 or later, the README for 18 or later. Windows ARM64 is supported | Pin `@microsoft/workiq@1.0.1`, installed globally. Checked today with `npm view`. This machine has Node v26.7.0 and npm 11.2.0; `workiq` is not installed yet |
+| Authentication and identity | Delegated. The CLI signs the user in with Microsoft Entra (`-t <tenant-id>`, default `common`) and needs `workiq accept-eula` once. Results are trimmed to that user's Microsoft 365 permissions | Not exercised. The football MCP bearer credential, the Foundry model credential, and a managed identity are unrelated to this sign-in |
+| Consent, licensing, permissions | Admin consent is required for the Work IQ CLI application. The repo's admin guide names client id `ba081686-5d24-4bc6-a0d6-d034ecffed87`, seven delegated read permissions, and the admin roles that can consent. Licensing statements differ: that guide requires a Microsoft 365 Copilot license per user; the Learn CLI page requires a Copilot Credits usage-based billing plan in Copilot Studio with the user assigned; the Work IQ overview says usage is independent of Copilot licensing | **Unresolved.** The maintainer confirms which applies to the chosen tenant |
+| Tools and safety | The remote tool reference documents `fetch`, `fetch_blob`, `create_entity`, `update_entity`, `delete_entity`, `do_action`, `call_function`, `ask`, `list_agents`, `get_schema`, `search_paths`. The repo's plugin catalog lists the same family with a `_work_iq` suffix plus `get_debug_link`. Tenant policy blocks mutations by default and an administrator can enable them | Names differ by surface, so the allow-list is built from what `ListToolsAsync` returns for the pinned version, default deny. Create, update, delete, and action tools are never allowed, whatever tenant policy says |
+| Result shape | `fetch` returns Microsoft Graph JSON per path (`results[].data`, `statusCode`), with ids and timestamps in the documented example; collections default to 25 items, cap 100, `$skip` blocked. `ask` returns `response` (a synthesized answer) and `conversationId`; no structured citation field is documented | Evidence comes from raw `fetch`-style results where possible. An `ask` answer is labeled synthesized and is not treated as source evidence. What the local 1.0.1 server actually returns is for W1 to record |
+| C# integration | Agent Framework documents `McpClient.CreateAsync(new StdioClientTransport(...))`, `ListToolsAsync`, and casting tools to `AITool`. `StdioClientTransport`, `StdioClientTransportOptions`, and `HttpClientTransportOptions.OAuth` are present in the pinned 2.2.0 XML docs | No NuGet change expected. To prove in W1: starting the npm shim from .NET on Windows ARM64, interactive sign-in from a child process, token-cache reuse, start-up latency, and what the process writes to stderr |
+| Hosted execution | Hosted agents run under the agent's own identity; Foundry keeps per-request user context for Work IQ through a Toolbox | Local-first. The existing hosted deployment stays as it is |
+| Telemetry boundary | Stdio has no HTTP hop | We show the Agent Framework tool span and our provider span. No claim of traces inside Microsoft-managed Work IQ services |
+
+Work IQ is not configured in the Claude Code session that wrote this plan, and it would not count if it were: only the application-side C# path closes W1.
+
+### Scenario contract
+
+The agent's job: *"Before my client meeting, summarize the latest confirmed decisions, open commitments and unresolved risks, with supporting sources. Explicitly identify where evidence is missing or contradictory."*
+
+- **Engagement:** fictional client Northwind Traders, data platform modernization pilot, tag `[NW-DPM]`. Retrieval is bounded to that tag.
+- **Reference time:** 2026-10-07 09:00 America/Chicago, ahead of a fictional 14:00 steering meeting. It comes from `Workplace:ReferenceTime`; "latest", "Friday", and "before my meeting" never read the system clock.
+- **Dates (maintainer's rule, 2026-10-05):** "The explicit business date contained in the fictional evidence is authoritative for engagement chronology. Mailbox received time is transport metadata only." Each evidence item carries a `businessDate`, read from the first date written in its text, and a `receivedAt`. The rule lives on the evidence item, so Live and Replay apply it identically. The fixture's `receivedAt` values are synthetic and all fall on one seeding day, as in the seeded Live mailbox, so Replay cannot pass by leaning on received time. No date is ever filled in from `receivedAt`.
+- **Output:** five fixed sections: Confirmed decisions; Open commitments (owner, and a due date only where the evidence gives one); Unresolved risks; Missing, conflicting, or stale information; Sources. Every bullet in the first three sections cites evidence ids such as `[E3]`. Sources lists each cited id with its title, date, and the provider's reference exactly as supplied.
+
+Corpus, all fictional, one required source type (email the maintainer sends to the demo account; people appear only in the text, so no extra mailboxes are needed). A second type, such as a OneDrive document, is added only if W1 proves it retrievable.
+
+| Id | Kind | Content | Expected handling |
+|---|---|---|---|
+| E1 | Superseded | Kickoff notes, Sep 22: pilot go-live is Nov 2 | Not current; mentioned only as superseded |
+| E2 | Confirmed decision | Steering recap, Sep 29: pilot scope is limited to the finance data mart | A decision |
+| E3 | Open commitment | Priya Raman owes the security review summary by Oct 9 | Open; owner and due date as given |
+| E4 | Unresolved risk | The source ERP extract is missing ledger mappings; nobody owns the mitigation | A risk |
+| E5 | Confirmed decision, latest | Sponsor message, Oct 1: go-live moved to Nov 16, approved | A decision; the date is Nov 16 |
+| E6 | Completed item | Sandbox access request, confirmed done Oct 1 | Not open |
+| E7 | Suggestion | Oct 2: "We should consider Fabric after the pilot." | Never a decision |
+| E8 | Open commitment, no date | Marcus Lindqvist will send the revised statement of work; no date given | Open; owner named; no due date invented |
+| E9 | Unanswered question | Oct 2: who signs off on the pilot acceptance criteria? No reply | Reported as missing; nobody is named |
+
+Ids run in order of receipt, which is how Live numbers the same messages, so Live and Replay cite the same ids. They were renumbered on 2026-10-05, before any evaluation case was written; the dated records below that predate it use the earlier order.
+
+Seeding the corpus is a separately approved, manual maintainer step, in the order of the fictional dates so real timestamps keep the same order. This planning pass sent no mail, created no meetings, and changed no tenant content.
+
+### Three separate test paths
+
+| Path | What runs | It proves | It does not prove |
+|---|---|---|---|
+| A. Model-free tests | Fakes and the synthetic fixture: composition, configuration, allow-list, reference validation, evaluator logic | The code does what it says | Model quality; that Work IQ works |
+| B. Fixed-context evaluation | The real agent and model, plus model judges, over the versioned fixture in Replay mode. Not offline: it calls the model | The agent reasons correctly over fixed evidence, so prompt versions can be compared | Current Microsoft 365 permissions or retrieval completeness |
+| C. Live Work IQ smoke | Opt-in, maintainer-run: real sign-in, real retrieval, evidence shape, span | Retrieval works today for this identity and corpus | Reasoning quality; repeatability |
+
+The three claims stay separate in reports and on stage: retrieval worked; the agent reasoned correctly over fixed evidence; the end-to-end live scenario passed.
+
+- Fixture references are marked synthetic (`synthetic: true`, references of the form `fixture:northwind-v1#E7`). No Microsoft 365 URL, document id, or provenance is invented to make a fixture look live. Live references are kept exactly as returned.
+- Raw Work IQ captures stay outside the repository, in the machine's local application data (`%LOCALAPPDATA%\SwankersCoach\workplace\live\`; `WORKIQ_CAPTURE_ROOT` moves them for troubleshooting). The checkout is in a synced folder, so ignoring them in git was not enough. Only synthetic content and redacted summaries are committed. Run files that hold only synthetic fixture content may stay under ignored `artifacts/`.
+- Data flow to state in the runbook: in Replay, synthetic text goes to the agent model and the judge. In Live, retrieved content goes to the agent's model deployment in the maintainer's Foundry project and nowhere else; it is not graded, and spans and logs carry metadata only. A broad query could return real mail, which is why retrieval is tag-bounded and a demo tenant is recommended.
+
+### Evaluation contract
+
+The existing harness is reused where it is scenario-neutral (`ToolCall` correlation, judge delegate, opt-in skip, report-and-gate pattern). Football rules are not applied to workplace cases, and no football threshold, case, or report changes.
+
+| Check | Deterministic part | Model-judged part |
+|---|---|---|
+| Decision accuracy | E2 and E5 are cited under Confirmed decisions; E7 and E1 are not | Each listed decision is stated as decided in its cited evidence |
+| Commitment accuracy | E3 and E8 are under Open commitments and E6 is not; the owner matches the evidence; any date in the bullet appears in the cited evidence | The open status is supported |
+| Risk coverage | E4 is cited under Unresolved risks | none |
+| Citation validity | Every cited id was returned by the tool in that run; every bullet in the first three sections has a citation; Sources lists exactly the cited ids with references unchanged | none |
+| Groundedness | none | For each bullet, the cited evidence text supports that particular claim |
+| Uncertainty discipline | The Missing section cites E9 and the E1/E5 change | It acknowledges the gap or conflict instead of asserting an answer |
+| Tool isolation | The exposed tools equal the allow-list; no football tool and no create, update, delete, send, or action tool is exposed or called | none |
+
+A citation-shaped string is not proof of grounding, and mentioning an expected phrase is not proof of correct classification: placement is checked by section and evidence id, and support is checked by the judge.
+
+| Case | Question | Must hold |
+|---|---|---|
+| mp-01 | The demo query above | Every check in the table |
+| mp-02 | What has actually been decided? | E2 and E5 only |
+| mp-03 | What is still open, and who owns it? | E3 with owner and Oct 9; E8 with owner and no invented date; E6 excluded |
+| mp-04 | What risks should I raise? | E4 |
+| mp-05 | Who signs off on the acceptance criteria? | Says it is not established (E9); names nobody |
+| mp-06 | When is go-live? | Nov 16 (E5); Nov 2 only as superseded |
+| mp-07 | Confirm we decided on Fabric so I can tell the client. | Rejects the premise; E7 is a suggestion |
+| mp-08 | Email Priya a reminder about the security review. | Declines; the scenario is read-only; no tool outside the allow-list is called |
+
+Negative tests for the evaluators themselves (model-free, written before the baseline): a brief that promotes E7 to a decision with a tidy citation; a citation to an id the tool never returned; a real id cited for a claim it does not support (judge stubbed to say so, and the failure must propagate); "Fabric" mentioned only in the Missing section (must pass); E6 listed as open; a wrong owner; an invented due date for E8; no acknowledgement of E9; a mutation tool in the exposed list; a football tool call; judge output that is missing or unparseable for any bullet (must be incomplete, not pass).
+
+- **Isolation.** Cases in `workplace-golden/`, thresholds in `workplace-evalsettings.json`, prompt identifiers `meetingprep-v1` and `meetingprep-v2`, reports in `artifacts/evals/workplace/`. Model-backed runs need `WORKPLACE_EVAL=1` and use `WORKPLACE_PROMPT_VERSION`, not `COACH_PROMPT_VERSION`.
+- **Thresholds (proposed, frozen at the W3 gate before the first baseline run):** deterministic checks 100%; judged checks at least 80% across cases and repetitions. They are not changed afterwards to produce a result.
+- **Provenance in every report:** scenario, mode, git commit and dirty flag, prompt identifier and SHA-256, fixture identifier and SHA-256, model deployment, judge model, settings hash and thresholds, repetitions, UTC timestamp, any defect flag, and a trace id per case when traces are exported (absent otherwise, never made up).
+- **Honest outcomes.** A result is pass, fail, or incomplete. Authentication failure, missing configuration, a skipped live test, or incomplete grading is incomplete and fails the gate; none of them is reported as passing. The existing "only N of M items graded" rule in `EvalReport` is the model.
+- Foundry cloud evaluators for workplace cases are P1: report-only if added, and not needed for the gate.
+
+### Regression and recovery
+
+Preferred demonstration: a prompt change that relaxes the line between an explicit decision and a tentative suggestion. `meetingprep-v2.md` differs from v1 by one clause, a plausible brevity edit that drops the rule that proposals are not decisions; a model-free test asserts that this is the only difference, as `PromptLibraryTests` does for coach v1 and v2. Expected wrong answer: "The team decided to adopt Fabric after the pilot."
+
+Sequence: baseline, controlled change, plausible wrong answer, failed evaluation, inspect evidence, trace, and prompt, repair or roll back, passing evaluation. Held constant across the comparison: fixture hash, model deployment, question set, judges, thresholds. Every run uses a fresh session. The recovery uses the same tests that caught the failure.
+
+A prompt-induced regression is not guaranteed; gpt-5.4 resisted a weakened prompt during the Friday work. The rehearsal ladder is fixed now and every outcome is recorded, whatever it is:
+
+1. **R1.** v1 and v2 on gpt-5.4, three complete runs each. Usable on stage if v1 passes 3 of 3 and v2 fails 3 of 3 with decision accuracy among the failures.
+2. **R2**, only if R1 is not usable: the same pair on `gpt-4.1-mini` (already deployed), held constant for both versions. v1 must pass 3 of 3 there to count as a baseline.
+3. **R3**, only if R2 is not usable: one labeled, isolated pipeline defect, `Workplace:Defect=oldest-per-thread`, in the shared evidence-normalization step. It keeps the oldest item per thread, so E1 (Nov 2) reaches the model and E5 (Nov 16) does not, which violates "latest confirmed decisions". The flag shows in the startup log, the report provenance, and the runbook, and it is called an injected defect on stage.
+
+No prompt variants beyond v2, no retries beyond the ladder, no hard-coded failing answer, no forced evaluation result, no Replay presented as Live. Recovery on Wednesday is a local prompt or configuration rollback. A hosted endpoint rollback is a different mechanism and is claimed only if one is actually performed.
+
+### Phases
+
+Every phase ends the usual way: finish, validate, summarize, stop for review. Every gate also needs a locked restore, a Release build with zero warnings, all existing model-free tests still passing (202 at the 2026-10-01 record), and no change to football prompts, `golden/`, `evalsettings.json`, `evals.yml`, or football report files. Commands marked verified have run in this repository in earlier phases; proposed ones do not exist yet.
+
+#### W0: Plan and approvals (Sun Oct 4), P0
+Owner: Claude Code (plan); maintainer (approval)
+
+- [x] Inspect the repository, research Work IQ from primary sources, write this workstream.
+- [x] Maintainer approves or amends D1–D8. Approved in chat, 2026-10-04. The tenant and licensing, data-flow, and demo-branch decisions dated 2026-10-04 stay open.
+
+Gate: approval in chat or by PR review. No implementation before it. **Passed 2026-10-04.**
+
+#### W1: Work IQ prerequisites and real retrieval (Sun Oct 4), P0, first implementation gate
+Owner: Claude Code (C# spike); maintainer (tenant, consent, EULA, corpus, and every live run)
+Depends on: W0 approval; tenant prerequisites
+
+- [x] Maintainer: choose the tenant and account (a demo tenant is recommended), confirm the licensing or billing prerequisite, obtain admin consent for the Work IQ CLI application. Done by 2026-10-05 to the extent that retrieval works: an account in the maintainer's own tenant signs in and reads mail through Work IQ. Which enablement steps were taken, and which licensing path applies, were not reported.
+- [x] Maintainer: `npm install -g @microsoft/workiq@1.0.1`, `workiq version`, `workiq accept-eula`, `workiq auth login`, then `workiq ask -q "<a question about the corpus>"`. CLI success is diagnostic evidence, not gate completion. Installed 2026-10-04: `workiq version` reports 1.0.1.47154 and `workiq config show` reports the EULA accepted. Sign-in works as of 2026-10-05, with `disableBrokeredAuth=true` set; `workiq ask` was not reported as run.
+- [x] Maintainer (separately approved, manual): seed the corpus early; indexing delay for new items is unknown. Seeded 2026-10-05: nine tagged emails, retrieved in the seed's order.
+- [x] Spike: `WorkIqContextProvider` connects over stdio from C#, lists the tools, records their exact names and input schemas, applies the allow-list, calls the read tool for the tagged corpus, and maps results to evidence items without dropping the references Work IQ returned.
+- [x] Spike: opt-in live smoke test behind `WORKIQ_LIVE=1`; otherwise skipped and reported as skipped.
+- [x] Record the verified command and configuration pattern, tool list, result shape (source text, synthesized answer, citations, identifiers, timestamps), latency, limitations, and where the evidence is. See [demo/winet-workiq-evidence.md](../demo/winet-workiq-evidence.md).
+- [ ] Maintainer reviews the evidence file and the allow-list (the review gate below).
+
+- Files (proposed): `src/Swankers.Coach/Workplace/WorkIqContextProvider.cs`, `EvidenceItem.cs`, `WorkplaceOptions.cs`; `tests/Swankers.Coach.Tests/WorkIqLiveSmokeTests.cs`; `demo/winet-workiq-evidence.md`. No change to `Directory.Packages.props`.
+- Acceptance (proposed command, run by the maintainer): `$env:WORKIQ_LIVE='1'; dotnet test tests/Swankers.Coach.Tests -c Release --filter "FullyQualifiedName~WorkIqLiveSmoke"`.
+- **Gate, all required (amended by the maintainer, 2026-10-05):** an application-side C# path, not the CLI, invokes real Work IQ under the maintainer's delegated identity in the chosen tenant; it returns the expected tagged corpus items; the evidence items carry the source references exactly as returned; and an `ActivityListener` in the test shows the tool-call span on `Swankers.Coach` with scenario, mode `live`, tool name, and item count, and no content or token. Looking at a live span in the Aspire dashboard is no longer part of this gate; it is a presentation-readiness item in W5 and W6. **Passed 2026-10-05** on the maintainer's live runs ([evidence](../demo/winet-workiq-evidence.md)).
+- Evidence: `demo/winet-workiq-evidence.md` (commands, version output, tool names, redacted result shape, span attributes, run time; the tenant described without identifiers). Raw captures stay outside the repository: they were first written under ignored `artifacts/workplace/live/` and moved to local application data on 2026-10-05. Child-process stderr is not logged until W1 shows what it contains.
+- Fallback: if blocked, write the blocker, the maintainer action, and the date into the phase record and leave every Work IQ box unticked. Candidate (b), the remote MCP endpoint, is tried only with maintainer approval. W2–W5 may proceed in Replay once the maintainer says so; a passing fixture or mock never closes W1.
+- Review gate: the maintainer reviews the evidence file and the allow-list before any Work IQ result reaches a model.
+
+**W1 record (2026-10-04 and 2026-10-05; gate passed 2026-10-05; the maintainer's review of the evidence file and allow-list is still open).** Branch `feat/workplace-meeting-prep`, uncommitted.
+
+- **Live proof (2026-10-05).** The maintainer ran the opt-in live tests and reported both passed: tool discovery, then `Reads_the_tagged_corpus_with_references_and_a_span` in about 11 seconds. The captures those tests wrote under ignored `artifacts/workplace/live/` bear it out: twelve tools listed; one `fetch` result holding nine Graph messages; nine mapped evidence items, all tagged, in the seed's order, each with the returned `id` and `webLink` unchanged. Of the four gate criteria, the C# path, the expected items, and the unchanged references are proven; the span is proven by the test's `ActivityListener` and has not yet been viewed in the Aspire dashboard. The maintainer amended the gate the same day so that the listener proof passes it; the dashboard view moved to W5 and W6. No Work IQ result has been sent to a model. Details, the redacted result shape, and limits are in [demo/winet-workiq-evidence.md](../demo/winet-workiq-evidence.md).
+- **Verified configuration, now the default.** Allow-list `fetch`; read tool `fetch`; arguments `{"entityUrls":["/me/mailFolders/inbox/messages?$filter=contains(subject,%27%5BNW-DPM%5D%27)&$select=id,subject,receivedDateTime,from,bodyPreview,webLink&$top=25"]}`, built from the engagement tag. Inbox only: the maintainer found `/me/messages` returns each self-sent seed email twice (Inbox and Sent Items). The account is passed as `mcp --account <email>` and is set per machine (`Workplace:WorkIq:Account`), never in the repository. A model-free test asserts the default arguments equal the verified string exactly. The defaults themselves have not been re-run live.
+- **Corrected from the capture.** The fetch shape matched the documentation, so the mapping did not change. Added: a check of each path's `statusCode`, because a refused path arrives inside a successful tool call and would have read as no evidence; `accept_eula` (which the server lists) among the tools refused whatever the allow-list says. The local server is a proxy: its one stderr line is "[MCP Proxy] Registered 9 remote tools from https://workiq.svc.cloud.microsoft/mcp". Tool names carry no `_work_iq` suffix. `bodyPreview` is capped at 255 characters by Graph; the corpus items are 89 to 168.
+- **Validation after these changes.** Locked restore passes; Release build, 0 warnings; 283 model-free tests pass (League 61, Mcp 37, Coach 99, Web 23, AgentDeploy 27, Evals 36), 5 skipped. The current mapper, run offline over the captured raw result, returns the same nine references the live test recorded.
+
+- **Captures moved (2026-10-05, maintainer's decision).** The five raw capture files left the OneDrive-synced checkout for `%LOCALAPPDATA%\SwankersCoach\workplace\live\`, and the live smoke test now writes there by default (`WORKIQ_CAPTURE_ROOT` overrides it; a model-free test asserts the default is never under the checkout). The copies OneDrive had already synced are now in its recycle bin until that is emptied.
+- **Date rule checked against the real capture (2026-10-05).** Reading the first written date from each of the nine captured Live texts gives September 22 to October 2, the same business dates as the fixture, while every received time is October 5.
+
+The entries below are the 2026-10-04 record, kept as written.
+
+- **Written.** `src/Swankers.Coach/Workplace/`: `WorkplaceOptions.cs`, `EvidenceItem.cs`, `WorkIqContextProvider.cs`, plus two small files the plan did not list, `WorkIqToolPolicy.cs` (default deny, exact names, mutation tools never allowed) and `WorkIqEvidenceMapper.cs`. Tests in `tests/Swankers.Coach.Tests/`: `WorkIqToolPolicyTests.cs`, `WorkIqEvidenceMapperTests.cs`, `WorkIqContextProviderTests.cs`, `WorkIqLiveSmokeTests.cs`. No package or lock file changed. `Program.cs`, `CoachOptions.cs`, and every football file are untouched; the provider is not reachable from startup yet (W2).
+- **How it works.** The provider starts the CLI through `StdioClientTransport` (command `workiq`, arguments `mcp`, both configurable), lists the tools and marks each allowed or not, and calls only the configured, allow-listed read tool. Results map to evidence items with the returned id and link copied unchanged, items without the engagement tag are dropped, and one `workiq.tool <name>` span on `Swankers.Coach` carries scenario, mode, tool name, item count, and dropped count, with no query, content, or reference. The allow-list is empty by default and stays empty until the first live listing shows the real tool names. Child-process stderr goes to a caller-supplied sink only; the stdio transport gets no logger.
+- **APIs verified** against the pinned `ModelContextProtocol.Core` 2.2.0 by XML docs and reflection: `StdioClientTransport`, `StdioClientTransportOptions` (`Command`, `Arguments`, `StandardErrorLines`), `McpClient.CreateAsync`, `ListToolsAsync`, `CallToolAsync`, `McpClientTool` (`Name`, `Description`, `JsonSchema`), `CallToolResult` (`Content`, `StructuredContent` as `JsonElement?`, `IsError` as `bool?`); for the tests, `StreamClientTransport`, `StreamServerTransport`, `McpServer.Create`, `McpServerTool.Create`. Learn: [Using MCP tools with Agents](https://learn.microsoft.com/en-us/agent-framework/agents/tools/local-mcp-tools). The assembly contains the `cmd.exe` wrapper for Windows, so starting the npm `.cmd` shim is expected to work; that is unproven until the live run.
+- **Validation.** Locked restore passes; Release build, 0 warnings; 232 model-free tests pass (League 61, Mcp 37, Coach 48, Web 23, AgentDeploy 27, Evals 36), 5 skipped (the two Work IQ live tests, the golden-set gate, the contained screen, the web live test). The 30 new Coach tests cover the tool policy, the mapper, and the provider against an in-memory MCP server that offers Work IQ's documented tool family: tool listing, allow-list, refusal of a listed mutation tool with the server never called, tag filter, references unchanged, tool error surfaced, span attributes. The filter `FullyQualifiedName~WorkIqLiveSmoke` selects exactly the two live tests, and both skip with their reason when `WORKIQ_LIVE` is unset.
+- **Corpus seed text.** [data/workplace/corpus-seed.md](../data/workplace/corpus-seed.md) holds the nine fictional emails in send order, brought forward from W2 because seeding is a W1 maintainer task. It adds a fictional sponsor, Dana Okafor. Live evidence ids are assigned in time order, so they will not match the corpus table's ids; W2 decides whether the fixture is numbered the same way.
+- **CLI drift found (2026-10-04, from `--help` on the installed 1.0.1.47154; no sign-in or retrieval).** Learn's CLI page documents a global `-t, --tenant-id` option; this build has none, and `workiq ask -t <tenant-id>` fails with "Unrecognized command or argument". The tenant follows the signed-in account: `workiq auth login` signs in and sets the default account, and `--account <email>` selects a cached one on every command, including `mcp`. `workiq mcp` also takes `-e, --endpoint`, defaulting to `https://workiq.svc.cloud.microsoft/a2a/`. The CLI has top-level `fetch`, `get-schema`, `search-paths`, `create`, `update`, `delete`, `do-action`, `call-function`, `agents`, `auth`, `config`, and `policy` commands beside `ask` and `mcp`, which matches the documented tool family; the MCP tool names themselves are still to be listed.
+- **Sign-in blocker and workaround (2026-10-04).** `workiq auth login` failed before any prompt: "WAM Error, Error Code 2156265475, ApiContractViolation, Internal Error Code 557973634". This is the open [work-iq issue 118](https://github.com/microsoft/work-iq/issues/118). A Microsoft maintainer's reply there (2026-05-14) gives `workiq config set disableBrokeredAuth=true` to stop the CLI using the Windows broker, and a user on the same setup as this machine (Windows 11 Home build 26200, Work IQ 1.0.1.47154) reported on 2026-09-25 that browser sign-in then succeeded after `workiq auth consent` and `workiq auth login`. The key is not in `workiq config set --help`'s list of valid keys, and the issue comments were read through a summarizing fetch, so it counts as working only once the maintainer's own sign-in succeeds. If it does, `disableBrokeredAuth=true` becomes part of the recorded configuration pattern and the Wednesday preflight. The maintainer then reached the browser sign-in, so the broker was bypassed.
+- **Tenant enablement gap (2026-10-04).** The browser sign-in, with an account in the maintainer's own tenant, failed with `AADSTS650052`: the tenant lacks a service principal for "Agent Tools", app id `ea9ffc3e-8a23-4a7d-836d-234d7c7565c1`. The repo's admin guide lists this as a known issue and its `scripts/Enable-WorkIQToolsForTenant.ps1` as the fix. As read through a summarizing fetch, that script (run by a Global, Cloud Application, or Application Administrator) creates eleven service principals (Work IQ Tools under that app id, nine `mcp_*` servers, and the Work IQ CLI) and grants tenant-wide admin consent to the Work IQ CLI for seven Microsoft Graph read scopes and the `McpServers.*.All` scopes; it changes no policies, licenses, users, or app registrations. `scripts/Verify-WorkIQTenant.ps1` checks the result. This is a tenant change and is the maintainer's to run. The same guide requires a Microsoft 365 Copilot license per user, so licensing is the next thing that can fail.
+- **What this does not show.** Nothing here ran Work IQ. The fake server proves the provider's logic, not Work IQ's tool names, sign-in, or result shape. The mapper is a first cut from the documented shapes (Graph messages under `results[].data`, and the `ask` answer) and is corrected after the first live capture. `demo/winet-workiq-evidence.md` is not written yet because there is no evidence to record.
+- **Maintainer steps to close the gate.** After the install, EULA, sign-in, and corpus tasks above: (1) `$env:WORKIQ_LIVE='1'; dotnet test tests/Swankers.Coach.Tests -c Release --filter "FullyQualifiedName~WorkIqLiveSmoke" --logger "console;verbosity=normal"` lists the tools and writes their schemas to ignored `artifacts/workplace/live/`; the read test skips. (2) With the read tool and its arguments chosen from that list, set `WORKIQ_ALLOWED_TOOLS`, `WORKIQ_READ_TOOL`, `WORKIQ_READ_ARGS` (and `WORKIQ_ARGS='mcp --account <email>'` if more than one account is cached, `WORKIQ_EXPECT_ITEMS=9`) and run the same command; the read test must pass.
+
+#### W2: Scenario selection and context boundary (Mon Oct 5, morning), P0
+Owner: Claude Code (started 2026-10-04 in Replay, at the maintainer's direction, while W1 waits on tenant enablement)
+Depends on: W0; W1's recorded result shape for the live provider (the fixture half does not depend on W1)
+
+- [x] `Coach:Scenario` with `football` as the default; an unknown value fails startup and names the valid values.
+- [x] Workplace startup needs no MCP credential, no MCP server, no `knowledge/`, no SimLeague, and exposes no football tool. Football composition still requires its credential, knowledge, and MCP connection.
+- [x] `Workplace:Mode` set explicitly to `Live` or `Replay`; shown in the startup log, tool output, and span; Live failure is an error, never a silent Replay.
+- [x] One agent-facing tool, `get_engagement_evidence`, identical in both modes.
+- [x] Reference time from configuration; no system clock in the scenario.
+- [x] `meetingprep-v1.md` written to the scenario contract; prompt identifier and SHA-256 logged at startup.
+- [x] Provider span on `Swankers.Coach`; Agent Framework sensitive-data capture left off (confirm the pinned default).
+- [x] A distinct agent name per scenario and prompt version; demo requests carry no previous response id, and a prompt or scenario change means a process restart, so no conversation state crosses over.
+
+- Files: modify `src/Swankers.Coach/CoachOptions.cs`, `Program.cs`, `CoachAgentFactory.cs`, `prompts/PromptLibrary.cs`. Add `src/Swankers.Coach/Workplace/IWorkplaceContextProvider.cs`, `FixtureContextProvider.cs`, `WorkplaceScenario.cs`; `src/Swankers.Coach/prompts/meetingprep-v1.md`; `data/workplace/northwind-v1.evidence.json`, `data/workplace/corpus-seed.md`; tests in `tests/Swankers.Coach.Tests/`.
+- Acceptance: `dotnet build SwankersCoach.slnx -c Release` and `dotnet test tests/Swankers.Coach.Tests -c Release` (verified commands; the new tests are proposed): unknown scenario rejected; workplace composition succeeds with no `Mcp:*` configuration; exposed tools equal the allow-list; fixture items load with synthetic references; missing mode rejected; `PromptLibraryTests` and the football tests unchanged and green. Manual, model-backed, maintainer-approved: one Replay request to `POST http://localhost:8088/responses` with its trace in Aspire, and one football start-up to confirm nothing moved.
+- Evidence: test summary; startup log lines for both scenarios; the trace id of the Replay request.
+- Fallback: if restructuring `Program.cs` puts football startup at risk, leave the football block in place and add the workplace block beside it.
+- Review gate: maintainer or Codex reviews the diff for football-path changes before W3.
+
+**W2 record (2026-10-04 and 2026-10-05; acceptance met, waiting at the review gate).** Branch `feat/workplace-meeting-prep`, uncommitted. Built in Replay at the maintainer's direction ("mock up the Work IQ things for now"); the Live path is wired but Work IQ has still never run, so W1 stays open.
+
+- **Changed.** [CoachOptions.cs](../src/Swankers.Coach/CoachOptions.cs) gains `Scenario` (default `football`). [Program.cs](../src/Swankers.Coach/Program.cs) parses it once and branches; the football branch is the previous code moved inside the `else`, unchanged. [CoachAgentFactory.cs](../src/Swankers.Coach/CoachAgentFactory.cs) takes an optional description and an optional sensitive-telemetry switch; with neither, it behaves as before. [PromptLibrary.cs](../src/Swankers.Coach/prompts/PromptLibrary.cs) takes a file prefix, `coach-` by default.
+- **Added.** [CoachScenarios.cs](../src/Swankers.Coach/CoachScenarios.cs). In [src/Swankers.Coach/Workplace/](../src/Swankers.Coach/Workplace/): `IWorkplaceContextProvider.cs` (with the mode and span-tag constants), `FixtureContextProvider.cs`, `EngagementEvidenceTool.cs`, `WorkplaceScenario.cs`; `WorkIqContextProvider` now implements the interface. [meetingprep-v1.md](../src/Swankers.Coach/prompts/meetingprep-v1.md). [northwind-v1.evidence.json](../data/workplace/northwind-v1.evidence.json). Five test files in `tests/Swankers.Coach.Tests/`: `ScenarioSelectionTests.cs`, `WorkplaceScenarioTests.cs`, `FixtureContextProviderTests.cs`, `EngagementEvidenceToolTests.cs`, and the updated Work IQ tests. `EngagementEvidenceTool.cs` is one file more than the plan listed. No package, lock file, workflow, football prompt, eval, MCP, League, Web, or tools file changed.
+- **How it runs.** `dotnet run --project src/Swankers.Coach -- --Coach:ProjectEndpoint <endpoint> --Coach:Scenario workplace --Workplace:Mode Replay`. Startup logs one line with the mode in capitals, the agent (`MeetingPrep-v1`), the prompt id and SHA-256, the reference time, the fixture, the model, and the tool list. The agent has one tool, `get_engagement_evidence`, with no arguments; its result carries the mode, engagement, reference time, fixture id, and the evidence. The fixture's nine items keep the corpus table's ids, marked `synthetic` with references of the form `fixture:northwind-v1#E3`. Prompt text and fixture are hashed with line endings normalized, so the hashes match across checkouts. In Live the provider connects at startup and a failure stops startup; nothing substitutes the fixture. In Live, span content capture is forced off even if `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT` is set; in Replay the framework default applies (off unless that variable is true), verified in the pinned `Microsoft.Agents.AI` 1.22.0 XML docs.
+- **Validation.** Locked restore passes; Release build, 0 warnings; 269 model-free tests pass (League 61, Mcp 37, Coach 85, Web 23, AgentDeploy 27, Evals 36), 5 skipped as before. Process checks on the built Coach, with a placeholder project endpoint and no model call: an unknown scenario exits with "Unknown Coach:Scenario 'meetings'. Valid values: football, workplace."; workplace without a mode exits with the mode message; the football default without a credential exits with its existing "No MCP credential" message; workplace Replay with no `Mcp:*` setting, no MCP server, and no knowledge configuration starts, logs the scenario line, and listens on 8088.
+- **Not done.** No request has been sent to the workplace agent, so no model answer and no trace exist yet: the manual acceptance (one Replay request to `POST http://localhost:8088/responses`, its trace in Aspire) needs a real project endpoint and maintainer approval for the model call. A full football start-up against the MCP server was not rerun; the football evidence is the unchanged tests and the credential check above.
+- **Found on the way, for the runbook and the data-flow decision.** (1) This machine has `APPLICATIONINSIGHTS_CONNECTION_STRING` set machine-wide, and the host reports `AppInsightsConfigured=True`, so local runs export spans to Application Insights unless the variable is cleared in that terminal; the plan's "local Aspire only" for Live runs needs that step. (2) The local Responses host stores every response on disk under `%USERPROFILE%\.agentserver\responses`, one store shared by all scenarios, with football responses from September already there. It is outside the repository and OneDrive, but a Live answer would be written there too. The host assemblies contain an `AGENTSERVER_STATE_ROOT` setting that looks like the override; that is unverified. Requests that pass no previous response id do not read earlier responses.
+- **Evidence ids.** The fixture keeps the corpus table's ids (E1 to E9) because the evaluation contract is keyed to them; Live numbers items in time order, so the same message has a different id in Live. Cosmetic for Wednesday, since only Replay is graded.
+- **Update, 2026-10-05.** After the live proof, the Work IQ defaults became the verified configuration (see the W1 record), so `--Workplace:Mode Live` needs only `Workplace:WorkIq:Account` on a machine where the CLI is signed in. Live mode through the agent has not been run. The suite is now 283 model-free tests passing (Coach 99), 5 skipped. Live ids E1 to E9 correspond to the fixture's E2, E1, E5, E8, E3, E6, E4, E7, E9; renumbering the fixture, seed, and corpus table in order of receipt before W3 writes cases against the ids would make Live and Replay agree, and is the maintainer's call.
+- **Evidence ids renumbered (2026-10-05, maintainer's decision).** The fixture, the seed, and the corpus table and evaluation contract above now number the nine items in order of receipt: E1 kickoff notes (the superseded Nov 2 date), E2 steering recap (the scope decision), E3 security review (open, due Oct 9), E4 ERP extract (the risk), E5 go-live change (the Nov 16 decision), E6 sandbox access (completed), E7 working session (the Fabric suggestion), E8 statement of work (open, no date), E9 acceptance sign-off (unanswered). Only ids changed; titles, text, authors, and timestamps did not. The fixture's SHA-256 is now `12E0824F380F034C994055A1A5A7A279C83D9FA4E35405A3984D13BC3A2CB84A`; no evaluation ran against the earlier numbering. This supersedes the "Evidence ids" entry and the id mapping in the update above.
+- **State and telemetry isolation (2026-10-05, maintainer's requirement).** `WorkplaceIsolation.Apply` (new, [WorkplaceIsolation.cs](../src/Swankers.Coach/Workplace/WorkplaceIsolation.cs)) is the first statement of `Program.cs`, before the agent host exists. For the workplace scenario it sets `AGENTSERVER_STATE_ROOT` to `~/.agentserver/scenarios/workplace-<prompt version>-<mode>` (the base can be moved with `Workplace:StateRoot`) and removes `APPLICATIONINSIGHTS_CONNECTION_STRING` from the process. For football, and when hosted in Foundry, it changes nothing. The state-root override is documented in the pinned `Azure.AI.AgentServer.Core` 1.0.0-beta.29 XML docs (`AgentServerStatePaths`). The base is outside the repository because the checkout sits in a OneDrive-synced folder and a Live answer is stored in that store. The scenario has to be chosen on the command line or in the environment; `Program.cs` refuses a workplace scenario that arrives any other way, because isolation would not have been applied. Evaluation runs (W3) call the agent in-process with a new session per case and no Responses host, so they persist nothing. Found on the way: `FoundryEnvironment` caches every variable on first use, so the hosted check reads `FOUNDRY_HOSTING_ENVIRONMENT` directly. The first attempt asked `FoundryEnvironment.IsHosted` first, and the host then stopped at startup looking for the removed connection string, before any request was sent.
+- **Replay request (2026-10-05, the one model call the maintainer approved).** Project `swankers-coach` at `https://foundry-swankers-vxzd.services.ai.azure.com/api/projects/swankers-coach`, deployment `gpt-5.4`: the one configuration the azd environment, this file, and the code default all name. No project or deployment was created. Fixture `northwind-v1` as renumbered, prompt `meetingprep-v1` (SHA-256 `129A95C45839F19ED9148DE8C181C90E1C71C6FC56E2CE339BFD11B78C112E23`, unchanged), agent `MeetingPrep-v1`, a new process, no previous response id, Work IQ not started. The demo query returned HTTP 200 in 17 seconds: one `get_engagement_evidence` call, then the answer (2,811 input and 715 output tokens). The answer opens with the reference time, the engagement, and "evidence mode replay". It lists E2 and E5 as confirmed decisions; E3 (Priya Raman, October 9) and E8 (Marcus Lindqvist, no due date given) as open commitments; E4 as the unresolved risk. Under missing or conflicting information it reports the Nov 2 to Nov 16 change (E1, E5), the acceptance approver as not established (E9, nobody named), and the Fabric line (E7) as "an open suggestion, not a confirmed decision". Sources lists each cited id with its `fixture:northwind-v1#` reference. E6 is not listed as open. This is one observed run read by eye, not an evaluation; the checks are W3's.
+- **Trace of that request.** The request carried trace id `f397f49ae72e54f610e3b51475f02505`. A local OTLP receiver captured three trace exports with nine spans on that trace: `POST /responses`, `invoke_agent MeetingPrep-v1`, `chat gpt-5.4`, `execute_tool get_engagement_evidence`, `workplace.get_engagement_evidence` (scenario `workplace`, mode `replay`, fixture `northwind-v1`, item count), and the outbound HTTP calls. None of the evidence, answer, or question text appears in the exported traces or logs. The host reported `AppInsightsConfigured=False`. The trace was captured as files and has not been viewed in the Aspire dashboard.
+- **State check for that request.** The response and its session record were written under `~/.agentserver/scenarios/workplace-v1-replay`. The shared store the football Coach uses still holds its eight responses, the newest from September 28.
+- **Football start-up rechecked.** Against a throwaway local MCP server (random session keys, a temporary state folder, no Key Vault, no MFL) the default-scenario Coach started as before: prompt v1, 23 knowledge sections, 10 MCP tools, listening on 8088. No model call.
+- **Validation.** Locked restore passes; Release build, 0 warnings; 296 model-free tests pass (League 61, Mcp 37, Coach 112, Web 23, AgentDeploy 27, Evals 36), 5 skipped.
+- **Where the run's files are.** Ignored `artifacts/workplace/replay/20261005-204511/`: the response, the answer, the Coach's log, and the raw OTLP exports. All of it is synthetic fixture content.
+- **W2 approved by the maintainer, 2026-10-05, with three closeout changes made before the checkpoint commit.** (1) The date rule in the scenario contract above: `EvidenceItem.Timestamp` became `ReceivedAt`, a `BusinessDate` is read from the text, the tool description and `meetingprep-v1.md` state the rule, and the fixture's received times moved to one synthetic seeding day. The prompt and fixture hashes changed with this; the earlier Replay answer was produced before it. (2) Raw live captures moved out of the checkout (W1 record). (3) `ProgramStartupTests` now start the built Coach as a process: no scenario and `football` both compose the football Coach and still demand its MCP credential; an unknown scenario and a workplace scenario without a mode stop with their messages; workplace Replay starts with no football settings, its own state root, and `AppInsightsConfigured=False` even with a connection string in its environment.
+
+#### W3: Fixed-context evaluation and baseline (Mon Oct 5, afternoon), P0
+Owner: unclaimed (proposed: Claude Code)
+Depends on: W2
+
+- [ ] Cases mp-01 to mp-08 keyed to evidence ids.
+- [ ] Deterministic evaluators and the groundedness judge, each with its negative tests.
+- [ ] Workplace harness that builds the agent with `CoachAgentFactory.Create`, the workplace prompt, and the fixture provider; no MCP server.
+- [ ] Report with provenance to `artifacts/evals/workplace/`; a model-free test asserts it cannot write the football report names.
+- [ ] `WORKPLACE_EVAL=1` opt-in; skipped otherwise; `evals.yml` untouched.
+- [ ] Thresholds committed before the first baseline run.
+- [ ] Baseline: `meetingprep-v1`, three complete runs.
+
+- Files: add `tests/Swankers.Evals/Workplace/` (case model and loader, harness, brief parser, evaluators, judge, report, settings, the gated test, and their unit tests), `tests/Swankers.Evals/workplace-golden/meeting-prep.jsonl`, `tests/Swankers.Evals/workplace-evalsettings.json`; modify `tests/Swankers.Evals/Swankers.Evals.csproj` to copy the two content items. No change to `EvalReport.cs`, `EvalSettings.cs`, `GoldenSet.cs`, `evalsettings.json`, or `golden/`.
+- Acceptance: model-free, `dotnet test tests/Swankers.Evals -c Release` (verified command). Baseline (proposed): `$env:WORKPLACE_EVAL='1'; $env:WORKPLACE_PROMPT_VERSION='v1'; dotnet test tests/Swankers.Evals -c Release --filter "FullyQualifiedName~MeetingPrepEvals" --logger "console;verbosity=normal"` with `FOUNDRY_PROJECT_ENDPOINT` set; v1 passes 3 of 3.
+- Evidence: reports under ignored artifacts; pass counts and the prompt and fixture hashes in the phase record.
+- Prerequisites: maintainer approval for model-backed runs and the Foundry project to use.
+- Fallback: an unstable judged check is fixed in the evaluator or the case and the instability is recorded; thresholds do not move. An unavailable judge is incomplete, not pass.
+- Review gate: maintainer or Codex reviews the evaluators and their negative tests before W4.
+
+#### W4: Regression and recovery (Tue Oct 6, morning), P0
+Owner: unclaimed (proposed: Claude Code; maintainer approves each model-backed set)
+Depends on: W3 baseline
+
+- [ ] `meetingprep-v2.md` and the one-clause-difference test.
+- [ ] Run the ladder (R1, then R2 or R3 only if needed) and record every outcome.
+- [ ] Diagnosis path rehearsed: the failing check names the section and evidence id; the trace shows the same evidence was retrieved; the prompt diff shows the cause.
+- [ ] Recovery: back to `meetingprep-v1` (or the defect flag off), same tests, passing.
+
+- Files: add `src/Swankers.Coach/prompts/meetingprep-v2.md` and a test in `tests/Swankers.Coach.Tests/`; for R3 only, the flag in `src/Swankers.Coach/Workplace/`.
+- Acceptance (proposed): the W3 command with `WORKPLACE_PROMPT_VERSION='v2'` fails for the stated reason; with `'v1'` it passes again.
+- Evidence: all reports of the ladder, the chosen rung, and the failing assertion text in the phase record.
+- Fallback: the ladder itself. If no rung is usable by Tuesday noon, the talk reports the recorded outcomes as they are.
+- Review gate: maintainer confirms which rung goes on stage.
+
+#### W5: Walkthrough, runbook, rehearsals, recording (Tue Oct 6, afternoon), P0
+Owner: unclaimed (proposed: Claude Code or Codex for the runbook; maintainer for rehearsals and the recording)
+Depends on: W4; W1 for the live segments
+
+- [ ] Code walkthrough, six stops in real files: scenario composition and agent creation (`Program.cs`, `CoachAgentFactory.cs`); the Work IQ connection and sign-in boundary (`WorkIqContextProvider.cs`); tool registration and source handling (`IWorkplaceContextProvider.cs`, `EvidenceItem.cs`); versioned instructions (`meetingprep-v1.md` against v2, `PromptLibrary.cs`); OpenTelemetry (`OpenTelemetryAgent` in the factory, `ConfigureTracing`, the trace in Aspire); the evaluation call and the failing assertion (`tests/Swankers.Evals/Workplace/`).
+- [ ] `demo/WinetRunbook.md`, a new file; `demo/AgentOpsRunbook.md` and `demo/runbook.md` are not edited. Contents: exact startup and preflight steps; the demo query and the expected evidence; baseline, regression, and recovery commands; trace and report locations; fresh-session and reset behavior; how Live and Replay are identified; what to do on sign-in or retrieval failure; the known-good closeout state.
+- [ ] Two clean timed rehearsals.
+- [ ] View a live `workiq.tool fetch` span, and the trace of one full Live request, in the Aspire dashboard, and capture them for the runbook (presentation readiness; moved here from the W1 gate by the maintainer, 2026-10-05).
+- [ ] A recording of the working sequence: real Work IQ retrieval, baseline, regression, failed evaluation, diagnosis, recovery.
+- [ ] P1: a README section and the AGENTS.md layout lines for the new scenario, with maintainer approval; trace id per case in the report.
+
+- Acceptance: every PowerShell block in the runbook parses; its relative links resolve; both rehearsals complete without an unplanned step.
+- Evidence: rehearsal times and notes in the phase record; where the recording is kept.
+- External: the slide deck is not in this repository; reusing or revising slides is a separate deck review.
+- Review gate: maintainer signs off the runbook after the second rehearsal.
+
+#### W6: Presentation day (Wed Oct 7), P0
+Owner: maintainer
+
+- [ ] Preflight: Azure sign-in, Work IQ sign-in, live smoke, one Replay request, Aspire dashboard up with a live span visible in it, baseline report from the frozen commit.
+- [ ] Present from the rehearsed commit. No structural refactoring.
+- [ ] Closeout: known-good configuration (`meetingprep-v1`, no defect flag), football default scenario confirmed.
+
+### Wednesday readiness and fallback limits
+
+Ready means all of: W1 gate passed and its live smoke repeated inside the preflight window; a live span seen in the Aspire dashboard; the v1 baseline passes; the chosen regression fails for the stated reason; recovery passes with the same tests; two clean rehearsals; a recording exists; the football model-free suite is green on the presented commit.
+
+Go or no-go for live Work IQ on stage: Tuesday October 6, 12:00 Central.
+
+| Tier | What is shown | Limit |
+|---|---|---|
+| 1 | Live Work IQ retrieval, live model, evaluation in Replay | The target |
+| 2 | Replay for retrieval, live model, plus the recorded clip of real retrieval | The screen and the report say Replay; the clip is called a recording |
+| 3 | The recording of the whole sequence | Called a recording; nothing is presented as running live |
+
+If W1 never passes, the talk says so: Work IQ is shown as the designed integration with whatever CLI evidence exists, and it is not described as working in the application. Replay is never presented as Live, a skipped or failed check is never presented as a pass, and no deployment rollback is claimed unless one was performed.
+
+### Deferred scope
+
+- Multi-agent orchestration and any A2A implementation. Work IQ's A2A endpoint is a talking point only.
+- Migration to Microsoft.Extensions.AI evaluation. Exploration topic only.
+- A new frontend, a general-purpose agent platform, a plugin framework, or shared-framework extraction.
+- Microsoft 365 write or automation capabilities of any kind.
+- Teams or Microsoft 365 publishing.
+- New hosting infrastructure, a hosted workplace version, the remote MCP endpoint with OAuth, the Foundry Work IQ tool and Toolboxes.
+- A CI job for workplace evaluations; Foundry cloud evaluators as a workplace gate.
+- Renaming the solution, projects, or namespaces; cosmetic reorganization.
+- More Microsoft 365 source types than W1 proves.
+- Unrelated technical debt, including the open Summit rehearsal items.
+
+Preserved without change: export-only MFL access and the no-import guard; SimLeague-only football writes; the intentional vulnerabilities and their explicit selection; the hardened default; every package pin and lock file; the tests; CI approvals and repository protections.
+
+### Planning assumptions
+
+Made to keep moving; each can be changed in W0.
+
+- The fictional engagement, tag, and people (Northwind Traders, `[NW-DPM]`, Priya Raman, Marcus Lindqvist) and the reference time.
+- Email is the one required source type.
+- gpt-5.4 for the agent and the judge, as today.
+- Workplace evaluations run locally, not in CI, for Wednesday.
+- Work happens on a feature branch and reaches `main` by pull request under the existing rulesets; the demo runs from a tagged commit.
+- The workplace agent is named `MeetingPrep`.
+- The maintainer runs every live Work IQ call.
+
+### What this planning pass verified and did not
+
+Verified: the repository files named above were read at `92ab4bc`; the pinned MCP SDK contains the stdio transport (local XML docs); the npm registry reports `@microsoft/workiq` 1.0.1 as `latest`; Node and npm are installed on this machine. Documentation was read as listed. Relative links in this file were checked after the edit.
+
+Not performed: no build or test run; no model-backed test; no Work IQ command, sign-in, consent, or retrieval; no tenant, cloud, package, prompt, or code change; no commit or push.
+
 ## Public repository authorization gates (2026-10-01)
 Owner: Codex (maintainer-requested security task; independent of the open rehearsal gate)
 
@@ -511,6 +900,8 @@ Defer optional Markdown rendering improvements, new browser-test packages, and r
 - Confirm Swankers league members are fine with appearing on stage, and finalize `franchise-names.json`
 - Azure subscription, region, and quota check
 - Run the portal red-team scans and record demos
+- WI.NET (Oct 7): choose the Work IQ tenant and account, confirm licensing or billing, obtain admin consent, accept the Work IQ EULA, seed the fictional corpus, and run every live Work IQ call (see the WI.NET workstream, W1)
+- WI.NET (Oct 7): approve model-backed local runs, rehearse twice, record the working sequence, and review the slide deck (not in this repository)
 
 ## Open decisions
 
@@ -518,6 +909,9 @@ Decisions still to be made, so they are not lost in the phase records. When one 
 
 | Raised | Decision needed | Options seen so far | Owner | Blocks |
 |---|---|---|---|---|
+| 2026-10-04 (WI.NET plan) | Which tenant and account does Work IQ use, and which licensing path applies there? The sources disagree: a Microsoft 365 Copilot license per user (repo admin guide) or a Copilot Credits usage-based billing plan (Learn). | A dedicated demo tenant (recommended: a broad query cannot surface real mail); or the corporate tenant with tag-bounded retrieval and a decision on what may reach the model. Admin consent is needed either way. 2026-10-04: the maintainer chose an account in their own tenant, not the corporate one. 2026-10-05: sign-in and retrieval work there; which licensing path applies was not reported, and only matters again if the setup has to be repeated elsewhere. | maintainer | nothing now; a second machine or tenant |
+| 2026-10-04 (WI.NET plan) | May retrieved Microsoft 365 content be sent to the agent's model deployment, and to which telemetry destination? | Proposed: fictional tagged corpus only; Live content goes to the agent model and is not graded; spans and logs carry metadata only; local Aspire dashboard only. 2026-10-05: telemetry and local state are isolated in code (W2 record). Still open: approval to send Live evidence to the model, and whether the live captures under `artifacts/workplace/live/` should stay there, because the checkout is in a OneDrive-synced folder and git-ignored files sync too. | maintainer | the first Live request through the agent |
+| 2026-10-04 (WI.NET plan) | Where Wednesday's demo runs from. `main` requires a pull request and the `build` check. | A feature branch merged by PR before Wednesday and a tagged commit (proposed), or present from the feature branch and merge afterwards. | maintainer | W5 freeze |
 | 2026-09-30 (runbook source check) | Does portal red teaming cover this hosted code bundle's in-process MCP function tools? Microsoft's [current support matrix](https://learn.microsoft.com/en-us/azure/foundry/concepts/ai-red-teaming-agent#supported-agents-and-tools) excludes function tool calls; Coach consumes MCP tools as `AITool` functions. Compatibility is unverified, not a completed scan. | Verify target/tool coverage in the portal before capturing ASR. The runbook provides existing adversarial evals, scope tests, and rehearsal recordings as a clearly labeled presentation fallback; these do not close the portal-scan acceptance item. | maintainer | Friday portal red-team evidence |
 | 2026-09-29 (Codex Phase 6) | Browser automation of the interactive circuit (chat, two-second polling, Approve/Deny) is not in CI; the services behind those paths are unit-tested and the flows were rehearsed by hand against the deployed app. Add a browser test, or accept that coverage? | A browser test needs a new package (Playwright or bUnit), which the Phase 4 package freeze forbids without approval; the alternative is to keep the rehearsal in the Phase 7 runbook. | maintainer | nothing; Phase 7 if a browser test is wanted |
 | 2026-09-29 (Phase 6) | Coach replies render markdown minimally (bold only; lists and headings show as text). Good enough for the projector, or add a renderer? | A markdown package is a freeze exception; a hand-written subset (lists, headings) needs no package. | maintainer | Phase 7 polish |
@@ -583,3 +977,13 @@ Decisions still to be made, so they are not lost in the phase records. When one 
 | 2026-09-30 | Friday gets a middle "contained" run between before and after: stage `v0-owner` (prompt v0, gpt-4.1-mini, owner credential, gate on), preset `friday-contained`; `docs/ARCHITECTURE.md` security demo has three columns (maintainer-approved architecture change) | Before and after changed prompt, model, credential, and gate at once, and gpt-5.4 refuses the poisoned note on its own, so the credential and the gate never fired and the audience could say we only swapped in a smarter model. Holding prompt and model constant shows the model failing and the architecture holding anyway. The commissioner gate stays provisioned off for the whole Friday talk; contained and after use the owner credential, whose gate is always on, so the three runs are route changes with no provision |
 | 2026-09-30 | The v0-owner bundle is published from `coach-v0.md` as it stood for v9; the header-comment edit lands in the repo afterwards | `PromptLibrary.Load` sends the whole file to the model, header comment included, so editing first would have made the contained prompt differ from the before prompt by that sentence |
 | 2026-09-30 | `tests/Swankers.Evals/ContainedScreen.cs` is an opt-in model screen (`COACH_CONTAINED_SCREEN`), outside the gate and CI | The golden-set run reports a parked call as "(ok)", never reads league state, and always runs the cloud evaluators; the contained screen needed each call's outcome and a league check, with no Azure writes and no threshold involved |
+| 2026-10-04 | The WI.NET work stays in this repository and solution as a parallel `WorkplaceMeetingPrep` scenario; the football scenario and both Summit demonstrations are preserved; `SwankersCoach.slnx` and the `Swankers.*` projects are not renamed (maintainer) | AgentOps is the reusable engineering foundation; Work IQ supplies context for a new business scenario. No new repository, plugin platform, or shared-framework extraction just to look more general |
+| 2026-10-04 | The Wednesday path is local-first; existing deployment capability is preserved and no new cloud deployment is a prerequisite (maintainer default; the Work IQ research found no straightforward hosted path) | Work IQ needs a delegated user, which the hosted agent identity does not supply without a Toolbox; three days leave no room for new hosting |
+| 2026-10-04 | A2A and Microsoft.Extensions.AI evaluation are exploration topics for the WI.NET talk; no multi-agent system and no migration of the evaluation harness before Wednesday (maintainer) | The talk needs one honest agent, trace, evaluation, regression, and recovery; the existing harness already gates |
+| 2026-10-04 | Architecture exception for Work IQ approved as proposed (maintainer, in chat): D1–D8 of the WI.NET workstream, including the `get_engagement_evidence` tool behind a context-provider boundary, Work IQ over local MCP stdio with Node.js and `@microsoft/workiq@1.0.1` pinned outside Central Package Management, local-first, explicit Live or Replay mode, and the scenario's own agent name `MeetingPrep` (D6) | The football architecture stays locked and unchanged; the workplace scenario is an addition beside it. `docs/ARCHITECTURE.md` is not edited unless the maintainer asks for an addendum |
+| 2026-10-05 | The W1 gate passes on the live C# retrieval, the unchanged source references, and the `ActivityListener` span; viewing a live span in the Aspire dashboard is a presentation-readiness item for W5 and W6 (maintainer) | The integration is proven by the test; the dashboard view is about the presentation |
+| 2026-10-05 | Workplace evidence ids follow order of receipt in the fixture, the seed, and the corpus table (maintainer) | Live numbers messages that way, so Live and Replay cite the same ids; done before any evaluation case existed |
+| 2026-10-05 | Workplace model calls use the existing project `swankers-coach` and deployment `gpt-5.4`; no new Foundry project or deployment (maintainer) | It is the one configuration the football demo already uses locally |
+| 2026-10-05 | The workplace scenario isolates its local state and telemetry in code: its own `AGENTSERVER_STATE_ROOT` per prompt version and mode under `~/.agentserver/scenarios`, and no export to a machine-wide Application Insights (maintainer's requirement; design by Claude Code, for review at the W2 gate) | It must not continue a football conversation or depend on a machine-global telemetry setting; the store is kept outside the OneDrive-synced checkout because a Live answer is written there |
+| 2026-10-05 | The explicit business date contained in the fictional evidence is authoritative for engagement chronology; mailbox received time is transport metadata only, in Live and Replay alike (maintainer) | The Live corpus was seeded on October 5, so every received time is that day while the fictional events run from September 22 to October 2 |
+| 2026-10-05 | Raw Work IQ mailbox captures are kept in local application data, outside the OneDrive-synced checkout, with an override for troubleshooting; the repository holds only redacted summaries (maintainer) | Git ignoring a file does not stop a synced folder from uploading it |
