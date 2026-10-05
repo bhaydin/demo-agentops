@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
@@ -22,18 +23,71 @@ public sealed record JudgedCheck(string CheckName, JudgedOutcome Outcome, string
 }
 
 /// <summary>
+/// The judge's configuration, versioned and hashed apart from the agent's prompt: what the judge
+/// is told changes what a result means, so every report records which version graded it.
+/// <para>
+/// judge-v1 graded the first meetingprep-v1 baseline (commit 6a2effd). It required each specific
+/// fact to be "stated in" the evidence, and failed a faithful paraphrase ("the kickoff date" for
+/// "the date in the kickoff notes"). judge-v2 states the rule both ways: a faithful paraphrase
+/// passes, and a statement fails only when it adds, changes, materially strengthens, or
+/// contradicts a fact. Ranking a risk the evidence does not rank is named as strengthening.
+/// </para>
+/// </summary>
+public sealed record MeetingPrepJudgeConfig(string Version, string SystemInstruction, string GroundednessInstructions, string ClaimsInstructions)
+{
+    public static readonly MeetingPrepJudgeConfig Current = new(
+        Version: "judge-v2",
+        SystemInstruction: "You are a careful grader. Apply the grading rules exactly as written. Answer with JSON only.",
+        GroundednessInstructions: """
+            You grade whether statements in a meeting-preparation brief are supported by the evidence they cite.
+            Grade each statement only against the evidence listed under it. Use no outside knowledge and no other statement's evidence.
+
+            Pass a statement that is a faithful account of its evidence. A paraphrase is faithful: different words, a shorter or longer phrasing, or a natural way of referring to the same thing passes when it means what the evidence says. For example, "the kickoff date" for "the date in the kickoff notes" is a faithful paraphrase. Saying that the evidence gives no date, no owner, or no mitigation passes when that is true of the evidence.
+
+            Fail a statement only when it does at least one of these:
+            - adds a fact the evidence does not state, such as a name, a date, a number, an owner, a cause, or a consequence;
+            - changes a fact, such as a different owner, date, amount, or status;
+            - materially strengthens what the evidence says, such as presenting a suggestion as a decision, a plan as done, or a possibility as certain, or ranking or prioritizing something (the biggest, the clearest, the most important) when the evidence gives no such ranking;
+            - contradicts the evidence.
+
+            The heading says what kind of claim the statement makes:
+            - Under "Confirmed decisions" it claims the matter was decided, approved, or agreed. A proposal, a suggestion, a question, or "we should consider" does not support a decision.
+            - Under "Open commitments" it claims someone committed to do it and it is not done. Evidence that it was completed does not support an open commitment.
+            - Under "Unresolved risks" it claims the evidence describes that risk.
+
+            Reply with JSON only, no prose:
+            {"verdicts":[{"n":1,"pass":true,"reason":"<one sentence>"}]}
+            with exactly one entry per statement, numbered as below.
+            """.ReplaceLineEndings("\n"),
+        ClaimsInstructions: """
+            You grade an assistant's answer against a list of requirements. Judge only what the answer says, not what would be true in general.
+            A requirement passes only if the answer clearly satisfies it.
+
+            Reply with JSON only, no prose:
+            {"verdicts":[{"n":1,"pass":true,"reason":"<one sentence>"}]}
+            with exactly one entry per requirement, numbered as below.
+            """.ReplaceLineEndings("\n"));
+
+    /// <summary>SHA-256 over the version and every instruction text, with line endings normalized.</summary>
+    public string Sha256 => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
+        string.Join("\n---\n", Version, SystemInstruction, GroundednessInstructions, ClaimsInstructions).ReplaceLineEndings("\n"))));
+}
+
+/// <summary>
 /// The model-judged workplace checks. Groundedness asks, for every bullet in the first three
 /// sections, whether the evidence it cites supports that particular claim under that heading, so
 /// a tidy citation on an unsupported claim fails. Claims asks whether case-specific statements
 /// about the answer hold. The judge is a delegate so tests can stub it; one call covers a case.
 /// A verdict that is missing or unreadable for any statement makes the check Incomplete.
 /// </summary>
-public sealed class MeetingPrepJudge(Func<string, CancellationToken, Task<string>> judge)
+public sealed class MeetingPrepJudge(Func<string, CancellationToken, Task<string>> judge, MeetingPrepJudgeConfig? config = null)
 {
     public const string Groundedness = "groundedness";
     public const string Claims = "judged_claims";
 
     private static readonly string[] JudgedSections = [MeetingPrepBrief.Decisions, MeetingPrepBrief.Commitments, MeetingPrepBrief.Risks];
+
+    public MeetingPrepJudgeConfig Config { get; } = config ?? MeetingPrepJudgeConfig.Current;
 
     public async Task<JudgedCheck> GroundednessAsync(MeetingPrepBrief brief, EvidenceReturned evidence, CancellationToken cancellationToken)
     {
@@ -48,7 +102,7 @@ public sealed class MeetingPrepJudge(Func<string, CancellationToken, Task<string
         }
 
         // Built with explicit line feeds so the judge reads the same prompt on every platform.
-        var prompt = new StringBuilder(GroundednessInstructions).Append("\n\nStatements:\n");
+        var prompt = new StringBuilder(Config.GroundednessInstructions).Append("\n\nStatements:\n");
         for (var i = 0; i < statements.Count; i++)
         {
             prompt.Append($"{i + 1}. [{statements[i].Section}] {statements[i].Bullet.Text}\n");
@@ -68,7 +122,7 @@ public sealed class MeetingPrepJudge(Func<string, CancellationToken, Task<string
             return new JudgedCheck(Claims, JudgedOutcome.NotApplicable, "no judged claims for this case", []);
         }
 
-        var prompt = new StringBuilder(ClaimsInstructions)
+        var prompt = new StringBuilder(Config.ClaimsInstructions)
             .Append("\n\nQuestion:\n").Append(@case.Query)
             .Append("\n\nAnswer:\n").Append(answer.ReplaceLineEndings("\n"))
             .Append("\n\nRequirements:\n");
@@ -144,29 +198,6 @@ public sealed class MeetingPrepJudge(Func<string, CancellationToken, Task<string
             return null;
         }
     }
-
-    public static readonly string GroundednessInstructions = """
-        You grade whether statements in a meeting-preparation brief are supported by the evidence they cite.
-        Grade each statement only against the evidence listed under it. Use no outside knowledge and no other statement's evidence.
-
-        A statement under "Confirmed decisions" passes only if its evidence says the matter was decided, approved, or agreed. A proposal, a suggestion, a question, or "we should consider" does not support a decision.
-        A statement under "Open commitments" passes only if its evidence shows someone committed to do it and does not say it was completed.
-        A statement under "Unresolved risks" passes only if its evidence describes that risk.
-        In every section, each specific fact in the statement (a name, a date, a number, an owner) must be stated in its evidence. Saying that the evidence gives no date, or no owner, is acceptable when that is true of the evidence.
-
-        Reply with JSON only, no prose:
-        {"verdicts":[{"n":1,"pass":true,"reason":"<one sentence>"}]}
-        with exactly one entry per statement, numbered as below.
-        """.ReplaceLineEndings("\n");
-
-    public static readonly string ClaimsInstructions = """
-        You grade an assistant's answer against a list of requirements. Judge only what the answer says, not what would be true in general.
-        A requirement passes only if the answer clearly satisfies it.
-
-        Reply with JSON only, no prose:
-        {"verdicts":[{"n":1,"pass":true,"reason":"<one sentence>"}]}
-        with exactly one entry per requirement, numbered as below.
-        """.ReplaceLineEndings("\n");
 
     private static string Truncate(string text, int max = 200)
     {

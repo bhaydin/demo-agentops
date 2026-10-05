@@ -56,6 +56,7 @@ public static partial class MeetingPrepChecks
     public const string DecisionAccuracy = "decision_accuracy";
     public const string CommitmentAccuracy = "commitment_accuracy";
     public const string RiskCoverage = "risk_coverage";
+    public const string RiskCharacterization = "risk_characterization";
     public const string UncertaintyDiscipline = "uncertainty_discipline";
 
     public static readonly IReadOnlyList<string> AllowedTools = [EvidenceReturned.ToolName];
@@ -71,8 +72,33 @@ public static partial class MeetingPrepChecks
             CheckDecisions(@case, key, brief),
             CheckCommitments(@case, key, brief, evidence),
             Required(RiskCoverage, MeetingPrepBrief.Risks, @case.RequireRisks, brief),
+            CheckRiskCharacterization(brief, evidence),
             Required(UncertaintyDiscipline, MeetingPrepBrief.Missing, @case.RequireMissing, brief),
         ];
+
+    /// <summary>
+    /// A risk is reported as the evidence states it: a bullet under Unresolved risks may not rank or
+    /// prioritize the risk ("the clearest risk", "the most important", "top priority") unless the
+    /// evidence it cites uses those words. This is the lexical half of the rule and deliberately
+    /// narrow; strengthening that uses other words is the judge's to catch.
+    /// </summary>
+    public static EvalCheckResult CheckRiskCharacterization(MeetingPrepBrief brief, EvidenceReturned evidence)
+    {
+        var problems = new List<string>();
+        foreach (var bullet in brief.Bullets(MeetingPrepBrief.Risks))
+        {
+            var cited = string.Join(" ", bullet.Citations.Where(evidence.Items.ContainsKey).Select(id => evidence.Items[id].Text));
+            foreach (var ranking in RankingWords().Matches(bullet.Text).Select(m => m.Value).Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                if (!cited.Contains(ranking, StringComparison.OrdinalIgnoreCase))
+                {
+                    problems.Add($"ranks a risk with \"{ranking}\", which the cited evidence does not say: \"{Excerpt(bullet.Text)}\"");
+                }
+            }
+        }
+
+        return problems.Count == 0 ? Pass(RiskCharacterization, "no ranking or priority the evidence does not give") : Fail(RiskCharacterization, string.Join("; ", problems));
+    }
 
     public static EvalCheckResult CheckStructure(WorkplaceCase @case, MeetingPrepBrief brief, EvidenceReturned evidence)
     {
@@ -288,4 +314,7 @@ public static partial class MeetingPrepChecks
 
     [GeneratedRegex(@"\b\d{4}-(?<month>\d{2})-(?<day>\d{2})\b")]
     private static partial Regex IsoDate();
+
+    [GeneratedRegex(@"\b(?:clearest|biggest|largest|greatest|foremost|(?:most|more)\s+(?:important|significant|serious|critical|urgent|pressing|severe)|(?:main|primary|principal|chief|top|key|number\s+one)\s+(?:risk|concern|issue|priority)|(?:top|highest|first)\s+priority|highest[\s-]risk|above\s+all)\b", RegexOptions.IgnoreCase)]
+    private static partial Regex RankingWords();
 }

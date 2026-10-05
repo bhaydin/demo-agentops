@@ -122,6 +122,116 @@ public sealed class MeetingPrepJudgeAndReportTests
         Assert.True(grounded.Passed && claims.Passed);
     }
 
+    // --- the judge configuration (judge-v2) ------------------------------------------------------
+
+    [Fact]
+    public void The_judge_configuration_is_versioned_and_hashed_apart_from_the_prompt()
+    {
+        var config = MeetingPrepJudgeConfig.Current;
+
+        Assert.Equal("judge-v2", config.Version);
+        Assert.Matches("^[0-9A-F]{64}$", config.Sha256);
+        Assert.Equal(config.Sha256, (config with { }).Sha256);
+        // Any change to what the judge is told is a different configuration.
+        Assert.NotEqual(config.Sha256, (config with { Version = "judge-v3" }).Sha256);
+        Assert.NotEqual(config.Sha256, (config with { SystemInstruction = config.SystemInstruction + " Be lenient." }).Sha256);
+        Assert.NotEqual(config.Sha256, (config with { GroundednessInstructions = config.GroundednessInstructions.Replace("only when", "when") }).Sha256);
+        Assert.NotEqual(config.Sha256, (config with { ClaimsInstructions = config.ClaimsInstructions + "\n" }).Sha256);
+        Assert.DoesNotContain("\r", config.GroundednessInstructions + config.ClaimsInstructions);
+        Assert.Same(config, new MeetingPrepJudge((_, _) => Task.FromResult("")).Config);
+    }
+
+    [Fact]
+    public void The_judge_is_told_that_a_faithful_paraphrase_passes_and_exactly_what_fails()
+    {
+        var rules = MeetingPrepJudgeConfig.Current.GroundednessInstructions;
+
+        // The evaluator defect of the first baseline: a paraphrase was failed for its wording.
+        Assert.Contains("Pass a statement that is a faithful account of its evidence. A paraphrase is faithful", rules);
+        Assert.Contains("\"the kickoff date\" for \"the date in the kickoff notes\" is a faithful paraphrase", rules);
+        // Fail only for one of four things.
+        Assert.Contains("Fail a statement only when it does at least one of these:", rules);
+        Assert.Contains("- adds a fact the evidence does not state", rules);
+        Assert.Contains("- changes a fact", rules);
+        Assert.Contains("- materially strengthens what the evidence says", rules);
+        Assert.Contains("- contradicts the evidence.", rules);
+        // Ranking a risk the evidence does not rank is named as strengthening.
+        Assert.Contains("ranking or prioritizing something (the biggest, the clearest, the most important) when the evidence gives no such ranking", rules);
+        // The standard for each heading is unchanged.
+        Assert.Contains("A proposal, a suggestion, a question, or \"we should consider\" does not support a decision.", rules);
+        Assert.Contains("Evidence that it was completed does not support an open commitment.", rules);
+        Assert.DoesNotContain("strict", MeetingPrepJudgeConfig.Current.SystemInstruction);
+    }
+
+    [Fact]
+    public async Task Each_verdict_stays_with_its_statement_a_paraphrase_passing_and_a_ranking_or_strengthened_claim_failing()
+    {
+        // A stub stands in for the model, so this shows the plumbing, not the judge's judgement:
+        // the real judge's handling of these three kinds of statement is JudgeCalibration's job.
+        var brief = MeetingPrepBrief.Parse("""
+            ## Confirmed decisions
+            - The pilot go-live was approved to move from November 2, 2026 to November 16, 2026, replacing the kickoff date. [E5]
+
+            ## Unresolved risks
+            - The source ERP extract is missing ledger mappings for two business units. This is the clearest risk to raise. [E4]
+            - The missing ledger mappings will delay the November 16 go-live. [E4]
+            """);
+        string? seen = null;
+        var judge = new MeetingPrepJudge((prompt, _) =>
+        {
+            seen = prompt;
+            return Task.FromResult("""{"verdicts":[{"n":1,"pass":true,"reason":"A faithful paraphrase of the approved change."},{"n":2,"pass":false,"reason":"The evidence does not rank this risk."},{"n":3,"pass":false,"reason":"The evidence states no effect on go-live."}]}""");
+        });
+
+        var grounded = await judge.GroundednessAsync(brief, await EvidenceAsync(), CT);
+
+        Assert.StartsWith(MeetingPrepJudgeConfig.Current.GroundednessInstructions, seen);
+        Assert.Equal(JudgedOutcome.Fail, grounded.Outcome);
+        Assert.Equal([true, false, false], grounded.Verdicts.Select(v => v.Pass));
+        Assert.Contains("replacing the kickoff date", grounded.Verdicts[0].Statement);
+        Assert.Contains("clearest risk to raise", grounded.Verdicts[1].Statement);
+        Assert.Contains("will delay", grounded.Verdicts[2].Statement);
+        Assert.DoesNotContain("replacing the kickoff date", grounded.Reason);   // only the failed statements are reported as failures
+        Assert.Contains("The evidence does not rank this risk.", grounded.Reason);
+        Assert.Contains("The evidence states no effect on go-live.", grounded.Reason);
+    }
+
+    [Fact]
+    public async Task The_calibration_set_is_well_formed_and_reaches_the_judge_in_its_labeled_order()
+    {
+        // Model-free: this checks the labeled statements, not the judge. JudgeCalibration sends them.
+        var evidence = await EvidenceAsync();
+        var labels = JudgeCalibration.InJudgedOrder;
+        string? seen = null;
+        var judge = new MeetingPrepJudge((prompt, _) =>
+        {
+            seen = prompt;
+            return Task.FromResult(AllPass(labels.Count));
+        });
+
+        var result = await judge.GroundednessAsync(JudgeCalibration.AsBrief(), evidence, CT);
+
+        Assert.Equal(JudgeCalibration.Statements.Count, labels.Count);
+        Assert.Equal(labels.Count, result.Verdicts.Count);
+        Assert.All(labels, label => Assert.Contains(label.Cites, evidence.Items.Keys));
+        for (var i = 0; i < labels.Count; i++)
+        {
+            Assert.Contains($"{i + 1}. [{labels[i].Heading}] {labels[i].Statement}", seen);
+        }
+
+        // All three kinds the calibration must prove are present.
+        Assert.Contains(labels, l => l.ShouldPass && l.Kind.StartsWith("paraphrase", StringComparison.Ordinal));
+        Assert.Contains(labels, l => !l.ShouldPass && l.Kind.StartsWith("unsupported ranking", StringComparison.Ordinal));
+        Assert.Contains(labels, l => !l.ShouldPass && l.Kind.StartsWith("materially strengthened", StringComparison.Ordinal));
+
+        // The deterministic check agrees with the labels on ranking: it flags the two ranked risks and nothing else.
+        var ranking = MeetingPrepChecks.CheckRiskCharacterization(JudgeCalibration.AsBrief(), evidence);
+        Assert.False(ranking.Passed);
+        Assert.Contains("\"clearest\"", ranking.Reason);
+        Assert.Contains("\"most important\"", ranking.Reason);
+        Assert.Equal(2, ranking.Reason.Split("ranks a risk with").Length - 1);
+    }
+
     // --- the gate ----------------------------------------------------------------------------
 
     [Fact]
@@ -130,16 +240,17 @@ public sealed class MeetingPrepJudgeAndReportTests
         var report = Report([.. Cases.Select(c => Result(c.Id))]);
 
         Assert.Equal(WorkplaceEvalReport.Pass, report.Status);
-        Assert.Equal((56, 56), report.Deterministic);   // seven checks, eight cases
+        Assert.Equal((64, 64), report.Deterministic);   // eight checks, eight cases
         Assert.Equal((16, 16), report.Judged);
         var json = report.ToJson();
-        foreach (var field in (string[])["\"status\": \"pass\"", "\"scenario\": \"workplace\"", "\"mode\": \"replay\"", "\"gitCommit\": \"abc123\"", "\"gitDirty\": false", "\"promptId\": \"meetingprep-v1\"", "\"promptSha256\"", "\"fixture\": \"northwind-v1\"", "\"fixtureSha256\"", "\"casesSha256\"", "\"answerKeySha256\"", "\"settingsSha256\"", "\"agentModel\": \"gpt-5.4\"", "\"judgeModel\": \"gpt-5.4\"", "\"timestampUtc\"", "\"defect\": \"none\"", "\"traceIds\": \"not exported\""])
+        foreach (var field in (string[])["\"status\": \"pass\"", "\"scenario\": \"workplace\"", "\"mode\": \"replay\"", "\"gitCommit\": \"abc123\"", "\"gitDirty\": false", "\"promptId\": \"meetingprep-v1\"", "\"promptSha256\"", "\"fixture\": \"northwind-v1\"", "\"fixtureSha256\"", "\"casesSha256\"", "\"answerKeySha256\"", "\"settingsSha256\"", "\"agentModel\": \"gpt-5.4\"", "\"judgeModel\": \"gpt-5.4\"", "\"judgeConfig\": \"judge-v2\"", "\"judgeConfigSha256\": \"J\"", "\"timestampUtc\"", "\"defect\": \"none\"", "\"traceIds\": \"not exported\""])
         {
             Assert.Contains(field, json);
         }
 
         Assert.Contains("**Gate: PASS**", report.ToMarkdown());
         Assert.Contains("| Scenario, mode | workplace, REPLAY |", report.ToMarkdown());
+        Assert.Contains("| Judge configuration | judge-v2, sha256 J |", report.ToMarkdown());
     }
 
     [Fact]
@@ -149,7 +260,7 @@ public sealed class MeetingPrepJudgeAndReportTests
         var report = Report([.. Cases.Where(c => c.Id != "mp-02").Select(c => Result(c.Id)), failed]);
 
         Assert.Equal(WorkplaceEvalReport.Fail, report.Status);
-        Assert.Contains("deterministic checks: 55/56 passed, threshold 100%", Assert.Single(report.GateFailures));
+        Assert.Contains("deterministic checks: 63/64 passed, threshold 100%", Assert.Single(report.GateFailures));
         Assert.Equal((7, 8), report.ByCheck[MeetingPrepChecks.DecisionAccuracy]);
         Assert.Contains("### mp-02 FAIL", report.ToMarkdown());
         Assert.Contains("- decision_accuracy: presents suggestion E7 as a confirmed decision", report.ToMarkdown());
@@ -251,7 +362,7 @@ public sealed class MeetingPrepJudgeAndReportTests
         var passing = new[]
         {
             MeetingPrepChecks.Structure, MeetingPrepChecks.ToolIsolation, MeetingPrepChecks.CitationValidity, MeetingPrepChecks.DecisionAccuracy,
-            MeetingPrepChecks.CommitmentAccuracy, MeetingPrepChecks.RiskCoverage, MeetingPrepChecks.UncertaintyDiscipline,
+            MeetingPrepChecks.CommitmentAccuracy, MeetingPrepChecks.RiskCoverage, MeetingPrepChecks.RiskCharacterization, MeetingPrepChecks.UncertaintyDiscipline,
         }.Select(name => new EvalCheckResult(true, "ok", name)).ToList();
         if (checks is not null)
         {
@@ -266,6 +377,6 @@ public sealed class MeetingPrepJudgeAndReportTests
     private static WorkplaceEvalReport Report(params IReadOnlyList<WorkplaceCaseResult> results)
         => new(
             new WorkplaceProvenance("workplace", "replay", "run1", "2026-10-06 01:02:03", "abc123", false, "meetingprep-v1", "P", "northwind-v1", "F", "C", "K", "S",
-                "https://example.invalid/api/projects/none", "gpt-5.4", "gpt-5.4", "none", "not exported"),
+                "https://example.invalid/api/projects/none", "gpt-5.4", "gpt-5.4", "judge-v2", "J", "none", "not exported"),
             WorkplaceEvalSettings.Load(), results);
 }

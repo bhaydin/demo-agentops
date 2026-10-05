@@ -51,7 +51,7 @@ public sealed class MeetingPrepUnderTest : IAsyncDisposable
             ProjectEndpoint = projectEndpoint,
             ModelDeployment = agentModel,
             PromptVersion = promptVersion,
-            AgentName = $"MeetingPrep-eval-{promptVersion}",
+            AgentName = WorkplaceScenario.AgentNameFor("MeetingPrep-eval", promptVersion),
         };
         var agent = CoachAgentFactory.Create(options, composition.Instructions, composition.Tools, NullLoggerFactory.Instance, WorkplaceScenario.Description);
         var project = new AIProjectClient(new Uri(projectEndpoint), new CachedTokenCredential(
@@ -64,10 +64,13 @@ public sealed class MeetingPrepUnderTest : IAsyncDisposable
     public Task<AgentResponse> RunAsync(WorkplaceCase @case, CancellationToken cancellationToken)
         => Agent.RunAsync(@case.Query, session: null, options: null, cancellationToken: cancellationToken);
 
-    /// <summary>A no-tools judge agent; each call is its own conversation.</summary>
-    public Func<string, CancellationToken, Task<string>> CreateJudge(string model)
+    /// <summary>A no-tools judge agent under the given judge configuration; each call is its own conversation.</summary>
+    public Func<string, CancellationToken, Task<string>> CreateJudge(string model, MeetingPrepJudgeConfig? config = null)
+        => CreateJudge(Project, model, config ?? MeetingPrepJudgeConfig.Current);
+
+    public static Func<string, CancellationToken, Task<string>> CreateJudge(AIProjectClient project, string model, MeetingPrepJudgeConfig config)
     {
-        var judge = Project.AsAIAgent(model: model, instructions: "You are a strict grader. Answer with JSON only.", name: "MeetingPrepJudge");
+        var judge = project.AsAIAgent(model: model, instructions: config.SystemInstruction, name: "MeetingPrepJudge");
         return async (prompt, ct) => (await judge.RunAsync(prompt, session: null, options: null, cancellationToken: ct)).Text;
     }
 

@@ -43,7 +43,7 @@ public class ScenarioSelectionTests
         var meetingPrep = new PromptLibrary(PromptLibrary.DefaultDirectory, PromptLibrary.MeetingPrepPrefix).Versions;
 
         Assert.Equal(["v0", "v1", "v2"], coach);
-        Assert.Equal(["v1"], meetingPrep);
+        Assert.Equal(["v1", "v1.1"], meetingPrep);
     }
 
     [Fact]

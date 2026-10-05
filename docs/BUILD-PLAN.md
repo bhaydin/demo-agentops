@@ -13,7 +13,7 @@ Owner: Claude Code for the planning pass (maintainer-requested 2026-10-04) and f
 
 Talk: "Build, Trace, Test: Production-Grade AI Agents with .NET Microsoft Agent Framework", WI.NET, Wednesday October 7, 2026 ([abstract](https://www.meetup.com/wisconsin-net-users-group/events/313016779/)). The principle: **AgentOps is the reusable engineering foundation; Work IQ supplies context for a new business scenario.** `WorkplaceMeetingPrep` is a second scenario beside the football one, in the same repository and solution. Work IQ is its context-provider implementation, not a new identity for the repository.
 
-**Status (2026-10-05): W0 approved; W1 gate passed; W2 acceptance met and waiting at its review gate; W3 not started.** Real Work IQ retrieval works through the application's C# path: nine tagged corpus items with their references ([evidence](../demo/winet-workiq-evidence.md)). The workplace scenario starts with `Coach:Scenario=workplace` in Live or Replay, with its own local state and no Application Insights export. One Replay request has been answered by the agent on `gpt-5.4` (W2 record). No Work IQ result has reached a model, and the maintainer's review of the evidence file and allow-list comes before that. Unticked boxes are proposals or open work.
+**Status (2026-10-05): W0 approved; W1 gate passed; W2 approved and committed (`6de3a37`); W3 harness committed (`6a2effd`); the `meetingprep-v1` baseline passed the gate in 2 of 3 runs and the maintainer did not accept it as the regression baseline; the W3 remediation (`meetingprep-v1.1`, judge configuration `judge-v2`, an eighth deterministic check) is frozen and its three-run baseline is next; W4 not started.** Real Work IQ retrieval works through the application's C# path ([evidence](../demo/winet-workiq-evidence.md)). The workplace scenario starts with `Coach:Scenario=workplace` in Live or Replay, with its own local state and no Application Insights export. The baseline over the Replay fixture is in the W3 record: six of eight cases passed every check in all three runs, and two varied. No Work IQ result has reached a model, and the maintainer's review of the evidence file and allow-list comes before that. Unticked boxes are proposals or open work.
 
 | The talk must show | Covered by |
 |---|---|
@@ -194,6 +194,14 @@ Negative tests for the evaluators themselves (model-free, written before the bas
 - **Gate arithmetic.** Per run there are 56 deterministic case-checks (7 by 8) and 16 judged case-checks (2 by 8). The run passes when every deterministic case-check passes and at least 80% of the judged ones do. A judged check passes only if every statement in it does. A judge reply that is unreadable or lacks a verdict for any statement, a judge call that fails, or a case that errors makes the run incomplete, which fails the gate and is reported as incomplete.
 - **Judge.** `gpt-5.4`, no tools, instructed to answer with JSON only, a new conversation per call; the two instruction texts are constants in `MeetingPrepJudge`.
 
+**Amended by the W3 remediation (2026-10-05, after the `meetingprep-v1` baseline and before the `meetingprep-v1.1` baseline).** The `meetingprep-v1` baseline ran under the contract above. From the remediation on:
+
+- **Eight deterministic checks.** `risk_characterization` is added: a bullet under Unresolved risks may not rank or prioritize a risk ("the clearest risk", "the most important", "top priority") unless the evidence it cites uses those words. It is lexical and deliberately narrow; strengthening in other words is the judge's to catch. Per run there are now 64 deterministic case-checks (8 by 8) and 16 judged ones. The thresholds are unchanged.
+- **Source completeness** was already part of `citation_validity` (Sources lists exactly the ids cited anywhere in the answer) and is what failed `meetingprep-v1` run 1. The rule is unchanged; a test now pins an id cited only under missing information.
+- **Judge configuration.** The judge's system instruction and its two instruction texts are one versioned record, `MeetingPrepJudgeConfig`, with its own SHA-256, separate from the prompt's. Every report carries the version and the hash. `judge-v1` is what the `meetingprep-v1` baseline used (its text is in commit `6a2effd`; it was not hashed then). `judge-v2` changes the groundedness rule and the system instruction: a faithful paraphrase passes, and a statement fails only when it adds, changes, materially strengthens (ranking included), or contradicts a fact. The standard for each heading and the claims instruction are unchanged.
+- **Prompt identifiers.** `meetingprep-v1` is kept as it was baselined. `meetingprep-v1.1` is the corrected prompt, selected with `WORKPLACE_PROMPT_VERSION=v1.1`; `workplace-evalsettings.json` is not edited, so its hash is the same in both baselines.
+- **Judge calibration.** `JudgeCalibration` is an opt-in, model-backed test (`WORKPLACE_JUDGE_CALIBRATION=<repetitions>`) that sends labeled statements to the real judge: faithful paraphrases that must pass, and added, changed, strengthened, ranked, or contradicted facts that must fail. It grades the judge, not the agent, and CI never runs it.
+
 ### Regression and recovery
 
 Preferred demonstration: a prompt change that relaxes the line between an explicit decision and a tentative suggestion. `meetingprep-v2.md` differs from v1 by one clause, a plausible brevity edit that drops the rule that proposals are not decisions; a model-free test asserts that this is the only difference, as `PromptLibraryTests` does for coach v1 and v2. Expected wrong answer: "The team decided to adopt Fabric after the pilot."
@@ -311,7 +319,9 @@ Depends on: W2
 - [x] Report with provenance to `artifacts/evals/workplace/`; a model-free test asserts it cannot write the football report names.
 - [x] `WORKPLACE_EVAL=1` opt-in; skipped otherwise; `evals.yml` untouched.
 - [x] Thresholds committed before the first baseline run.
-- [ ] Baseline: `meetingprep-v1`, three complete runs.
+- [x] Baseline: `meetingprep-v1`, three complete runs. Run 2026-10-05: two passed the gate and one failed it, so the "v1 passes 3 of 3" acceptance below is not met (W3 record).
+- [x] Remediation (maintainer decision 2026-10-05: `meetingprep-v1` is not the regression baseline): `meetingprep-v1.1`, judge configuration `judge-v2`, the `risk_characterization` check, and their tests (W3 remediation record).
+- [ ] Baseline: `meetingprep-v1.1`, three fresh complete runs, all three passing the full frozen gate with no incomplete judge call and no deterministic failure.
 
 - Files: add `tests/Swankers.Evals/Workplace/` (case model and loader, harness, brief parser, evaluators, judge, report, settings, the gated test, and their unit tests), `tests/Swankers.Evals/workplace-golden/meeting-prep.jsonl`, `tests/Swankers.Evals/workplace-evalsettings.json`; modify `tests/Swankers.Evals/Swankers.Evals.csproj` to copy the two content items. No change to `EvalReport.cs`, `EvalSettings.cs`, `GoldenSet.cs`, `evalsettings.json`, or `golden/`.
 - Acceptance: model-free, `dotnet test tests/Swankers.Evals -c Release` (verified command). Baseline (proposed): `$env:WORKPLACE_EVAL='1'; $env:WORKPLACE_PROMPT_VERSION='v1'; dotnet test tests/Swankers.Evals -c Release --filter "FullyQualifiedName~MeetingPrepEvals" --logger "console;verbosity=normal"` with `FOUNDRY_PROJECT_ENDPOINT` set; v1 passes 3 of 3.
@@ -341,6 +351,69 @@ $env:FOUNDRY_PROJECT_ENDPOINT = 'https://foundry-swankers-vxzd.services.ai.azure
 $env:WORKPLACE_EVAL = '1'; $env:WORKPLACE_PROMPT_VERSION = 'v1'; $env:WORKPLACE_EVAL_RUN = 'run1'
 dotnet test tests/Swankers.Evals -c Release --no-build --filter "FullyQualifiedName~MeetingPrepEvals" --logger "console;verbosity=normal"
 ```
+
+**W3 record (2026-10-05; baseline run, gate not passed, waiting for the maintainer's review).** Three complete runs from commit `6a2effd15aa6e401cbc77bf047a4ae80f3048a36` with a clean tree, nothing changed between them. All three reports carry identical provenance: the frozen hashes above, Replay, `gpt-5.4` for agent and judge, project `swankers-coach`. Every case made exactly one `get_engagement_evidence` call. Work IQ was not started. No run was incomplete.
+
+| | Run 1 (21:43 UTC) | Run 2 (21:45 UTC) | Run 3 (21:47 UTC) | All three |
+|---|---|---|---|---|
+| Gate | **fail** | pass | pass | 2 of 3 |
+| Deterministic case-checks (100% needed) | 55/56 | 56/56 | 56/56 | 167/168 |
+| Judged case-checks (80% needed) | 15/16 | 16/16 | 14/16 | 45/48 |
+| Cases with every check passing | 7/8 | 8/8 | 6/8 | 21/24 |
+| Wall time | 116 s | 109 s | 103 s | |
+
+| Check | Run 1 | Run 2 | Run 3 |
+|---|---|---|---|
+| structure | 8/8 | 8/8 | 8/8 |
+| tool_isolation | 8/8 | 8/8 | 8/8 |
+| citation_validity | 7/8 | 8/8 | 8/8 |
+| decision_accuracy | 8/8 | 8/8 | 8/8 |
+| commitment_accuracy | 8/8 | 8/8 | 8/8 |
+| risk_coverage | 8/8 | 8/8 | 8/8 |
+| uncertainty_discipline | 8/8 | 8/8 | 8/8 |
+| groundedness (judged) | 7/8 | 8/8 | 6/8 |
+| judged_claims (judged) | 8/8 | 8/8 | 8/8 |
+
+- **Stable in all three runs:** mp-01, mp-02, mp-03, mp-05, mp-06, mp-07, on every check. That includes everything the planned regression turns on: the Fabric suggestion (E7) was never cited as a decision, `decision_accuracy` passed 24 of 24, and the judged claims that the answer does not present Fabric as decided (mp-01, mp-02, mp-07) held 3 of 3.
+- **mp-04 ("What risks should I raise?") passed 1 of 3.** In runs 1 and 3 the risk bullet added "This is the clearest risk to raise", and the judge failed it as a claim the evidence does not make; in run 2 the bullet said "this is an unresolved risk to raise" and passed. The question invites a ranking and the agent supplies one. In run 1 the answer also cited E7 under missing information without listing it under Sources, which is the one deterministic failure of the baseline and the reason run 1 failed the gate.
+- **mp-08 (the email request) passed 2 of 3.** The agent declined correctly all three times and `judged_claims` passed each time. In run 3 the judge failed a decision bullet that said the new date replaced "the kickoff date", because the evidence says it replaced "the date in the kickoff notes". That is the judge reading a paraphrase strictly.
+- **Reading.** The agent's classification of decisions, commitments, risks, and gaps did not vary. What varied was an editorial phrase, one omitted Sources line, and the judge's tolerance for paraphrase. The gate did what it is set to do, and by its frozen rule a baseline that fails one run in three is not a stable baseline: the recovery step of the regression demo could fail for a reason unrelated to the regression.
+- **Not changed.** No threshold, case, prompt, fixture, judge instruction, or code was changed after the first result, and no run was repeated. Options for the maintainer are in the W3 handover; W4 has not started.
+- **Reports.** Ignored `artifacts/evals/workplace/`: `meetingprep-v1-run1-20261005-214521`, `meetingprep-v1-run2-20261005-214722`, `meetingprep-v1-run3-20261005-214923`, each as `.md` and `.json`, and `latest-meetingprep-v1.json` (a copy of run 3). Each JSON holds the provenance block, every check with its reason, every judge verdict, and the full answer. No football report file was written.
+
+**W3 remediation record (2026-10-05).** The maintainer reviewed the baseline above, did not accept `meetingprep-v1` as the regression baseline, and chose remediation. Two defects, fixed separately:
+
+- **Agent prompt.** v1 let the agent cite an id without listing it under Sources and rank a risk the evidence does not rank. `meetingprep-v1.1.md` is v1 with a new title, one added rule (report a risk as the evidence states it; no ranking, priority, likelihood, consequence, or urgency the evidence does not give), and a replaced Sources rule (every id cited anywhere in the answer, with a final self-check). A test asserts those are the only differences. `meetingprep-v1.md` is untouched and a test pins its baselined hash. The agent's name carries the version (`MeetingPrep-v1-1`; an agent name takes no dot), so sessions and traces of the two versions stay apart.
+- **Evaluator.** `judge-v1` failed a faithful paraphrase ("the kickoff date" for "the date in the kickoff notes"). `judge-v2` states the rule both ways (evaluation contract, amendment). The deterministic `risk_characterization` check now catches the ranking phrases without a model.
+- **Not changed.** Fixture `northwind-v1`, cases mp-01 to mp-08, the answer key, expected behavior, thresholds, `workplace-evalsettings.json`, the Foundry project, the `gpt-5.4` deployment for agent and judge, Replay mode, and a new session per case.
+- **Tests added before any model request.** Source completeness (an id cited only under missing information must be in Sources). Risk ranking: the two v1 baseline bullets and four other rankings fail `risk_characterization`; the run 2 wording and two plain statements pass; a ranking the cited evidence itself gives passes; ranking words outside the risks section are left to the judge. Judge: the configuration is versioned and its hash moves with any instruction; the instructions state the paraphrase rule and the four fail conditions; a paraphrase verdict of pass and ranking and strengthened verdicts of fail stay with their statements; the report carries the judge configuration. Prompt: the four prompt tests above.
+- **Model-free results.** Locked restore and a full Release build: 0 warnings, 0 errors. 388 tests passed, 0 failed, 7 skipped (the two Work IQ live tests, the football golden gate, the contained screen, the web live test, this workplace gate, and the judge calibration, each without its opt-in). 69 of them are in `tests/Swankers.Evals/Workplace/`.
+- **Judge calibration (model-backed, judge only, outside the three baseline runs).** Stubbed tests cannot show how the real judge reads a paraphrase, so the labeled set was sent to `gpt-5.4` under `judge-v2` three times before the freeze: three judge calls, no agent call, synthetic statements over the fixture. 13 statements per call: six faithful paraphrases (including the run 3 sentence `judge-v1` failed and the run 2 risk wording), two unsupported rankings (including the run 1 and run 3 sentence), two materially strengthened claims, two changed facts, one contradiction. The judge agreed with every label in every repetition, 39 of 39. `judge-v2` was not edited after it.
+
+**W3 freeze for the `meetingprep-v1.1` baseline (2026-10-05, before any baseline model request).** Nothing in this list changes between the three runs, whatever a run returns.
+
+| Frozen | Value |
+|---|---|
+| Code | The commit that adds this record; the runs record its hash and a clean tree in their provenance |
+| Prompt | `meetingprep-v1.1`, SHA-256 `5A57E9C358E800B6A34CD23862E850D8DE5B7EA8939970FA7B16AB3E8ACAD569` |
+| Judge configuration | `judge-v2`, SHA-256 `228B183FF4EC4CBA8BBEB718FB1B70BF04ABB0A98CA045CFAA2C0A1EFC2CDDF6` |
+| Fixture | `northwind-v1`, SHA-256 `72FE0287021C354E7FE3C64BF53E6055289887965BFF0660DB264790582028CD`, Replay (unchanged) |
+| Cases | `workplace-golden/meeting-prep.jsonl`, eight cases, SHA-256 `B33E5C326F201FFF00332716503C9A38D56B0FC936F89E1844E304284BAB1615` (unchanged) |
+| Answer key | `workplace-golden/northwind-v1.key.json`, SHA-256 `40A5B8BE3B725B9FA7922F49F6427DBE04EAA8167305E8E8D0F5B79DFEF39845` (unchanged) |
+| Thresholds and models | `workplace-evalsettings.json`, SHA-256 `FFCCDE250F7571C5E95CD280E8B11223F48DCCBC8E8662E347C634F6BC4BF799` (unchanged): deterministic 100%, judged 80%, agent `gpt-5.4`, judge `gpt-5.4`, 180 s per case |
+| Gate | 64 deterministic case-checks (8 by 8) at 100%, 16 judged case-checks at 80%, incomplete never passes |
+| Project | `swankers-coach` |
+| Session | A new one per case; no Responses host, nothing persisted |
+
+Baseline command, run three times with `WORKPLACE_EVAL_RUN` set to `run1`, `run2`, `run3`:
+
+```powershell
+$env:FOUNDRY_PROJECT_ENDPOINT = 'https://foundry-swankers-vxzd.services.ai.azure.com/api/projects/swankers-coach'
+$env:WORKPLACE_EVAL = '1'; $env:WORKPLACE_PROMPT_VERSION = 'v1.1'; $env:WORKPLACE_EVAL_RUN = 'run1'
+dotnet test tests/Swankers.Evals -c Release --no-build --filter "FullyQualifiedName~MeetingPrepEvals" --logger "console;verbosity=normal"
+```
+
+Acceptance, set by the maintainer: all three runs pass the full frozen gate, with no incomplete judge call and no deterministic failure. W4 does not start otherwise.
 
 #### W4: Regression and recovery (Tue Oct 6, morning), P0
 Owner: unclaimed (proposed: Claude Code; maintainer approves each model-backed set)

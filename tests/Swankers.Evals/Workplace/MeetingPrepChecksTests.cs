@@ -17,8 +17,80 @@ public sealed class MeetingPrepChecksTests
     {
         var checks = await EvaluateAsync(GoodBrief);
 
-        Assert.Equal(7, checks.Count);
+        Assert.Equal(8, checks.Count);
         Assert.All(checks, c => Assert.True(c.Passed, $"{c.CheckName}: {c.Reason}"));
+    }
+
+    // --- the two defects the first meetingprep-v1 baseline exposed (2026-10-05) -----------------
+
+    [Fact]
+    public async Task An_id_cited_only_under_missing_information_must_still_be_listed_under_sources()
+    {
+        // Baseline run 1, mp-04: the answer cited E7 under missing information and left it out of Sources.
+        var brief = GoodBrief.Replace("- E7 — [NW-DPM] Working session notes — 2026-10-02 — fixture:northwind-v1#E7", "").TrimEnd();
+        Assert.Contains("is an open suggestion, not a decision. [E7]", brief);   // still cited, and only under Missing
+
+        var check = Single(await EvaluateAsync(brief), MeetingPrepChecks.CitationValidity);
+
+        Assert.False(check.Passed);
+        Assert.Contains("cited but not listed under Sources: E7", check.Reason);
+    }
+
+    [Theory]
+    // The risk bullets gpt-5.4 actually wrote for mp-04 in baseline runs 1 and 3:
+    [InlineData("Source ERP extract is missing ledger mappings for two business units, and nobody has been assigned to resolve it. This is the clearest risk to raise. [E4]", "clearest")]
+    [InlineData("The source ERP extract is missing ledger mappings for two business units, and nobody has been assigned to resolve it. This is the clearest risk to raise because the evidence names the issue and shows no owner. [E4]", "clearest")]
+    // Other ways of ranking or prioritizing that the evidence does not support:
+    [InlineData("The biggest risk is the ERP extract, which is missing ledger mappings for two business units. [E4]", "biggest")]
+    [InlineData("The ERP extract is missing ledger mappings; this is the most important issue before go-live. [E4]", "most important")]
+    [InlineData("Top priority: the ERP extract is missing ledger mappings for two business units. [E4]", "Top priority")]
+    [InlineData("The main risk is that the ERP extract is missing ledger mappings for two business units. [E4]", "main risk")]
+    public async Task A_risk_ranked_or_prioritized_beyond_the_evidence_fails_risk_characterization(string riskBullet, string ranking)
+    {
+        var brief = GoodBrief.Replace("- The source ERP extract is missing ledger mappings for two business units; nobody has been assigned to resolve it. [E4]", "- " + riskBullet);
+
+        var checks = await EvaluateAsync(brief);
+
+        var check = Single(checks, MeetingPrepChecks.RiskCharacterization);
+        Assert.False(check.Passed);
+        Assert.Contains($"ranks a risk with \"{ranking}\", which the cited evidence does not say", check.Reason);
+        Assert.True(Single(checks, MeetingPrepChecks.RiskCoverage).Passed);   // the risk is still reported; only its wording fails
+    }
+
+    [Theory]
+    // The risk bullet from baseline run 2, which reported the risk without ranking it:
+    [InlineData("The source ERP extract is missing ledger mappings for two business units. Nobody has been assigned to resolve it, so this is an unresolved risk to raise. [E4]")]
+    [InlineData("Ledger mappings for two business units are missing from the source ERP extract, and no one owns the fix. [E4]")]
+    [InlineData("A named approver for the pilot acceptance criteria is not established, and one is needed before go-live. [E9]")]
+    public async Task A_risk_reported_as_the_evidence_states_it_passes_risk_characterization(string riskBullet)
+    {
+        var brief = GoodBrief.Replace("- The source ERP extract is missing ledger mappings for two business units; nobody has been assigned to resolve it. [E4]", "- " + riskBullet + "\n- The ERP extract is missing ledger mappings. [E4]");
+
+        Assert.True(Single(await EvaluateAsync(brief), MeetingPrepChecks.RiskCharacterization).Passed);
+    }
+
+    [Fact]
+    public void A_ranking_the_cited_evidence_itself_gives_is_not_a_failure()
+    {
+        var evidence = new EvidenceReturned("replay", "NW-DPM", new DateOnly(2026, 10, 7), new Dictionary<string, EvidenceReturned.Item>
+        {
+            ["E1"] = new("E1", "The steering committee called the data quality issue the most important risk to the pilot.", "fixture:other#E1", "Risk review"),
+            ["E2"] = new("E2", "The extract is late.", "fixture:other#E2", "Extract"),
+        });
+        var supported = MeetingPrepBrief.Parse("## Unresolved risks\n- Data quality is the most important risk to the pilot, according to the steering committee. [E1]");
+        var borrowed = MeetingPrepBrief.Parse("## Unresolved risks\n- The late extract is the most important risk to the pilot. [E2]");
+
+        Assert.True(MeetingPrepChecks.CheckRiskCharacterization(supported, evidence).Passed);
+        Assert.False(MeetingPrepChecks.CheckRiskCharacterization(borrowed, evidence).Passed);
+    }
+
+    [Fact]
+    public async Task Ranking_words_outside_the_risks_section_are_left_to_the_judge()
+    {
+        // The lexical rule is about how risks are characterized; it does not police the other sections.
+        var brief = GoodBrief.Replace("- Who signs off on the pilot acceptance criteria is not established. [E9]", "- The most important gap: who signs off on the pilot acceptance criteria is not established. [E9]");
+
+        Assert.True(Single(await EvaluateAsync(brief), MeetingPrepChecks.RiskCharacterization).Passed);
     }
 
     [Fact]

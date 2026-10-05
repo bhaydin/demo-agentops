@@ -50,7 +50,7 @@ public static class WorkplaceScenario
             : FixtureContextProvider.Load(RepoPaths.Resolve(options.FixturePath, contentRoot));
 
         return new WorkplaceComposition(
-            AgentName: $"{options.AgentName}-{promptVersion}",
+            AgentName: AgentNameFor(options.AgentName, promptVersion),
             Instructions: instructions,
             PromptId: $"{PromptLibrary.MeetingPrepPrefix}{promptVersion}",
             PromptSha256: promptSha256,
@@ -58,6 +58,13 @@ public static class WorkplaceScenario
             Provider: provider,
             ReferenceTime: referenceTime);
     }
+
+    /// <summary>
+    /// The agent's name for a prompt version: distinct per version, so sessions and traces of two
+    /// versions cannot be confused. A dotted version such as v1.1 becomes v1-1, because an agent
+    /// name is letters, digits, underscores, and hyphens.
+    /// </summary>
+    public static string AgentNameFor(string baseName, string promptVersion) => $"{baseName}-{promptVersion.Replace('.', '-')}";
 
     /// <summary>An explicit offset is required: a time without one would be read in the machine's zone.</summary>
     public static DateTimeOffset ParseReferenceTime(string configured)

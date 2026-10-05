@@ -39,6 +39,7 @@ public sealed class MeetingPrepEvals(ITestOutputHelper output)
         await using var sut = await MeetingPrepUnderTest.StartAsync(version, endpoint!, settings.EffectiveAgentModel, CT);
         Assert.True(sut.Fixture.Fixture == key.Fixture, $"The answer key is for {key.Fixture}, but the fixture is {sut.Fixture.Fixture}.");
 
+        var judge = new MeetingPrepJudge(sut.CreateJudge(settings.JudgeModel));
         var repoRoot = MeetingPrepUnderTest.RepoRoot;
         var (commit, dirty) = WorkplaceProvenance.Git(repoRoot);
         var provenance = new WorkplaceProvenance(
@@ -58,11 +59,12 @@ public sealed class MeetingPrepEvals(ITestOutputHelper output)
             ProjectEndpoint: endpoint!,
             AgentModel: sut.AgentModel,
             JudgeModel: settings.JudgeModel,
+            JudgeConfig: judge.Config.Version,
+            JudgeConfigSha256: judge.Config.Sha256,
             Defect: "none",
             TraceIds: "not exported");
-        output.WriteLine($"{provenance.PromptId} {runLabel}: {cases.Count} cases, mode {provenance.Mode}, fixture {provenance.Fixture}, agent {provenance.AgentModel}, judge {provenance.JudgeModel}, code {commit}{(dirty == true ? " (uncommitted changes)" : "")}.");
+        output.WriteLine($"{provenance.PromptId} {runLabel}: {cases.Count} cases, mode {provenance.Mode}, fixture {provenance.Fixture}, agent {provenance.AgentModel}, judge {provenance.JudgeModel} ({provenance.JudgeConfig}), code {commit}{(dirty == true ? " (uncommitted changes)" : "")}.");
 
-        var judge = new MeetingPrepJudge(sut.CreateJudge(settings.JudgeModel));
         var results = new List<WorkplaceCaseResult>();
         foreach (var @case in cases)
         {

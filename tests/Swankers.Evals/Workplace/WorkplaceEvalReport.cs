@@ -86,6 +86,8 @@ public sealed record WorkplaceProvenance(
     string ProjectEndpoint,
     string AgentModel,
     string JudgeModel,
+    string JudgeConfig,
+    string JudgeConfigSha256,
     string Defect,
     string TraceIds)
 {
@@ -192,6 +194,7 @@ public sealed class WorkplaceEvalReport(WorkplaceProvenance provenance, Workplac
         sb.AppendLine($"| Cases, answer key, settings | sha256 {provenance.CasesSha256}, {provenance.AnswerKeySha256}, {provenance.SettingsSha256} |");
         sb.AppendLine($"| Project | {provenance.ProjectEndpoint} |");
         sb.AppendLine($"| Agent model, judge model | {provenance.AgentModel}, {provenance.JudgeModel} |");
+        sb.AppendLine($"| Judge configuration | {provenance.JudgeConfig}, sha256 {provenance.JudgeConfigSha256} |");
         sb.AppendLine($"| Injected defect | {provenance.Defect} |");
         sb.AppendLine($"| Trace ids | {provenance.TraceIds} |");
         sb.AppendLine();
