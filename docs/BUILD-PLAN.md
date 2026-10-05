@@ -184,6 +184,16 @@ Negative tests for the evaluators themselves (model-free, written before the bas
 - **Honest outcomes.** A result is pass, fail, or incomplete. Authentication failure, missing configuration, a skipped live test, or incomplete grading is incomplete and fails the gate; none of them is reported as passing. The existing "only N of M items graded" rule in `EvalReport` is the model.
 - Foundry cloud evaluators for workplace cases are P1: report-only if added, and not needed for the gate.
 
+**As implemented and frozen before the baseline (2026-10-05).** Each case gets nine checks. Seven are deterministic: `structure`, `tool_isolation`, `citation_validity`, `decision_accuracy`, `commitment_accuracy`, `risk_coverage`, `uncertainty_discipline`. Two are judged, one judge call each per case: `groundedness` and `judged_claims`. Where this is more specific than the tables above, this is the contract:
+
+- **Answer key.** `tests/Swankers.Evals/workplace-golden/northwind-v1.key.json` says what each evidence id is. Placement rules come from it and apply to every answer, whatever the question: under Confirmed decisions every cited bullet must cite a decision (E2 or E5), the suggestion (E7) is never cited there, and the superseded item (E1) is cited there only beside the item that replaced it (E5); under Open commitments every cited bullet must cite an open commitment (E3 or E8) and name the owner the evidence names, and the completed item (E6) is never cited there. This refines "E7 and E1 are not" in the table: a decision bullet that says what it replaced may cite E1 with E5.
+- **Dates in commitments.** Any date written in a commitment bullet must be written in the evidence that bullet cites, or be the reference date. An invented due date fails without a special rule for E8.
+- **Per case.** A case adds only what its question requires: ids that must be cited under a given heading, and statements for the judge.
+- **`structure`** is new here: the opening line starts with "As of" and states the evidence mode the tool reported, and the five headings appear in order. Without it the placement checks have nothing to read. For mp-08, the request the agent must decline, a plain reply is accepted.
+- **`groundedness`** judges every cited bullet in the first three sections against the text of the evidence it cites, under the standard for its heading (a suggestion does not support a decision; a completed item does not support an open commitment). It is the judged part of decision accuracy, commitment accuracy, and groundedness in the table. **`judged_claims`** judges per-case statements about the answer; it is the judged part of uncertainty discipline and carries the "names nobody", "rejects the premise", and "declines" expectations.
+- **Gate arithmetic.** Per run there are 56 deterministic case-checks (7 by 8) and 16 judged case-checks (2 by 8). The run passes when every deterministic case-check passes and at least 80% of the judged ones do. A judged check passes only if every statement in it does. A judge reply that is unreadable or lacks a verdict for any statement, a judge call that fails, or a case that errors makes the run incomplete, which fails the gate and is reported as incomplete.
+- **Judge.** `gpt-5.4`, no tools, instructed to answer with JSON only, a new conversation per call; the two instruction texts are constants in `MeetingPrepJudge`.
+
 ### Regression and recovery
 
 Preferred demonstration: a prompt change that relaxes the line between an explicit decision and a tentative suggestion. `meetingprep-v2.md` differs from v1 by one clause, a plausible brevity edit that drops the rule that proposals are not decisions; a model-free test asserts that this is the only difference, as `PromptLibraryTests` does for coach v1 and v2. Expected wrong answer: "The team decided to adopt Fabric after the pilot."
@@ -292,15 +302,15 @@ Depends on: W0; W1's recorded result shape for the live provider (the fixture ha
 - **W2 approved by the maintainer, 2026-10-05, with three closeout changes made before the checkpoint commit.** (1) The date rule in the scenario contract above: `EvidenceItem.Timestamp` became `ReceivedAt`, a `BusinessDate` is read from the text, the tool description and `meetingprep-v1.md` state the rule, and the fixture's received times moved to one synthetic seeding day. The prompt and fixture hashes changed with this; the earlier Replay answer was produced before it. (2) Raw live captures moved out of the checkout (W1 record). (3) `ProgramStartupTests` now start the built Coach as a process: no scenario and `football` both compose the football Coach and still demand its MCP credential; an unknown scenario and a workplace scenario without a mode stop with their messages; workplace Replay starts with no football settings, its own state root, and `AppInsightsConfigured=False` even with a connection string in its environment.
 
 #### W3: Fixed-context evaluation and baseline (Mon Oct 5, afternoon), P0
-Owner: unclaimed (proposed: Claude Code)
+Owner: Claude Code (approved by the maintainer 2026-10-05: three baseline runs of eight cases on `swankers-coach` / `gpt-5.4`, `meetingprep-v1`, fixture `northwind-v1`, a new session per case, Replay only)
 Depends on: W2
 
-- [ ] Cases mp-01 to mp-08 keyed to evidence ids.
-- [ ] Deterministic evaluators and the groundedness judge, each with its negative tests.
-- [ ] Workplace harness that builds the agent with `CoachAgentFactory.Create`, the workplace prompt, and the fixture provider; no MCP server.
-- [ ] Report with provenance to `artifacts/evals/workplace/`; a model-free test asserts it cannot write the football report names.
-- [ ] `WORKPLACE_EVAL=1` opt-in; skipped otherwise; `evals.yml` untouched.
-- [ ] Thresholds committed before the first baseline run.
+- [x] Cases mp-01 to mp-08 keyed to evidence ids.
+- [x] Deterministic evaluators and the groundedness judge, each with its negative tests.
+- [x] Workplace harness that builds the agent with `CoachAgentFactory.Create`, the workplace prompt, and the fixture provider; no MCP server.
+- [x] Report with provenance to `artifacts/evals/workplace/`; a model-free test asserts it cannot write the football report names.
+- [x] `WORKPLACE_EVAL=1` opt-in; skipped otherwise; `evals.yml` untouched.
+- [x] Thresholds committed before the first baseline run.
 - [ ] Baseline: `meetingprep-v1`, three complete runs.
 
 - Files: add `tests/Swankers.Evals/Workplace/` (case model and loader, harness, brief parser, evaluators, judge, report, settings, the gated test, and their unit tests), `tests/Swankers.Evals/workplace-golden/meeting-prep.jsonl`, `tests/Swankers.Evals/workplace-evalsettings.json`; modify `tests/Swankers.Evals/Swankers.Evals.csproj` to copy the two content items. No change to `EvalReport.cs`, `EvalSettings.cs`, `GoldenSet.cs`, `evalsettings.json`, or `golden/`.
@@ -309,6 +319,28 @@ Depends on: W2
 - Prerequisites: maintainer approval for model-backed runs and the Foundry project to use.
 - Fallback: an unstable judged check is fixed in the evaluator or the case and the instability is recorded; thresholds do not move. An unavailable judge is incomplete, not pass.
 - Review gate: maintainer or Codex reviews the evaluators and their negative tests before W4.
+**W3 freeze (2026-10-05, before any W3 model request).** What the baseline holds constant. Nothing in this list changes between the three runs, whatever a run returns.
+
+| Frozen | Value |
+|---|---|
+| Code | The commit that adds this record; the runs record its hash and a clean tree in their provenance |
+| Prompt | `meetingprep-v1`, SHA-256 `D7CDA140C0F18C776BA7FCAF6AF747024FD3393D3F98EBC379A39D03FB55CF16` |
+| Fixture | `northwind-v1`, SHA-256 `72FE0287021C354E7FE3C64BF53E6055289887965BFF0660DB264790582028CD`, Replay |
+| Cases | `workplace-golden/meeting-prep.jsonl`, eight cases, SHA-256 `B33E5C326F201FFF00332716503C9A38D56B0FC936F89E1844E304284BAB1615` |
+| Answer key | `workplace-golden/northwind-v1.key.json`, SHA-256 `40A5B8BE3B725B9FA7922F49F6427DBE04EAA8167305E8E8D0F5B79DFEF39845` |
+| Thresholds and models | `workplace-evalsettings.json`, SHA-256 `FFCCDE250F7571C5E95CD280E8B11223F48DCCBC8E8662E347C634F6BC4BF799`: deterministic 100%, judged 80%, agent `gpt-5.4`, judge `gpt-5.4`, 180 s per case |
+| Project | `swankers-coach` |
+| Session | A new one per case; no Responses host, nothing persisted |
+
+Hashes are of the file with line endings normalized, as the run computes them. Deterministic tests before the freeze: 52 workplace tests in `tests/Swankers.Evals/Workplace/` (checks, parser, judge parsing and propagation, gate, cases and key) inside 368 model-free tests passing across the solution, 6 skipped (the two Work IQ live tests, the football golden gate, the contained screen, the web live test, and this workplace gate without its opt-in). Each negative test planned in the evaluation contract exists, and the answer gpt-5.4 gave in the W2 Replay request passes the deterministic checks verbatim.
+
+Baseline command, run three times with `WORKPLACE_EVAL_RUN` set to `run1`, `run2`, `run3`:
+
+```powershell
+$env:FOUNDRY_PROJECT_ENDPOINT = 'https://foundry-swankers-vxzd.services.ai.azure.com/api/projects/swankers-coach'
+$env:WORKPLACE_EVAL = '1'; $env:WORKPLACE_PROMPT_VERSION = 'v1'; $env:WORKPLACE_EVAL_RUN = 'run1'
+dotnet test tests/Swankers.Evals -c Release --no-build --filter "FullyQualifiedName~MeetingPrepEvals" --logger "console;verbosity=normal"
+```
 
 #### W4: Regression and recovery (Tue Oct 6, morning), P0
 Owner: unclaimed (proposed: Claude Code; maintainer approves each model-backed set)
