@@ -75,7 +75,8 @@ public static partial class WorkplaceIsolation
             return Plan.None;
         }
 
-        var promptVersion = configuration[$"{CoachOptions.SectionName}:{nameof(CoachOptions.PromptVersion)}"] ?? new CoachOptions().PromptVersion;
+        // The same resolution Program.cs makes later, so the state root names the version that runs.
+        var promptVersion = CoachScenarios.PromptVersionFor(CoachScenarios.Workplace, configuration[$"{CoachOptions.SectionName}:{nameof(CoachOptions.PromptVersion)}"]);
         var mode = configuration[$"{WorkplaceOptions.SectionName}:{nameof(WorkplaceOptions.Mode)}"] ?? "";
         var stateBase = configuration[StateBaseKey] is { Length: > 0 } configured ? configured : defaultStateBase;
         var folder = $"{CoachScenarios.Workplace}-{Safe(promptVersion)}-{Safe(mode)}";

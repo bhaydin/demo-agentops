@@ -32,8 +32,19 @@ public class WorkplaceIsolationTests
         var plan = WorkplaceIsolation.For(Configuration(("Coach:Scenario", "workplace"), ("Workplace:Mode", "Replay")), Base, hosted: false);
 
         Assert.True(plan.Applies);
-        Assert.Equal(Path.Combine(Base, "workplace-v1-replay"), plan.StateRoot);
+        Assert.Equal(Path.Combine(Base, "workplace-v1.1-replay"), plan.StateRoot);   // the workplace default version, as Program.cs resolves it
         Assert.True(plan.DropApplicationInsights);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("  ")]
+    public void An_unset_or_blank_version_means_the_workplace_default(string? version)
+    {
+        var plan = WorkplaceIsolation.For(Configuration(("Coach:Scenario", "workplace"), ("Coach:PromptVersion", version), ("Workplace:Mode", "Replay")), Base, hosted: false);
+
+        Assert.Equal(Path.Combine(Base, $"workplace-{CoachScenarios.DefaultPromptVersion(CoachScenarios.Workplace)}-replay"), plan.StateRoot);
     }
 
     [Fact]
@@ -42,10 +53,11 @@ public class WorkplaceIsolationTests
         string Root(string version, string mode) => WorkplaceIsolation.For(
             Configuration(("Coach:Scenario", "Workplace"), ("Coach:PromptVersion", version), ("Workplace:Mode", mode)), Base, hosted: false).StateRoot!;
 
-        var roots = new[] { Root("v1", "Replay"), Root("v2", "Replay"), Root("v1", "Live"), Root("v2", "Live") };
+        var roots = new[] { Root("v1", "Replay"), Root("v1.1", "Replay"), Root("v2", "Replay"), Root("v1", "Live"), Root("v2", "Live") };
 
-        Assert.Equal(4, roots.Distinct().Count());
-        Assert.Equal(Path.Combine(Base, "workplace-v2-live"), roots[3]);
+        Assert.Equal(5, roots.Distinct().Count());
+        Assert.Equal(Path.Combine(Base, "workplace-v1.1-replay"), roots[1]);
+        Assert.Equal(Path.Combine(Base, "workplace-v2-live"), roots[4]);
     }
 
     [Fact]
@@ -55,7 +67,7 @@ public class WorkplaceIsolationTests
         var plan = WorkplaceIsolation.For(Configuration(("Coach:Scenario", "workplace"), ("Workplace:Mode", "Replay")), WorkplaceIsolation.DefaultStateBase, hosted: false);
 
         // Beside the Coach's responses/, never the same folder, and not under the checkout.
-        Assert.Equal(Path.Combine(shared, "scenarios", "workplace-v1-replay"), plan.StateRoot);
+        Assert.Equal(Path.Combine(shared, "scenarios", "workplace-v1.1-replay"), plan.StateRoot);
         Assert.NotEqual(shared, plan.StateRoot);
         Assert.DoesNotContain(Path.Combine("artifacts", "workplace"), plan.StateRoot);
     }
@@ -67,13 +79,12 @@ public class WorkplaceIsolationTests
         var plan = WorkplaceIsolation.For(
             Configuration(("Coach:Scenario", "workplace"), ("Workplace:Mode", "Live"), (WorkplaceIsolation.StateBaseKey, elsewhere)), Base, hosted: false);
 
-        Assert.Equal(Path.Combine(elsewhere, "workplace-v1-live"), plan.StateRoot);
+        Assert.Equal(Path.Combine(elsewhere, "workplace-v1.1-live"), plan.StateRoot);
     }
 
     [Theory]
     [InlineData("../v9", "workplace-.._v9-replay")]
     [InlineData("V 2", "workplace-v_2-replay")]
-    [InlineData("", "workplace-unset-replay")]
     public void The_folder_name_is_made_safe(string version, string expected)
     {
         var plan = WorkplaceIsolation.For(

@@ -22,9 +22,11 @@ public sealed class CoachOptions
 
     /// <summary>
     /// Which prompts/coach-{version}.md to load: v1 (good) or v2 (the regressed tweak). In the
-    /// workplace scenario the same setting selects prompts/meetingprep-{version}.md.
+    /// workplace scenario the same setting selects prompts/meetingprep-{version}.md. Unset, each
+    /// scenario runs its own default (<see cref="CoachScenarios.DefaultPromptVersion"/>); the
+    /// program resolves it at startup, so after that this is never null.
     /// </summary>
-    public string PromptVersion { get; set; } = "v1";
+    public string? PromptVersion { get; set; }
 
     /// <summary>Streamable HTTP endpoint of Swankers.Mcp.</summary>
     public string McpEndpoint { get; set; } = "http://localhost:5210/mcp";

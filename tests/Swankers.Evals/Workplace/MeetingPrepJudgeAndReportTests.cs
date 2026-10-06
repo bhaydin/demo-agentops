@@ -351,6 +351,19 @@ public sealed class MeetingPrepJudgeAndReportTests
         Assert.InRange(GoldenSet.Load().Count, 15, 20);                               // workplace cases are not in golden/
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void A_model_backed_run_must_name_its_prompt_version_and_never_runs_on_a_default(string? configured)
+    {
+        var ex = Assert.Throws<InvalidOperationException>(() => WorkplaceEvalSettings.ExplicitPromptVersion(configured));
+
+        Assert.Contains("WORKPLACE_PROMPT_VERSION must be set explicitly", ex.Message);
+        Assert.Equal("v1.1", WorkplaceEvalSettings.ExplicitPromptVersion(" v1.1 "));
+        Assert.Equal("v2", WorkplaceEvalSettings.ExplicitPromptVersion("v2"));
+    }
+
     private static async Task<EvidenceReturned> EvidenceAsync() => EvidenceReturned.From(await CallsAsync(CT));
 
     private static string AllPass(int count)

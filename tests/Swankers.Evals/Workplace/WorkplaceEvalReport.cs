@@ -41,8 +41,16 @@ public sealed record WorkplaceEvalSettings
         return settings;
     }
 
-    /// <summary>WORKPLACE_PROMPT_VERSION wins over the file; COACH_PROMPT_VERSION is never read here.</summary>
-    public string EffectivePromptVersion => Environment.GetEnvironmentVariable("WORKPLACE_PROMPT_VERSION") is { Length: > 0 } v ? v : PromptVersion;
+    /// <summary>
+    /// The version under test comes from WORKPLACE_PROMPT_VERSION and nowhere else (COACH_PROMPT_VERSION
+    /// is never read here). A model-backed run must name it: a baseline, a regression, and a recovery
+    /// are compared, and a comparison that silently ran on a default proves nothing. The file's
+    /// <see cref="PromptVersion"/> stays as documentation of the version the settings were written for.
+    /// </summary>
+    public static string ExplicitPromptVersion(string? configured)
+        => string.IsNullOrWhiteSpace(configured)
+            ? throw new InvalidOperationException("WORKPLACE_PROMPT_VERSION must be set explicitly (for example v1.1 or v2); a workplace evaluation never runs on a default prompt version.")
+            : configured.Trim();
 
     public string EffectiveAgentModel => Environment.GetEnvironmentVariable("WORKPLACE_EVAL_MODEL") is { Length: > 0 } m ? m : AgentModel;
 }

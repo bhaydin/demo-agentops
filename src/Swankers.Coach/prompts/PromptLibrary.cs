@@ -27,7 +27,7 @@ public sealed class PromptLibrary(string promptsDirectory, string prefix = Promp
         if (!File.Exists(file))
         {
             throw new FileNotFoundException(
-                $"No instructions for prompt version '{version}'. Available: {string.Join(", ", Versions)}.", file);
+                $"No instructions for prompt version '{version}' ({prefix}{version}.md). Available: {string.Join(", ", Versions)}.", file);
         }
 
         return File.ReadAllText(file);

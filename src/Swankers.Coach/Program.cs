@@ -42,8 +42,12 @@ if (string.IsNullOrWhiteSpace(options.ProjectEndpoint))
     throw new InvalidOperationException("Coach:ProjectEndpoint (or FOUNDRY_PROJECT_ENDPOINT) is required.");
 }
 
-// The scenario is chosen here and nowhere else; an unknown value stops startup.
+// The scenario is chosen here and nowhere else; an unknown value stops startup. Each scenario
+// has its own default prompt version; a version that does not exist for the scenario stops
+// startup when its instructions are loaded, naming the versions that do.
 options.Scenario = CoachScenarios.Parse(options.Scenario);
+var promptVersion = CoachScenarios.PromptVersionFor(options.Scenario, options.PromptVersion);
+options.PromptVersion = promptVersion;
 
 using var startupLogging = LoggerFactory.Create(logging => logging.AddConsole());
 var startupLogger = startupLogging.CreateLogger("Swankers.Coach.Startup");
@@ -64,7 +68,7 @@ if (options.Scenario == CoachScenarios.Workplace)
     // server, no league knowledge. Its settings are the "Workplace" section.
     var workplaceOptions = configuration.GetSection(WorkplaceOptions.SectionName).Get<WorkplaceOptions>() ?? new WorkplaceOptions();
     var workplace = await WorkplaceScenario.ComposeAsync(
-        workplaceOptions, options.PromptVersion, PromptLibrary.DefaultDirectory, contentRoot, startupLogging, CancellationToken.None);
+        workplaceOptions, promptVersion, PromptLibrary.DefaultDirectory, contentRoot, startupLogging, CancellationToken.None);
     options.AgentName = workplace.AgentName;
 
     startupLogger.LogInformation(
@@ -94,8 +98,8 @@ else
             "(Key Vault secrets Mcp--OwnerCredential / Mcp--CommissionerCredential).");
     }
 
-    var instructions = new PromptLibrary(PromptLibrary.DefaultDirectory).Load(options.PromptVersion);
-    startupLogger.LogInformation("Instructions {PromptVersion} loaded from {PromptsDirectory}.", options.PromptVersion, PromptLibrary.DefaultDirectory);
+    var instructions = new PromptLibrary(PromptLibrary.DefaultDirectory).Load(promptVersion);
+    startupLogger.LogInformation("Instructions {PromptVersion} loaded from {PromptsDirectory}.", promptVersion, PromptLibrary.DefaultDirectory);
 
     var knowledgeRoot = ResolveKnowledgeRoot(options.KnowledgeRoot, contentRoot);
     var knowledge = KnowledgeSearch.Load(knowledgeRoot);
@@ -114,7 +118,7 @@ else
 
     startupLogger.LogInformation(
         "Coach {PromptVersion}: model {Model} at {ProjectEndpoint}, {McpTools} MCP tools from {McpEndpoint} (credential key {CredentialKey}), {Sections} knowledge sections from {KnowledgeRoot}.",
-        options.PromptVersion, options.ModelDeployment, options.ProjectEndpoint, leagueTools.Count, options.McpEndpoint,
+        promptVersion, options.ModelDeployment, options.ProjectEndpoint, leagueTools.Count, options.McpEndpoint,
         options.McpCredentialKey, knowledge.SectionCount, knowledgeRoot);
 
     agent = CoachAgentFactory.Create(options, instructions, tools, startupLogging);

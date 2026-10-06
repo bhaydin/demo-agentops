@@ -84,7 +84,7 @@ public sealed class WorkplaceScenarioTests
     {
         var ex = await Assert.ThrowsAsync<FileNotFoundException>(() => ComposeAsync(new WorkplaceOptions { Mode = "Replay" }, promptVersion: "v9"));
 
-        Assert.Contains("Available: v1", ex.Message);
+        Assert.Contains("(meetingprep-v9.md). Available: v1, v1.1, v2.", ex.Message);
         Assert.DoesNotContain("v0", ex.Message);   // the Coach's versions are not offered
     }
 
@@ -177,6 +177,87 @@ public sealed class WorkplaceScenarioTests
         Assert.StartsWith("- Under Sources, list every id you cited anywhere in the answer", added[2]);
         Assert.Equal(v1.Length + 1, v11.Length);
         Assert.Equal(v1.Where(line => !removed.Contains(line)), v11.Where(line => !added.Contains(line)));   // every other line, in the same order
+    }
+
+    // --- meetingprep-v2: the W4 regression, derived from v1.1 ----------------------------------
+
+    [Fact]
+    public void The_v1_1_prompt_is_kept_exactly_as_it_was_accepted_as_the_baseline()
+    {
+        var v11 = new PromptLibrary(PromptLibrary.DefaultDirectory, PromptLibrary.MeetingPrepPrefix).Load("v1.1").ReplaceLineEndings("\n");
+
+        // The hash recorded by the meetingprep-v1.1 baseline (W3). v2 is derived from it; it is not edited.
+        Assert.Equal("5A57E9C358E800B6A34CD23862E850D8DE5B7EA8939970FA7B16AB3E8ACAD569",
+            Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(v11))));
+    }
+
+    [Fact]
+    public void The_v2_instructions_differ_from_v1_1_only_by_the_decision_rule()
+    {
+        var library = new PromptLibrary(PromptLibrary.DefaultDirectory, PromptLibrary.MeetingPrepPrefix);
+        var v11 = library.Load("v1.1").ReplaceLineEndings("\n").Split('\n');
+        var v2 = library.Load("v2").ReplaceLineEndings("\n").Split('\n');
+
+        var removed = v11.Except(v2).ToArray();
+        var added = v2.Except(v11).ToArray();
+
+        // One rule changes: what counts as a confirmed decision. The title changes with the version. Nothing else.
+        Assert.Equal(2, removed.Length);
+        Assert.Equal("# Meeting prep instructions (v1.1)", removed[0]);
+        Assert.StartsWith("- A confirmed decision is something the evidence says was decided, approved, or agreed. A proposal, a suggestion, a question, or \"we should consider\" is not a decision", removed[1]);
+        Assert.Equal(2, added.Length);
+        Assert.Equal("# Meeting prep instructions (v2)", added[0]);
+        Assert.StartsWith("- A confirmed decision is something the evidence says was decided, approved, or agreed, or the direction a stakeholder or team member has set", added[1]);
+        Assert.Equal(v11.Length, v2.Length);
+        Assert.Equal(v11.Where(line => !removed.Contains(line)), v2.Where(line => !added.Contains(line)));   // every other line, in the same order
+        Assert.Equal(Array.IndexOf(v11, removed[1]), Array.IndexOf(v2, added[1]));                            // the replacement sits where the rule was
+    }
+
+    [Fact]
+    public void The_v2_decision_rule_blurs_a_recommendation_into_a_decision_and_drops_the_suggestion_rule()
+    {
+        var v2 = new PromptLibrary(PromptLibrary.DefaultDirectory, PromptLibrary.MeetingPrepPrefix).Load("v2");
+
+        // The weakened rule: a stakeholder's direction, recommendation, or proposed next step counts as a decision.
+        Assert.Contains("or the direction a stakeholder or team member has set for the engagement, such as a recommendation or a proposed next step", v2);
+        Assert.Contains("report the team's stated direction with its decisions", v2);
+        // The rule that protected the line is gone.
+        Assert.DoesNotContain("is not a decision", v2);
+        Assert.DoesNotContain("as an open suggestion", v2);
+        // Everything else v1.1 added is still there.
+        Assert.Contains("Report a risk as the evidence states it.", v2);
+        Assert.Contains("list every id you cited anywhere in the answer", v2);
+        Assert.Contains("When the user states something as settled, check it against the evidence", v2);
+    }
+
+    [Fact]
+    public void The_v2_regression_is_general_and_names_no_evidence_case_or_expected_answer()
+    {
+        var library = new PromptLibrary(PromptLibrary.DefaultDirectory, PromptLibrary.MeetingPrepPrefix);
+        var v2 = library.Load("v2");
+        var changed = v2.ReplaceLineEndings("\n").Split('\n').Except(library.Load("v1.1").ReplaceLineEndings("\n").Split('\n')).Single(l => l.StartsWith("- ", StringComparison.Ordinal));
+
+        // Nothing in the prompt points at the fixture, a case, or the answer the regression is expected to produce.
+        Assert.DoesNotContain("Fabric", v2, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Northwind", v2, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("adopt", v2, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotMatch(@"\bmp-\d\d\b", v2);                 // no case id
+        Assert.DoesNotContain("pilot", v2, StringComparison.OrdinalIgnoreCase);
+        // The changed rule itself names no evidence id either (v1.1's `[E3]` citation-format example is unchanged elsewhere).
+        Assert.DoesNotMatch(@"\bE\d\b", changed);
+        Assert.DoesNotContain("consider", changed, StringComparison.OrdinalIgnoreCase);   // not written against the evidence's own words
+    }
+
+    [Fact]
+    public async Task The_v2_prompt_is_its_own_version_with_its_own_agent_name_and_hash()
+    {
+        var v2 = await ComposeAsync(new WorkplaceOptions { Mode = "Replay" }, promptVersion: "v2");
+        await using var provider = v2.Provider;
+
+        Assert.Equal("meetingprep-v2", v2.PromptId);
+        Assert.Equal("MeetingPrep-v2", v2.AgentName);
+        Assert.Matches("^[0-9A-F]{64}$", v2.PromptSha256);
+        Assert.NotEqual("5A57E9C358E800B6A34CD23862E850D8DE5B7EA8939970FA7B16AB3E8ACAD569", v2.PromptSha256);
     }
 
     private static Task<WorkplaceComposition> ComposeAsync(WorkplaceOptions options, string promptVersion = "v1")

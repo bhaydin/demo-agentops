@@ -204,7 +204,7 @@ Negative tests for the evaluators themselves (model-free, written before the bas
 
 ### Regression and recovery
 
-Preferred demonstration: a prompt change that relaxes the line between an explicit decision and a tentative suggestion. `meetingprep-v2.md` differs from v1 by one clause, a plausible brevity edit that drops the rule that proposals are not decisions; a model-free test asserts that this is the only difference, as `PromptLibraryTests` does for coach v1 and v2. Expected wrong answer: "The team decided to adopt Fabric after the pilot."
+Preferred demonstration: a prompt change that relaxes the line between an explicit decision and a tentative suggestion. `meetingprep-v2.md` differs from the baseline prompt by one clause, a plausible brevity edit that drops the rule that proposals are not decisions; a model-free test asserts that this is the only difference, as `PromptLibraryTests` does for coach v1 and v2. Expected wrong answer: "The team decided to adopt Fabric after the pilot." (As built in W4, after the W3 remediation: the baseline is `meetingprep-v1.1`, v2 is derived from it, and the recovery returns to it. See the W4 design.)
 
 Sequence: baseline, controlled change, plausible wrong answer, failed evaluation, inspect evidence, trace, and prompt, repair or roll back, passing evaluation. Held constant across the comparison: fixture hash, model deployment, question set, judges, thresholds. Every run uses a fresh session. The recovery uses the same tests that caught the failure.
 
@@ -436,16 +436,57 @@ Every deterministic check was 8/8 in every run, `risk_characterization` and `cit
 - **Reports.** Ignored `artifacts/evals/workplace/`: `meetingprep-v1.1-run1-20261005-222209`, `meetingprep-v1.1-run2-20261005-222358`, `meetingprep-v1.1-run3-20261005-222548`, each as `.md` and `.json`, and `latest-meetingprep-v1.1.json` (a copy of run 3). The v1 reports are kept beside them. No football report file was written.
 
 #### W4: Regression and recovery (Tue Oct 6, morning), P0
-Owner: unclaimed (proposed: Claude Code; maintainer approves each model-backed set)
-Depends on: W3 baseline
+Owner: Claude Code (approved by the maintainer 2026-10-05 with the W3 approval: `meetingprep-v1.1` is the regression baseline; v2 is derived from v1.1 and changes one behavioral rule; one v1.1 control run, at most three v2 rehearsal runs, one v1.1 recovery run; `swankers-coach` / `gpt-5.4`, `judge-v2`, `northwind-v1`, the eight frozen cases, unchanged thresholds, Replay, a new session per case)
+Depends on: W3 baseline (passed 3 of 3, `45e9264`)
 
-- [ ] `meetingprep-v2.md` and the one-clause-difference test.
-- [ ] Run the ladder (R1, then R2 or R3 only if needed) and record every outcome.
-- [ ] Diagnosis path rehearsed: the failing check names the section and evidence id; the trace shows the same evidence was retrieved; the prompt diff shows the cause.
-- [ ] Recovery: back to `meetingprep-v1` (or the defect flag off), same tests, passing.
+- [x] `meetingprep-v2.md` derived from `meetingprep-v1.1.md`, and the one-rule-difference test (W4 design below).
+- [x] Startup footgun removed: each scenario has its own default prompt version (football `v1`, workplace `v1.1`); an explicit `Coach:PromptVersion` wins; a version the scenario does not have stops startup and names the file and the versions that exist. Model-free coverage for all three.
+- [ ] A: control, `meetingprep-v1.1` on the W4 revision.
+- [ ] B: regression, `meetingprep-v2`, three rehearsal runs at most, every outcome recorded.
+- [ ] C: diagnosis from the reports: the failing check names the section and evidence id; the captured tool calls show the same evidence was retrieved; the prompt diff shows the cause.
+- [ ] D: recovery, back to the unchanged `meetingprep-v1.1`, same evaluation, passing.
+- [ ] Reliability: v2 reproduces the intended decision failure in at least 2 of 3 runs, or W4 stops and reports, and R3 (the isolated pipeline defect) is the fallback.
 
-- Files: add `src/Swankers.Coach/prompts/meetingprep-v2.md` and a test in `tests/Swankers.Coach.Tests/`; for R3 only, the flag in `src/Swankers.Coach/Workplace/`.
-- Acceptance (proposed): the W3 command with `WORKPLACE_PROMPT_VERSION='v2'` fails for the stated reason; with `'v1'` it passes again.
+**W4 design (2026-10-05).** The regression is a prompt change that weakens the line between a confirmed decision and a stakeholder's recommendation or directional statement. `meetingprep-v2.md` is `meetingprep-v1.1.md` with a new title and one rule replaced, under "What counts as what":
+
+- v1.1: `A confirmed decision is something the evidence says was decided, approved, or agreed. A proposal, a suggestion, a question, or "we should consider" is not a decision, however sensible it sounds. Report it under "Missing, conflicting, or stale information" as an open suggestion.`
+- v2: `A confirmed decision is something the evidence says was decided, approved, or agreed, or the direction a stakeholder or team member has set for the engagement, such as a recommendation or a proposed next step. The consultant should walk in knowing where the team is heading, so report the team's stated direction with its decisions.`
+
+It reads as a plausible product request (a forward-looking brief) and is general: it names no evidence, case, fixture, or expected answer, and tests assert that the two files differ by exactly these two lines and that the changed rule contains no evidence id and none of the evidence's own words. The intended consequence is that a recommendation such as "We should consider Fabric after the pilot" (E7) is promoted to a confirmed decision, which `decision_accuracy` (E7 cited under Confirmed decisions) and `groundedness` (a suggestion does not support a decision) catch deterministically and by the judge, and which the judged claims of mp-01, mp-02, and mp-07 name. Nothing else in v1.1 changed: the risk rule, the Sources rule, and the "check what the user states as settled" rule are all in v2.
+
+The startup footgun: `CoachOptions.PromptVersion` had a shared default of `v1`, which for the workplace scenario is the unremediated prompt. Now it is unset by default and `CoachScenarios.DefaultPromptVersion` resolves it per scenario at startup (football `v1`, unchanged for the Summit demos and hosted versions; workplace `v1.1`). `WorkplaceIsolation` resolves it the same way, so the state root names the version that runs. `PromptLibrary` names the missing file and the versions that exist (`No instructions for prompt version 'v0' (meetingprep-v0.md). Available: v1, v1.1, v2.`), and a process-level test covers it. The evaluation does not use the default: `MeetingPrepEvals` now requires `WORKPLACE_PROMPT_VERSION` and fails without it, so a control, a regression, and a recovery can never silently run on the same prompt. `workplace-evalsettings.json` is unchanged (its `promptVersion` is now documentation only).
+
+**W4 freeze (2026-10-05, before any W4 model request).** Nothing in this list changes during the sequence A to D, whatever a run returns.
+
+| Frozen | Value |
+|---|---|
+| Code | The commit that adds this record; every run records its hash and a clean tree |
+| Baseline prompt | `meetingprep-v1.1`, SHA-256 `5A57E9C358E800B6A34CD23862E850D8DE5B7EA8939970FA7B16AB3E8ACAD569` (unchanged, test-pinned) |
+| Regression prompt | `meetingprep-v2`, SHA-256 `1A25C091C632117DAD06FBD770188638A2ADD6459D78EF16D39CDB02354DFAA5` |
+| Judge configuration | `judge-v2`, SHA-256 `228B183FF4EC4CBA8BBEB718FB1B70BF04ABB0A98CA045CFAA2C0A1EFC2CDDF6` (unchanged) |
+| Fixture | `northwind-v1`, SHA-256 `72FE0287021C354E7FE3C64BF53E6055289887965BFF0660DB264790582028CD`, Replay (unchanged) |
+| Cases | `workplace-golden/meeting-prep.jsonl`, eight cases, SHA-256 `B33E5C326F201FFF00332716503C9A38D56B0FC936F89E1844E304284BAB1615` (unchanged) |
+| Answer key | `workplace-golden/northwind-v1.key.json`, SHA-256 `40A5B8BE3B725B9FA7922F49F6427DBE04EAA8167305E8E8D0F5B79DFEF39845` (unchanged) |
+| Thresholds and models | `workplace-evalsettings.json`, SHA-256 `FFCCDE250F7571C5E95CD280E8B11223F48DCCBC8E8662E347C634F6BC4BF799` (unchanged): deterministic 100%, judged 80%, agent `gpt-5.4`, judge `gpt-5.4`, 180 s per case |
+| Gate | 64 deterministic case-checks at 100%, 16 judged at 80%, incomplete never passes |
+| Project and session | `swankers-coach`; a new session per case; no Responses host, nothing persisted |
+| Sequence | A control `v1.1` (one run); B regression `v2` (three runs, no more); C diagnosis from the reports; D recovery `v1.1` (one run). No case, threshold, judge, model, or fixture is altered if another check also varies. |
+
+Model-free results before the freeze: locked restore clean; full Release build 0 warnings, 0 errors; 414 tests passed, 0 failed, 7 skipped (the same opt-in seven). New since W3: 26 tests for the scenario defaults, the failure message, the v2 difference and generality, the v2 composition, the isolation roots, and the explicit-version rule.
+
+Commands (`WORKPLACE_EVAL_RUN` labels the run; the version is always explicit):
+
+```powershell
+$env:FOUNDRY_PROJECT_ENDPOINT = 'https://foundry-swankers-vxzd.services.ai.azure.com/api/projects/swankers-coach'
+$env:WORKPLACE_EVAL = '1'
+$env:WORKPLACE_PROMPT_VERSION = 'v1.1'; $env:WORKPLACE_EVAL_RUN = 'w4-control'     # A
+$env:WORKPLACE_PROMPT_VERSION = 'v2';   $env:WORKPLACE_EVAL_RUN = 'w4-v2-run1'     # B, then w4-v2-run2, w4-v2-run3
+$env:WORKPLACE_PROMPT_VERSION = 'v1.1'; $env:WORKPLACE_EVAL_RUN = 'w4-recovery'    # D
+dotnet test tests/Swankers.Evals -c Release --no-build --filter "FullyQualifiedName~MeetingPrepEvals" --logger "console;verbosity=normal"
+```
+
+- Files: add `src/Swankers.Coach/prompts/meetingprep-v2.md`; modify `CoachOptions.cs`, `CoachScenarios.cs`, `Program.cs`, `Workplace/WorkplaceIsolation.cs`, `prompts/PromptLibrary.cs`, tests in `tests/Swankers.Coach.Tests/`, `tests/Swankers.Evals/Workplace/MeetingPrepEvals.cs` and `WorkplaceEvalReport.cs`; for R3 only, the flag in `src/Swankers.Coach/Workplace/`.
+- Acceptance: the W3 command with `WORKPLACE_PROMPT_VERSION='v2'` fails with `decision_accuracy` (and the judged checks that name it) among the failures in at least 2 of 3 runs; with `'v1.1'` it passes before and after.
 - Evidence: all reports of the ladder, the chosen rung, and the failing assertion text in the phase record.
 - Fallback: the ladder itself. If no rung is usable by Tuesday noon, the talk reports the recorded outcomes as they are.
 - Review gate: maintainer confirms which rung goes on stage.
@@ -471,7 +512,7 @@ Owner: maintainer
 
 - [ ] Preflight: Azure sign-in, Work IQ sign-in, live smoke, one Replay request, Aspire dashboard up with a live span visible in it, baseline report from the frozen commit.
 - [ ] Present from the rehearsed commit. No structural refactoring.
-- [ ] Closeout: known-good configuration (`meetingprep-v1`, no defect flag), football default scenario confirmed.
+- [ ] Closeout: known-good configuration (`meetingprep-v1.1`, the workplace default since W4; no defect flag), football default scenario confirmed.
 
 ### Wednesday readiness and fallback limits
 

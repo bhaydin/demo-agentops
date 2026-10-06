@@ -14,7 +14,7 @@ namespace Swankers.Evals.Workplace;
 ///
 ///   WORKPLACE_EVAL=1            opt in
 ///   FOUNDRY_PROJECT_ENDPOINT    the Foundry project
-///   WORKPLACE_PROMPT_VERSION    meetingprep version to evaluate (default: workplace-evalsettings.json)
+///   WORKPLACE_PROMPT_VERSION    meetingprep version to evaluate; required, there is no default
 ///   WORKPLACE_EVAL_MODEL        agent model deployment (default: workplace-evalsettings.json)
 ///   WORKPLACE_EVAL_RUN          a label for this run in the report name, for example run1
 /// </summary>
@@ -33,7 +33,7 @@ public sealed class MeetingPrepEvals(ITestOutputHelper output)
         var key = WorkplaceCaseSet.LoadKey();
         var cases = WorkplaceCaseSet.LoadCases();
         WorkplaceCaseSet.Validate(cases, key);
-        var version = settings.EffectivePromptVersion;
+        var version = WorkplaceEvalSettings.ExplicitPromptVersion(Environment.GetEnvironmentVariable("WORKPLACE_PROMPT_VERSION"));
         var runLabel = Environment.GetEnvironmentVariable("WORKPLACE_EVAL_RUN") is { Length: > 0 } label ? label : "run";
 
         await using var sut = await MeetingPrepUnderTest.StartAsync(version, endpoint!, settings.EffectiveAgentModel, CT);

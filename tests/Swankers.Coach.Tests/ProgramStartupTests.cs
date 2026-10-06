@@ -70,9 +70,10 @@ public sealed class ProgramStartupTests
 
             Assert.True(run.Listened, $"did not start:\n{run.Output}\n{run.Error}");
             Assert.Contains("Scenario workplace, evidence mode REPLAY", run.Output);
-            Assert.Contains("agent MeetingPrep-v1", run.Output);
+            // No Coach:PromptVersion given: the workplace scenario runs its own default, meetingprep-v1.1, not the Coach's v1.
+            Assert.Contains("agent MeetingPrep-v1-1, instructions meetingprep-v1.1 (sha256 5A57E9C358E800B6A34CD23862E850D8DE5B7EA8939970FA7B16AB3E8ACAD569)", run.Output);
             Assert.Contains("tools get_engagement_evidence.", run.Output);
-            Assert.Contains($"response state under {Path.Combine(stateBase, "workplace-v1-replay")}", run.Output);
+            Assert.Contains($"response state under {Path.Combine(stateBase, "workplace-v1.1-replay")}", run.Output);
             Assert.Contains("AppInsightsConfigured=False", run.Output);
             Assert.DoesNotContain("MCP tools from", run.Output);          // the football startup line
             Assert.DoesNotContain("knowledge sections", run.Output);
@@ -84,6 +85,17 @@ public sealed class ProgramStartupTests
                 Directory.Delete(stateBase, recursive: true);
             }
         }
+    }
+
+    [Fact]
+    public async Task A_prompt_version_the_workplace_scenario_does_not_have_stops_startup_and_names_the_ones_it_has()
+    {
+        // v0 exists for the football Coach only; the workplace scenario must not fall back to any other version.
+        var run = await StartAsync(["--Coach:ProjectEndpoint", PlaceholderEndpoint, "--Coach:Scenario", "workplace", "--Workplace:Mode", "Replay", "--Coach:PromptVersion", "v0"]);
+
+        Assert.NotEqual(0, run.ExitCode);
+        Assert.Contains("No instructions for prompt version 'v0' (meetingprep-v0.md). Available: v1, v1.1, v2.", run.Error);
+        Assert.DoesNotContain("Now listening", run.Output);
     }
 
     private sealed record Run(int? ExitCode, string Output, string Error, bool Listened);

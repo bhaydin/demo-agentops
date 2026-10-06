@@ -16,4 +16,20 @@ public static class CoachScenarios
     public static string Parse(string? configured)
         => All.FirstOrDefault(s => s.Equals(configured?.Trim(), StringComparison.OrdinalIgnoreCase))
             ?? throw new InvalidOperationException($"Unknown Coach:Scenario '{configured}'. Valid values: {string.Join(", ", All)}.");
+
+    /// <summary>
+    /// The prompt version a scenario runs when Coach:PromptVersion is not set: the football Coach
+    /// keeps v1 (the hardened prompt the Summit demos and the hosted versions rely on); the
+    /// workplace scenario runs meetingprep-v1.1, its accepted baseline. One shared default would
+    /// start the workplace scenario on a prompt that is not its baseline.
+    /// </summary>
+    public static string DefaultPromptVersion(string scenario) => Parse(scenario) switch
+    {
+        Football => "v1",
+        _ => "v1.1",
+    };
+
+    /// <summary>The configured version when one is given, otherwise the scenario's default.</summary>
+    public static string PromptVersionFor(string scenario, string? configured)
+        => string.IsNullOrWhiteSpace(configured) ? DefaultPromptVersion(scenario) : configured.Trim();
 }
