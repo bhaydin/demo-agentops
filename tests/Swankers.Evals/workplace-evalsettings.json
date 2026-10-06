@@ -1,0 +1,11 @@
+{
+  "$comment": "WorkplaceMeetingPrep evaluation gate, separate from the football evalsettings.json. Frozen before the first baseline run (docs/BUILD-PLAN.md, W3) and not changed afterwards to produce a result. Every deterministic check must pass in every case; at least 80% of the judged checks must pass; a judge that cannot be read, or a case that errors, makes the run incomplete, which is never a pass.",
+  "promptVersion": "v1",
+  "agentModel": "gpt-5.4",
+  "judgeModel": "gpt-5.4",
+  "caseTimeoutSeconds": 180,
+  "thresholds": {
+    "deterministic": 1.0,
+    "judged": 0.8
+  }
+}

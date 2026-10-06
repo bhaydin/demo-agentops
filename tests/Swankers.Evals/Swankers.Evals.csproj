@@ -35,6 +35,9 @@
   <ItemGroup>
     <Content Include="evalsettings.json" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="golden\*.jsonl" CopyToOutputDirectory="PreserveNewest" />
+    <!-- WorkplaceMeetingPrep cases, answer key, and gate settings: kept apart from the football golden set. -->
+    <Content Include="workplace-evalsettings.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="workplace-golden\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

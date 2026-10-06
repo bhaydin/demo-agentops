@@ -1,0 +1,80 @@
+{
+  "fixture": "northwind-v1",
+  "synthetic": true,
+  "description": "Synthetic evidence for the WorkplaceMeetingPrep scenario's Replay mode. Fictional client, people, and dates; the text mirrors data/workplace/corpus-seed.md. Not a capture of any Microsoft 365 content. Each item states its business date in its text, and that is the only chronology. The receivedAt values are synthetic transport times, all on one seeding day as in a seeded mailbox, so they cannot stand in for it.",
+  "engagement": "NW-DPM",
+  "items": [
+    {
+      "id": "E1",
+      "sourceType": "email",
+      "title": "[NW-DPM] Kickoff notes",
+      "author": "Priya Raman",
+      "receivedAt": "2026-10-05T14:10:00-05:00",
+      "text": "Kickoff notes, September 22, 2026.\nAttendees: Dana Okafor (Northwind sponsor), Priya Raman, Marcus Lindqvist.\nPlanned pilot go-live: November 2, 2026."
+    },
+    {
+      "id": "E2",
+      "sourceType": "email",
+      "title": "[NW-DPM] Steering committee recap",
+      "author": "Priya Raman",
+      "receivedAt": "2026-10-05T14:12:00-05:00",
+      "text": "Steering committee recap, September 29, 2026.\nDecision: the pilot scope is limited to the finance data mart. The steering committee agreed and Dana Okafor confirmed it."
+    },
+    {
+      "id": "E3",
+      "sourceType": "email",
+      "title": "[NW-DPM] Security review summary",
+      "author": "Priya Raman",
+      "receivedAt": "2026-10-05T14:14:00-05:00",
+      "text": "September 30, 2026.\nAction: Priya Raman will deliver the security review summary by October 9, 2026. It has not been delivered yet."
+    },
+    {
+      "id": "E4",
+      "sourceType": "email",
+      "title": "[NW-DPM] ERP extract issue",
+      "author": "Priya Raman",
+      "receivedAt": "2026-10-05T14:16:00-05:00",
+      "text": "September 30, 2026.\nPriya Raman raised a risk: the source ERP extract is missing ledger mappings for two business units. Nobody has been assigned to resolve it."
+    },
+    {
+      "id": "E5",
+      "sourceType": "email",
+      "title": "[NW-DPM] Go-live date change approved",
+      "author": "Dana Okafor",
+      "receivedAt": "2026-10-05T14:18:00-05:00",
+      "text": "October 1, 2026.\nDana Okafor approved moving the pilot go-live from November 2 to November 16, 2026. This replaces the date in the kickoff notes."
+    },
+    {
+      "id": "E6",
+      "sourceType": "email",
+      "title": "[NW-DPM] Sandbox access request",
+      "author": "Marcus Lindqvist",
+      "receivedAt": "2026-10-05T14:20:00-05:00",
+      "text": "October 1, 2026.\nMarcus Lindqvist confirmed the sandbox access request is complete. All four team members can sign in."
+    },
+    {
+      "id": "E7",
+      "sourceType": "email",
+      "title": "[NW-DPM] Working session notes",
+      "author": "Marcus Lindqvist",
+      "receivedAt": "2026-10-05T14:22:00-05:00",
+      "text": "October 2, 2026.\nMarcus Lindqvist: We should consider Fabric after the pilot. It is worth a look once the finance data mart is live."
+    },
+    {
+      "id": "E8",
+      "sourceType": "email",
+      "title": "[NW-DPM] Statement of work",
+      "author": "Marcus Lindqvist",
+      "receivedAt": "2026-10-05T14:24:00-05:00",
+      "text": "October 2, 2026.\nMarcus Lindqvist will send the revised statement of work to Dana Okafor."
+    },
+    {
+      "id": "E9",
+      "sourceType": "email",
+      "title": "[NW-DPM] Acceptance criteria sign-off",
+      "author": "Priya Raman",
+      "receivedAt": "2026-10-05T14:26:00-05:00",
+      "text": "October 2, 2026.\nPriya Raman asked: who signs off on the pilot acceptance criteria? We need a named approver before go-live."
+    }
+  ]
+}
